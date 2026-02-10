@@ -23,17 +23,17 @@ const StudentRegistrationMain = () => {
 
   return (
     <main>
-      <Breadcrumb title="Student Registration" subTitle="Registration" />
+      <Breadcrumb title="Registro de Estudiante" subTitle="Registro" />
 
       <div className="it-student-area pt-120 pb-120">
         <div className="container">
           <div className="row">
             <div className="col-xl-12">
               <div className="it-student-bg">
-                <h4 className="it-student-title">Student Registration</h4>
+                <h4 className="it-student-title">Registro de Estudiante</h4>
                 <div className="it-student-content mb-70">
                   <h4 className="it-student-subtitle">
-                    Fields with are required
+                    Los campos con * son obligatorios
                   </h4>
                   <p>
                     Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
@@ -42,15 +42,15 @@ const StudentRegistrationMain = () => {
                   </p>
                 </div>
                 <div className="it-student-regiform">
-                  <h4 className="it-student-regiform-title">Credentials</h4>
+                  <h4 className="it-student-regiform-title">Credenciales</h4>
                   <form ref={formRef} onSubmit={handleSubmit}>
                     <div className="it-student-regiform-wrap">
                       <div className="it-student-regiform-item">
-                        <label>First Name *</label>
+                        <label>Nombre *</label>
                         <input type="text" />
                       </div>
                       <div className="it-student-regiform-item">
-                        <label>Last Name *</label>
+                        <label>Apellidos *</label>
                         <input type="text" />
                       </div>
                       <div className="it-student-regiform-item">
@@ -62,11 +62,11 @@ const StudentRegistrationMain = () => {
                         <input type="email" />
                       </div>
                       <div className="it-student-regiform-item">
-                        <label>Password *</label>
+                        <label>Contraseña *</label>
                         <input type="text" />
                       </div>
                       <div className="it-student-regiform-item">
-                        <label>Password Confirmation *</label>
+                        <label>Confirmación de Contraseña *</label>
                         <input type="text" />
                       </div>
                       <div className="it-student-regiform-btn">
@@ -74,7 +74,7 @@ const StudentRegistrationMain = () => {
                           className="ed-btn-square purple-4 w-100"
                           type="submit"
                         >
-                          <span>Create account</span>
+                          <span>Crear cuenta</span>
                         </button>
                       </div>
                     </div>
