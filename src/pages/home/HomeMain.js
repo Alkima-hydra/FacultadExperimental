@@ -23,10 +23,10 @@ const HomeMain = () => {
       <WhyChooseUs />
       <FunFact />
       <Testimonial />
-      <Team />
+      {/* <Team /> */}
       <Career />
-      <Blog />
-      <Newsletter />
+      {/*<Blog />
+      <Newsletter />*/}
     </main>
   );
 };

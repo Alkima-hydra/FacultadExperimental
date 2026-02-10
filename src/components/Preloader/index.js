@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Logo from '../../assets/img/logo/pencil-upper.png';
+import Logo from '../../assets/img/logo/pencil-upper.jpg';
 import Icon from '../../assets/img/logo/pencil.png';
 
 const Preloader = () => {

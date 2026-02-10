@@ -23,9 +23,9 @@ const WhyChooseUs = () => {
             <div className="it-choose-left">
               <SectionTitleSpecial
                 itemClass="it-choose-title-box mb-30"
-                subTitle="WHY CHOOSE US"
-                preTitle="Creating A Community Of Life Long"
-                highlightText="Learners."
+                subTitle="¿Por qué elegirnos?"
+                preTitle="Creando una comunidad de"
+                highlightText="profesionales."
               />
 
               <div className="it-choose-text pb-15">
@@ -41,8 +41,8 @@ const WhyChooseUs = () => {
                   <div className="col-md-6 col-sm-6 mb-20">
                     <div className="it-choose-content">
                       <h5>
-                        <i className="fa-solid fa-circle-check"></i>World
-                        className Trainers
+                        <i className="fa-solid fa-circle-check"></i>Docentes
+                          Expertos
                       </h5>
                       <p>Gravida dictum fusce placerat ultricies integer</p>
                     </div>
@@ -50,8 +50,8 @@ const WhyChooseUs = () => {
                   <div className="col-md-6 col-sm-6 mb-20">
                     <div className="it-choose-content">
                       <h5>
-                        <i className="fa-solid fa-circle-check"></i>Easy
-                        Learning
+                        <i className="fa-solid fa-circle-check"></i>Aprendizaje
+                        Fácil
                       </h5>
                       <p>Gravida dictum fusce placerat ultricies integer</p>
                     </div>
@@ -67,8 +67,7 @@ const WhyChooseUs = () => {
                   <div className="col-md-6 col-sm-6 mb-20">
                     <div className="it-choose-content">
                       <h5>
-                        <i className="fa-solid fa-circle-check"></i>Affordable
-                        Price
+                        <i className="fa-solid fa-circle-check"></i>Accesible en Costo
                       </h5>
                       <p>Gravida dictum fusce placerat ultricies integer</p>
                     </div>

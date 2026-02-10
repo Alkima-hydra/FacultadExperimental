@@ -41,8 +41,8 @@ const Testimonial = () => {
             <div className="col-xl-6">
               <SectionTitle
                 itemClass="it-testimonial-title-box text-center"
-                subTitle="testimonial"
-                title="Creating A Community Of Life Long Learners."
+                subTitle="Testimonios"
+                title="Creando una comunidad de profesionales."
               />
             </div>
           </div>
@@ -62,8 +62,8 @@ const Testimonial = () => {
                           tempor incididunt ut labore et dolore magna aliqua.
                           Orci nulla pellentesque dignissim enim. Amet
                           consectetur adipiscing”`}
-                      authorName="Ellen Perera"
-                      designation="CEO at House of Ramen"
+                      authorName="Elena Orozco"
+                      designation="CEO"
                     />
                   </SwiperSlide>
                   <SwiperSlide className="swiper-slide">
@@ -72,8 +72,8 @@ const Testimonial = () => {
                           tempor incididunt ut labore et dolore magna aliqua.
                           Orci nulla pellentesque dignissim enim. Amet
                           consectetur adipiscing”`}
-                      authorName="Kathy Sullivan"
-                      designation="CEO at ordian it"
+                      authorName="Maria Paz"
+                      designation="CEO"
                     />
                   </SwiperSlide>
                   <SwiperSlide className="swiper-slide">
@@ -82,8 +82,8 @@ const Testimonial = () => {
                           tempor incididunt ut labore et dolore magna aliqua.
                           Orci nulla pellentesque dignissim enim. Amet
                           consectetur adipiscing”`}
-                      authorName="Elsie Stroud"
-                      designation="CEO at Edwards"
+                      authorName="Ellie Daza"
+                      designation="CEO"
                     />
                   </SwiperSlide>
                   <SwiperSlide className="swiper-slide">
@@ -92,8 +92,8 @@ const Testimonial = () => {
                           tempor incididunt ut labore et dolore magna aliqua.
                           Orci nulla pellentesque dignissim enim. Amet
                           consectetur adipiscing”`}
-                      authorName="Kathy Sullivan"
-                      designation="CEO at ordian it"
+                      authorName="Lucero Oropeza"
+                      designation="CEO"
                     />
                   </SwiperSlide>
                 </Swiper>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import bgImg from '../../assets/img/footer/bg-1-1.jpg';
-import Logo from '../../assets/img/logo/logo-white.png';
+import Logo from '../../assets/img/logo/logo-gatobyte.png';
 import footerImg1 from '../../assets/img/footer/thumb-1-1.png';
 import footerImg2 from '../../assets/img/footer/thumb-1-2.png';
 import footerImg3 from '../../assets/img/footer/thumb-1-3.png';
@@ -65,13 +65,12 @@ const Footer = (props) => {
               data-wow-delay=".5s"
             >
               <div className="it-footer-widget footer-col-2">
-                <h4 className="it-footer-title">our services:</h4>
+                <h4 className="it-footer-title">Nuestros Cursos:</h4>
                 <div className="it-footer-list">
                   <ul>
                     <li>
                       <a href="#">
-                        <i className="fa-regular fa-angle-right"></i>Web
-                        development
+                        <i className="fa-regular fa-angle-right"></i>Arte y Diseño
                       </a>
                     </li>
                     <li>
@@ -82,18 +81,17 @@ const Footer = (props) => {
                     </li>
                     <li>
                       <a href="#">
-                        <i className="fa-regular fa-angle-right"></i>Management
+                        <i className="fa-regular fa-angle-right"></i>Administración
                       </a>
                     </li>
                     <li>
                       <a href="#">
-                        <i className="fa-regular fa-angle-right"></i>Digital
-                        Marketing
+                        <i className="fa-regular fa-angle-right"></i>Marketing Digital
                       </a>
                     </li>
                     <li>
                       <a href="#">
-                        <i className="fa-regular fa-angle-right"></i>Blog News
+                        <i className="fa-regular fa-angle-right"></i>PowerSkills
                       </a>
                     </li>
                   </ul>
@@ -106,24 +104,22 @@ const Footer = (props) => {
               data-wow-delay=".7s"
             >
               <div className="it-footer-widget footer-col-3">
-                <h4 className="it-footer-title">quick links:</h4>
+                <h4 className="it-footer-title">Acceso Rápido:</h4>
                 <div className="it-footer-list">
                   <ul>
                     <li>
                       <a href="#">
-                        <i className="fa-regular fa-angle-right"></i>templates
+                        <i className="fa-regular fa-angle-right"></i>Cursos
                       </a>
                     </li>
                     <li>
                       <a href="#">
-                        <i className="fa-regular fa-angle-right"></i>blog and
-                        article
+                        <i className="fa-regular fa-angle-right"></i>Inscripciones
                       </a>
                     </li>
                     <li>
                       <a href="#">
-                        <i className="fa-regular fa-angle-right"></i>
-                        integrations
+                        <i className="fa-regular fa-angle-right"></i>Acerca de Nosotros
                       </a>
                     </li>
                     <li>
@@ -133,8 +129,7 @@ const Footer = (props) => {
                     </li>
                     <li>
                       <a href="#">
-                        <i className="fa-regular fa-angle-right"></i>privacy &
-                        policy
+                        <i className="fa-regular fa-angle-right"></i>Política de Privacidad
                       </a>
                     </li>
                   </ul>
@@ -146,55 +141,7 @@ const Footer = (props) => {
               data-wow-duration=".9s"
               data-wow-delay=".9s"
             >
-              <div className="it-footer-widget footer-col-4">
-                <h4 className="it-footer-title">Gallery</h4>
-                <div className="it-footer-gallery-box">
-                  <div className="row gx-10">
-                    <div className="col-md-4 col-4">
-                      <div className="it-footer-thumb mb-10">
-                        <a href="#">
-                          <img src={footerImg1} alt="" />
-                        </a>
-                      </div>
-                    </div>
-                    <div className="col-md-4 col-4">
-                      <div className="it-footer-thumb mb-10">
-                        <a href="#">
-                          <img src={footerImg2} alt="" />
-                        </a>
-                      </div>
-                    </div>
-                    <div className="col-md-4 col-4 mb-10">
-                      <div className="it-footer-thumb">
-                        <a href="#">
-                          <img src={footerImg3} alt="" />
-                        </a>
-                      </div>
-                    </div>
-                    <div className="col-md-4 col-4">
-                      <div className="it-footer-thumb">
-                        <a href="#">
-                          <img src={footerImg4} alt="" />
-                        </a>
-                      </div>
-                    </div>
-                    <div className="col-md-4 col-4">
-                      <div className="it-footer-thumb">
-                        <a href="#">
-                          <img src={footerImg5} alt="" />
-                        </a>
-                      </div>
-                    </div>
-                    <div className="col-md-4 col-4">
-                      <div className="it-footer-thumb">
-                        <a href="#">
-                          <img src={footerImg6} alt="" />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              
             </div>
           </div>
         </div>
@@ -216,8 +163,7 @@ const Footer = (props) => {
                 }
               >
                 <p>
-                  Copyright &copy; 2024 <a href="#">edunity </a> || All Rights
-                  Reserved
+                  Copyright &copy; 2026 <a href="#">  Gatobyte </a> || Derechos Reservados
                 </p>
               </div>
             </div>

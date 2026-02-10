@@ -9,25 +9,25 @@ const FunFact = () => {
       countIcon: 'flaticon-teacher',
       countNum: 3,
       countSubtext: 'K+',
-      countTitle: 'Successfully Trained',
+      countTitle: 'Estudiantes',
     },
     {
       countIcon: 'flaticon-completed-task',
       countNum: 15,
       countSubtext: 'K+',
-      countTitle: 'Classes Completed',
+      countTitle: 'Clases Completadas',
     },
     {
       countIcon: 'flaticon-customer-review',
-      countNum: 97,
-      countSubtext: 'K+',
-      countTitle: 'Satisfaction Rate',
+      countNum: 97.00,
+      countSubtext: '%',
+      countTitle: 'Tasa de Satisfacción',
     },
     {
       countIcon: 'flaticon-class',
       countNum: 102,
       countSubtext: 'K+',
-      countTitle: 'Students Community',
+      countTitle: 'Comunidad',
     },
   ];
   return (

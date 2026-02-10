@@ -65,7 +65,7 @@ const Course = () => {
               thumbText="Digital Marketing"
               title="It Statistics Data Science And Business Analysis"
               authorAvatar={avatarImg2}
-              authorName="Charles"
+              authorName="Augusto"
             />
           </div>
           <div
@@ -78,7 +78,7 @@ const Course = () => {
               thumbText="Digital Marketing"
               title="It Statistics Data Science And Business Analysis"
               authorAvatar={avatarImg3}
-              authorName="Morgan"
+              authorName="Renato"
             />
           </div>
         </div>

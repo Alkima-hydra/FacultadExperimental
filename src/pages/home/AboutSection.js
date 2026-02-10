@@ -41,8 +41,8 @@ const About = () => {
               <div className="ed-about-experience d-none d-md-block">
                 <span>
                   <b>8+</b> <br />
-                  Years Of <br />
-                  Experiences
+                  Años de <br />
+                  Experiencia
                 </span>
               </div>
             </div>
@@ -55,10 +55,10 @@ const About = () => {
             <div className="it-about-right-box">
               <SectionTitleSpecial
                 itemClass="it-about-title-box mb-20 section-title-fixed-width"
-                subTitle="Our about us"
-                preTitle="Learn & Grow your"
-                highlightText="skills"
-                postTitle="From anywhere"
+                subTitle="Acerca de Nosotros"
+                preTitle="Aprende y desarrolla tus"
+                highlightText="habilidades"
+                postTitle="Desde cualquier lugar"
               />
 
               <div className="it-about-text pb-10">
@@ -71,14 +71,14 @@ const About = () => {
               </div>
               <div className="it-about-content-wrapper d-flex align-items-center justify-content-between pb-15">
                 <div className="it-about-content">
-                  <h5>Flexible classNamees</h5>
+                  <h5>Titulo</h5>
                   <p>
                     Suspendisse ultrice gravida dictum fusce placerat ultricies
                     integer quis auctor elit sed vulputate mi sit.
                   </p>
                 </div>
                 <div className="it-about-content">
-                  <h5>Flexible classNamees</h5>
+                  <h5>Titulo</h5>
                   <p>
                     Suspendisse ultrice gravida dictum fusce placerat ultricies
                     integer quis auctor elit sed vulputate mi sit.
@@ -86,7 +86,7 @@ const About = () => {
                 </div>
               </div>
               <Link className="ed-btn-theme" to="/about-us">
-                Load More
+                Ver más
                 <i>
                   <RightArrow />
                 </i>

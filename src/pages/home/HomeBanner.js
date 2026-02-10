@@ -18,7 +18,7 @@ const HomeBanner = () => {
         <div className="ed-slider-instructor-box d-none d-lg-block">
           <div>
             <span>
-              <i>200+</i> Instructor
+              <i>200+</i> Instructores
             </span>
             <img src={instructorImg} alt="" />
           </div>
@@ -35,24 +35,24 @@ const HomeBanner = () => {
                   data-wow-duration=".9s"
                   data-wow-delay=".3s"
                 >
-                  Welcome Edunity online courses
+                  Bienvenido a Gatobyte
                 </span>
                 <h1
                   className="ed-slider-title wow animate__fadeInUp"
                   data-wow-duration=".9s"
                   data-wow-delay=".4s"
                 >
-                  Achieving Your Dreams <br />
-                  Through <span>Education</span>
+                  Logrando tus sueños <br />
+                  A través de la <br />
+                  <span> educación</span>
                 </h1>
                 <p
                   className="pb-25 wow animate__fadeInUp"
                   data-wow-duration=".9s"
                   data-wow-delay=".5s"
                 >
-                  We are experienced in educationl platform and skilled
-                  strategies <br />
-                  for the success of our online learning.
+                  Somos expertos en plataformas educativas y estrategias hábiles <br />
+                  para el éxito de nuestro aprendizaje.
                 </p>
                 <Link
                   className="ed-btn-dark wow animate__fadeInUp"
@@ -60,7 +60,7 @@ const HomeBanner = () => {
                   data-wow-delay=".7s"
                   to="/course-details"
                 >
-                  Find courses
+                  Buscar cursos
                   <i>
                     <RightArrow />
                   </i>

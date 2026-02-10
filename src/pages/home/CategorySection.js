@@ -15,8 +15,8 @@ const Category = () => {
           <div className="col-xl-12">
             <SectionTitle
               itemClass="ed-category-title-box text-center mb-70"
-              subTitle="CATEGORIES"
-              title="Browse By Categories"
+              subTitle="CATEGORÍAS"
+              title="Explorar por Categorías"
             />
           </div>
         </div>
@@ -66,7 +66,7 @@ const Category = () => {
                   />
                 </svg>
               }
-              title="Business Management"
+              title="Manejo de Negocios"
             />
           </div>
           <div
@@ -106,7 +106,7 @@ const Category = () => {
                   />
                 </svg>
               }
-              title="Arts & Design"
+              title="Arte y Diseño"
             />
           </div>
           <div
@@ -158,7 +158,7 @@ const Category = () => {
                   />
                 </svg>
               }
-              title="Personal Development"
+              title="Desarrollo Personal"
             />
           </div>
           <div
@@ -198,7 +198,7 @@ const Category = () => {
                   />
                 </svg>
               }
-              title="UI/UX Design"
+              title="Diseño UI/UX"
             />
           </div>
           <div
@@ -226,7 +226,7 @@ const Category = () => {
                   />
                 </svg>
               }
-              title="Graphic Design"
+              title="Diseño Gráfico"
             />
           </div>
           <div
@@ -270,7 +270,7 @@ const Category = () => {
                   />
                 </svg>
               }
-              title="Digital Marketing"
+              title="Marketing Digital"
             />
           </div>
           <div
@@ -294,7 +294,7 @@ const Category = () => {
                   />
                 </svg>
               }
-              title="Exclusive man"
+              title="Habilidades Blandas"
             />
           </div>
           <div
@@ -410,7 +410,7 @@ const Category = () => {
                   />
                 </svg>
               }
-              title="Product Design"
+              title="Diseño de Productos"
             />
           </div>
           <div
@@ -442,7 +442,7 @@ const Category = () => {
                   />
                 </svg>
               }
-              title="Video & Photography"
+              title="Video y Fotografía"
             />
           </div>
         </div>

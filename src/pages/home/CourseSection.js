@@ -31,16 +31,16 @@ const Course = () => {
             <div className="col-xl-8 col-lg-8 col-md-7">
               <SectionTitleSpecial
                 itemClass="it-course-title-boxmb-70 section-title-fixed-width"
-                subTitle="Top Popular Course"
-                preTitle="Edunity Course"
-                highlightText="student"
-                postTitle={`can join with us.`}
+                subTitle="Cursos más populares"
+                preTitle="Cursos a los cuales los"
+                highlightText="alumnos"
+                postTitle={`pueden unirse.`}
               />
             </div>
             <div className="col-xl-4 col-lg-4 col-md-5">
               <div className="ed-course-button text-md-end">
                 <Link className="ed-btn-theme" to="/course-1">
-                  Load More Course
+                  Cargar más cursos
                   <i>
                     <RightArrow />
                   </i>
@@ -53,8 +53,8 @@ const Course = () => {
           <div className="col-xl-4 col-lg-6 col-md-6 mb-30">
             <SingleCourse
               courseImage={courseImg1}
-              thumbText="Digital Marketing"
-              title="It Statistics Data Science And Business Analysis"
+              thumbText="Marketing Digital"
+              title="Estadísticas TI, Ciencia de Datos y Análisis Empresarial"
               authorAvatar={avatarImg1}
               authorName="Samantha"
             />
@@ -62,46 +62,46 @@ const Course = () => {
           <div className="col-xl-4 col-lg-6 col-md-6 mb-30">
             <SingleCourse
               courseImage={courseImg2}
-              thumbText="Digital Marketing"
-              title="Bilginer Adobe Illustrator For Graphic Design"
+              thumbText="Diseño Gráfico"
+              title="Adobe Illustrator Para Diseño Gráfico"
               authorAvatar={avatarImg2}
-              authorName="Charles"
+              authorName="Andres"
             />
           </div>
           <div className="col-xl-4 col-lg-6 col-md-6 mb-30">
             <SingleCourse
               courseImage={courseImg3}
-              thumbText="Digital Marketing"
-              title="Starting SEO as your Home Based Business"
+              thumbText="Marketing Digital"
+              title="CEO de tu Negocio desde Casa"
               authorAvatar={avatarImg3}
-              authorName="Morgan"
+              authorName="Pedro"
             />
           </div>
           <div className="col-xl-4 col-lg-6 col-md-6 mb-30">
             <SingleCourse
               courseImage={courseImg4}
-              thumbText="Digital Marketing"
-              title="Bilginer Adobe Illustrator For Graphic Design"
+              thumbText="Diseño Gráfico"
+              title="Adobe Illustrator Para Diseño Gráfico"
               authorAvatar={avatarImg4}
-              authorName="Brian Brewer"
+              authorName="Renato"
             />
           </div>
           <div className="col-xl-4 col-lg-6 col-md-6 mb-30">
             <SingleCourse
               courseImage={courseImg5}
-              thumbText="Digital Marketing"
-              title="It Statistics Data Science And Business Analysis"
+              thumbText="Marketing Digital"
+              title="Estadísticas TI, Ciencia de Datos y Análisis Empresarial"
               authorAvatar={avatarImg5}
-              authorName="Rodriquez"
+              authorName="Adrian"
             />
           </div>
           <div className="col-xl-4 col-lg-6 col-md-6 mb-30">
             <SingleCourse
               courseImage={courseImg6}
-              thumbText="Digital Marketing"
-              title="Starting SEO as your Home Based Business"
+              thumbText="Marketing Digital"
+              title="CEO de tu Negocio desde Casa"
               authorAvatar={avatarImg6}
-              authorName="Morgan"
+              authorName="Melanie"
             />
           </div>
         </div>

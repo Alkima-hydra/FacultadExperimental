@@ -40,10 +40,10 @@ const SingleCourse = (props) => {
             <i className="fa-sharp fa-solid fa-star"></i>
             <i className="fa-sharp fa-solid fa-star"></i>
             <i className="fa-sharp fa-regular fa-star"></i>
-            <span>{rating ? rating : '4.5k'}</span>
+            <span>{rating ? rating : '4.5'}</span>
           </div>
           <div className="it-course-price-box">
-            <span>{price ? price : '$50.00'}</span>
+            <span>{price ? price : 'Bs 50.00'}</span>
           </div>
         </div>
         <h4 className="it-course-title pb-15">
@@ -54,7 +54,7 @@ const SingleCourse = (props) => {
         <div className="it-course-info pb-15 mb-30 d-flex justify-content-between">
           <span>
             <i className="fa-light fa-file-invoice"></i>
-            {lessonCount ? lessonCount : 'Lesson 10'}
+            {lessonCount ? lessonCount : 'Lección 10'}
           </span>
           <span>
             <i className="fa-sharp fa-regular fa-clock"></i>
@@ -62,7 +62,7 @@ const SingleCourse = (props) => {
           </span>
           <span>
             <i className="fa-light fa-user"></i>
-            {studentCount ? studentCount : 'Students 20+'}
+            {studentCount ? studentCount : 'Estudiantes 20+'}
           </span>
         </div>
         <div className="d-flex justify-content-between align-items-center">
@@ -72,7 +72,7 @@ const SingleCourse = (props) => {
           </div>
           <div className="ed-course-price-box">
             <Link className="ed-course-btn" to="/course-details">
-              {btnText ? btnText : 'Enroll'}
+              {btnText ? btnText : 'Inscribirse'}
               <span>
                 <RightArrowThin />
               </span>

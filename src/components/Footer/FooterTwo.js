@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import footerBG from '../../assets/img/footer/bg-1-1.jpg';
-import Logo from '../../assets/img/logo/logo-white-2.png';
+import Logo from '../../assets/img/logo/logo-gatobyte.png';
 import footerImg1 from '../../assets/img/footer/thumb-1-1.png';
 import footerImg2 from '../../assets/img/footer/thumb-1-2.png';
 import footerImg3 from '../../assets/img/footer/thumb-1-3.png';
@@ -39,7 +39,7 @@ const FooterTwo = (props) => {
                       target="_blank"
                       href="https://www.google.com/maps/@25.1314121,87.0325089,8.83z?entry=ttu"
                     >
-                      1925 Boggess Street
+                      Universidad Lorem Ipsum
                     </a>
                   </div>
                 </div>
@@ -53,7 +53,7 @@ const FooterTwo = (props) => {
                   </div>
                   <div className="it-footer-top-text">
                     <span>Phone:</span>
-                    <a href="tel:00875784568">(00) 875 784 568</a>
+                    <a href="tel:00875784568">(591) 123 456 78</a>
                   </div>
                 </div>
               </div>
@@ -84,7 +84,7 @@ const FooterTwo = (props) => {
                 <div className="it-footer-widget footer-col-5">
                   <div className="it-footer-logo pb-25">
                     <Link to="/">
-                      <img src={footerLogo ? footerLogo : Logo} alt="" />
+                      <img src={ Logo} alt="" />
                     </Link>
                   </div>
                   <div className="it-footer-text pb-5">
@@ -116,13 +116,12 @@ const FooterTwo = (props) => {
                 data-wow-delay=".5s"
               >
                 <div className="it-footer-widget footer-col-6">
-                  <h4 className="it-footer-title">our services:</h4>
+                  <h4 className="it-footer-title">Nuestros Cursos:</h4>
                   <div className="it-footer-list">
                     <ul>
                       <li>
                         <a href="#">
-                          <i className="fa-regular fa-angle-right"></i>Web
-                          development
+                          <i className="fa-regular fa-angle-right"></i>Arte y Diseño
                         </a>
                       </li>
                       <li>
@@ -133,101 +132,24 @@ const FooterTwo = (props) => {
                       </li>
                       <li>
                         <a href="#">
-                          <i className="fa-regular fa-angle-right"></i>
-                          Management
+                          <i className="fa-regular fa-angle-right"></i>Administración
                         </a>
                       </li>
                       <li>
                         <a href="#">
-                          <i className="fa-regular fa-angle-right"></i>Digital
-                          Marketing
+                          <i className="fa-regular fa-angle-right"></i>Marketing Digital
                         </a>
                       </li>
                       <li>
                         <a href="#">
-                          <i className="fa-regular fa-angle-right"></i>Blog News
+                          <i className="fa-regular fa-angle-right"></i>PowerSkills
                         </a>
                       </li>
                     </ul>
                   </div>
                 </div>
               </div>
-              <div
-                className="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-50 wow animate__fadeInUp"
-                data-wow-duration=".9s"
-                data-wow-delay=".7s"
-              >
-                <div className="it-footer-widget footer-col-4">
-                  <h4 className="it-footer-title">Gallery</h4>
-                  <div className="it-footer-gallery-box">
-                    <div className="row gx-10">
-                      <div className="col-md-4 col-4">
-                        <div className="it-footer-thumb mb-10">
-                          <a href="#">
-                            <img src={footerImg1} alt="" />
-                          </a>
-                        </div>
-                      </div>
-                      <div className="col-md-4 col-4">
-                        <div className="it-footer-thumb mb-10">
-                          <a href="#">
-                            <img src={footerImg2} alt="" />
-                          </a>
-                        </div>
-                      </div>
-                      <div className="col-md-4 col-4 mb-10">
-                        <div className="it-footer-thumb">
-                          <a href="#">
-                            <img src={footerImg3} alt="" />
-                          </a>
-                        </div>
-                      </div>
-                      <div className="col-md-4 col-4">
-                        <div className="it-footer-thumb">
-                          <a href="#">
-                            <img src={footerImg4} alt="" />
-                          </a>
-                        </div>
-                      </div>
-                      <div className="col-md-4 col-4">
-                        <div className="it-footer-thumb">
-                          <a href="#">
-                            <img src={footerImg5} alt="" />
-                          </a>
-                        </div>
-                      </div>
-                      <div className="col-md-4 col-4">
-                        <div className="it-footer-thumb">
-                          <a href="#">
-                            <img src={footerImg6} alt="" />
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div
-                className="col-xl-3 col-lg-3 col-md-6 col-sm-8 mb-50 wow animate__fadeInUp"
-                data-wow-duration=".9s"
-                data-wow-delay=".9s"
-              >
-                <div className="it-footer-widget footer-col-8">
-                  <h4 className="it-footer-title">Subscribe</h4>
-                  <div className="it-footer-input-box p-relative">
-                    <input
-                      className="mb-20"
-                      type="email"
-                      placeholder="Enter your email:"
-                    />
-                    <button
-                      className={btnClass ? btnClass : 'it-btn-white sky-bg'}
-                    >
-                      <span>SUBSCRIBE NOW</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
@@ -249,8 +171,7 @@ const FooterTwo = (props) => {
                 }
               >
                 <p>
-                  Copyright &copy; 2024 <a href="#">edunity </a> || All Rights
-                  Reserved
+                  Copyright &copy; 2026 <a href="#"> Gatobyte</a> || Todos los derechos reservados.
                 </p>
               </div>
             </div>

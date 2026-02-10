@@ -33,8 +33,8 @@ const Career = () => {
           <div className="col-xl-12">
             <SectionTitle
               itemClass="it-career-title-box text-center mb-70"
-              subTitle="Choose your career"
-              title="Discover your gain"
+              subTitle="Elige tu carrera"
+              title="Descubre tu ganancia"
             />
           </div>
           <div
@@ -45,7 +45,7 @@ const Career = () => {
             <SingleCareer
               itemClass="it-career-item theme-bg p-relative fix"
               careerImage={careerImg1}
-              title="Start from today"
+              title="Comienza hoy"
               btnClass="ed-btn-yellow dark-bg"
             />
           </div>
@@ -57,7 +57,7 @@ const Career = () => {
             <SingleCareer
               itemClass="it-career-item yellow-bg p-relative fix"
               careerImage={careerImg2}
-              title="Start from today"
+              title="Comienza hoy"
               btnClass="ed-btn-theme"
             />
           </div>

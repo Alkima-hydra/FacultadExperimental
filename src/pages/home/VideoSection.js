@@ -24,7 +24,7 @@ const Video = () => {
       <ModalVideo
         channel="youtube"
         isOpen={isOpen}
-        videoId="PO_fBTkoznc"
+        videoId="JcCBPgW0asY"
         onClose={() => openModal()}
       />
       <div className="it-video-shape-2 d-none d-lg-block">
@@ -43,15 +43,15 @@ const Video = () => {
         <div className="row align-items-center">
           <div className="col-xl-7 col-lg-7 col-md-9 col-sm-9">
             <div className="it-video-content yellow">
-              <span>Join Our New Session</span>
+              <span>Únete a nuestra comunidad</span>
               <h3 className="it-video-title">
-                Call To Enroll Your Child <br />
-                <a href="tel:+91958423452">(+91)958423452</a>
+                Llama para inscribirte <br />
+                <a href="tel:+91958423452">(+591)12345678</a>
               </h3>
               <div className="it-video-button">
                 <Link className="ed-btn-yellow" to="/contact">
                   <span>
-                    'Join With us'
+                    Únete a nosotros
                     <i>
                       <RightArrow />
                     </i>
@@ -71,7 +71,7 @@ const Video = () => {
                   <i className="fas fa-play"></i>
                 </Link>
                 <Link className="text" to="#" onClick={() => openModal()}>
-                  watch now
+                  Mira el video
                 </Link>
               </div>
             </div>

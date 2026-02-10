@@ -15,16 +15,17 @@ const SingleCareer = (props) => {
       }
     >
       <div className="it-career-content">
-        <span>{title ? title : 'Start from today'}</span>
+        <span>{title ? title : 'Comienza hoy'}</span>
         <p>
-          Join our training courses & <br />
-          Build your skill.
+          Únete a nuestros cursos y <br />
+          Desarrolla tus <br />
+          habilidades.
         </p>
         <Link
           className={btnClass ? btnClass : 'ed-btn-yellow dark-bg'}
           to="/student-registration"
         >
-          {btnText ? btnText : 'Join now'}
+          {btnText ? btnText : 'Únete ahora'}
           <i>
             <RightArrow />
           </i>
