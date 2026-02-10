@@ -1,0 +1,477 @@
+@use '../utils' as *;
+
+/*----------------------------------------*/
+/*  22. hero css start
+/*----------------------------------------*/
+.ed-hero {
+    &-bg {
+        background-repeat: no-repeat;
+        background-size: cover;
+        padding-top: 190px;
+        padding-bottom: 120px;
+        @media #{$lg}{
+            padding: 120px 0;
+        }
+        @media #{$md}{
+            padding-top: 230px;
+        }
+        & .ed-slider-title {
+            @media #{$lg}{
+                font-size: 44px;
+            }
+            @media #{$xs}{
+                font-size: 34px;
+            }
+            @media #{$sm}{
+                font-size: 47px;
+            }
+        }
+    }
+    &-subtitle  {
+        color: var(--it-theme-3);
+        font-weight: 400;
+        font-size: 14px;
+        border-radius: 5px;
+        padding: 4px 15px;
+        display: inline-block;
+        margin-bottom: 23px;
+        background-color: rgba(47, 199, 161, 0.15);
+    }
+    &-content {
+        @media #{$md,$xs}{
+            margin-bottom: 70px;
+        }        
+        & > span {
+            font-weight: 400;
+            font-size: 20px;
+            display: block;
+            margin-bottom: 10px;
+            @media #{$lg,$md,$xs}{
+                font-size: 17px;
+            }
+        }
+    }
+    &-search {
+        width: 485px;
+        @media #{$lg}{
+            width: 80%;
+        }
+        @media #{$md}{
+            width: 60%;
+        }
+        @media #{$xs}{
+            width: 90%;
+        }
+        @media #{$sm}{
+            width: 70%;
+        }
+        & input {
+            height: 58px;
+            line-height: 58px;
+            border-radius: 40px;
+            font-size: 15px;
+            padding-right: 70px;
+            background-color: var(--it-common-white);
+            @media #{$lg}{
+                height:48px;
+                line-height: 48px;
+            }
+            @media #{$xs}{
+                font-size: 12px;
+            }
+            
+        }
+        & span {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 58px;
+            height: 58px;
+            line-height: 58px;
+            border-radius: 50%;
+            text-align: center;
+            background-color: var(--it-theme-3);
+            display: inline-block;
+            @media #{$lg}{
+                width: 48px;
+                height:48px;
+                line-height: 48px;
+            }
+        }
+    }
+    &-thumb {
+        &-wrap {
+           
+            
+            @media #{$xl}{                 
+                transform: scale(.93);
+            }
+            @media #{$lg}{   
+                transform: scale(.8);
+            }
+        }
+        &-main {
+            display: inline-block;
+            @media #{$xl}{                 
+                transform: translateX(40px);
+            }
+            @media #{$lg}{                 
+                transform: translateX(60px);
+            }
+            & img {
+                border-radius: 100px;
+            }
+        }
+        &-sm {
+            position: absolute;
+            top: 36%;
+            left: 8%;
+            @media #{$xl}{                 
+                left: -3%;
+            }
+            @media #{$lg}{                 
+                left: -18%;
+            }
+            @media #{$xs}{   
+                margin-top: 40px;              
+                position: static;
+            }
+            & img {
+                border-radius: 100px;
+            }
+        }
+        &-shape{
+            &-1 {
+                position: absolute;
+                top: 7px;
+                left: -7px;
+                z-index: -1;
+                @media #{$xs}{   
+                    display: none;
+                }
+            }
+            &-2 {
+                position: absolute;
+                top: 5%;
+                right: -12%;
+                z-index: -1;
+                animation: zoom 7s infinite;
+            }
+            &-3 {
+                position: absolute;
+                top: 31%;
+                left: 6%;
+                z-index: -1;
+                animation: moving 9s linear infinite;
+            }
+            &-4 {
+                position: absolute;
+                bottom: -4%;
+                right: 5%;
+                z-index: -1;
+                animation: moving 14s linear infinite;
+            }
+        }
+        &-student{
+            position: absolute;
+            top: 8%;
+            left: 5%;
+            border-radius: 1000px;
+            padding: 15px 40px;
+            display: inline-block;
+            box-shadow: 0 0 20px 0 rgba(2, 52, 117, 0.15);
+            background: #fff;
+            animation: jumpTwo 3s infinite linear;
+            @media #{$md}{                 
+                left: 12%;
+            }
+            & > span {
+                font-weight: 500;
+                font-size: 25px;
+                text-align: start;
+                margin-right: 20px;
+                color: var(--it-common-black-3);
+                & i {
+                    font-style: normal;
+                    color: var(--it-theme-1);
+                }
+            }
+        }
+        &-courses{
+            position: absolute;
+            bottom: 6%;
+            right: -20%;
+            padding: 18px 50px;
+            text-align: start;
+            background: #fff;
+            border-radius: 50px;
+            box-shadow: 0 0 20px 0 rgba(19, 39, 66, 0.15);
+            animation: ittranslateX2 4s infinite alternate;
+            @media #{$xxxl,$xxl}{
+                right: -15%;
+            }
+            @media #{$md}{
+                right: 4%;
+            }
+            & i  {
+                font-weight: 500;
+                font-size: 34px;
+                text-transform: capitalize;
+                color: var(--it-theme-3);
+                font-style: normal;
+                display: block;
+            }
+            & span  {
+                font-weight: 500;
+                font-size: 16px;
+            }
+        }
+    }
+}
+
+.ed-hero-2 {
+    &-bg{
+        background-color: #FFF8F0;
+        padding-top: 60px;
+        padding-bottom: 45px;
+        @media #{$xl,$lg}{
+            padding: 0;
+        }
+        @media #{$md}{
+            padding: 120px 0;
+        }
+        @media #{$xs}{
+            padding-top: 80px; 
+            padding-bottom: 100px;
+        }
+    }
+    &-content{
+        @media #{$md,$xs}{
+            padding-bottom: 70px;
+        }
+        & .ed-slider-3-video {
+            & span {
+                background-color: var(--it-theme-5);
+                &::before{
+                    position: absolute;
+                    content: "";
+                    left: 50%;
+                    top: 50%;
+                    width: 60%;
+                    height: 60%;
+                    transform: scale(1.5);
+                    border: 1px solid rgba(0, 190, 174, 0.3);
+                    animation: borderanimate2 2s linear infinite;
+                    z-index: -1;
+                    border-radius: 50%;
+                }
+                &::after{
+                    position: absolute;
+                    content: "";
+                    left: 50%;
+                    top: 50%;
+                    width: 80%;
+                    height: 80%;
+                    background-color: rgba(0, 190, 174, 0.3);
+                    animation: borderanimate2 2s linear infinite;
+                    z-index: -1;
+                    border-radius: 50%
+                }
+                & i {
+                    color: var(--it-common-white);
+                }
+            }
+            & a {
+                color: var(--it-common-black);
+            }
+        }
+        & p {
+            @media #{$xl,$lg}{
+                & br {
+                    display: none;
+                }
+            }
+            @media #{$md,$xs}{
+                font-size: 15px;
+                & br {
+                    display: none;
+                }
+            }
+        }
+    }
+    &-button {
+        @media #{$xs}{
+            flex-wrap: wrap;
+        }
+        @media #{$sm}{
+            flex-wrap: nowrap;
+        }
+        & .ed-btn-radius {
+            margin-right: 28px;
+            @media #{$xs}{
+                margin-bottom: 25px;
+            }
+            @media #{$sm}{
+                margin-bottom: 0px;
+            }
+        }
+    }
+    &-thumb {
+        & img {
+            border-radius: 0 0 38% 38%;
+        }
+        position: relative;
+        display: inline-block;
+        &::after{
+            position: absolute;
+            content: '';
+            bottom: 0;
+            left: 50%;
+            width: 303px;
+            height: 386px;
+            z-index: -1;
+            transform: translateX(-50%);
+            background-color: #FF9500;
+            border-radius: 40% 0 40% 40%;
+        }
+        &.style-1 {      
+            margin-left: -15px;
+            @media #{$xs}{
+                margin-left: 0;
+            }
+        }
+        &.style-2 {      
+            position: absolute;
+            bottom: 0;
+            right: 0;  
+            margin-right: -15px;
+            @media #{$lg}{
+                margin-right: -178px;
+            } 
+            @media #{$xs}{
+                margin-right: 0;
+            }
+            &::after{
+                background-color: #00BEAE;
+                border-radius: 40% 40% 40% 0%;
+            }
+        }
+    }
+    &-right  {
+        transform: translateX(10px);
+        padding-bottom: 240px;   
+        @media #{$xl}{
+            transform: translateX(10px) scale(.8);
+        } 
+        @media #{$lg}{
+            transform: translateX(-70px) scale(.7);
+        } 
+        @media #{$md}{
+            transform: translateX(0px);
+            margin:0 17px;
+        }
+        @media #{$xs}{
+            transform: translateX(0px);
+        }
+        @media #{$xs}{
+            padding-bottom: 450px;
+        }
+        & .ed-hero-thumb-student {
+            bottom: 40px;
+            top: auto;
+            left: -10%;
+            @media #{$md}{
+                left: 10%;
+            }
+            & span {
+                & i {
+                    color: var(--it-theme-5);
+                }
+            }
+        }    
+        & .ed-hero-thumb-courses {
+            bottom: auto;
+            top: 11%;
+            right: 7%;
+            animation: ittranslateX2 3s infinite alternate;
+            & i {
+                color: var(--it-theme-6);
+            }
+        }
+    }
+    &-shape {
+        &-1 {
+            position: absolute;
+            top: 3%;
+            left: -1%;
+            z-index: -1;
+            animation: itswing-2 3s forwards infinite alternate;
+            transform-origin: bottom left;
+            z-index: -1;
+            @media #{$xl}{
+                top: 0%;
+                left: -5.5%;
+            } 
+            @media #{$lg}{
+                left: -7%;
+            } 
+            @media #{$md,$xs}{
+                display: none;
+            } 
+            & img {
+                @media #{$xl}{
+                    transform: scale(.6);
+                } 
+                @media #{$lg}{
+                    transform: scale(.6);
+                } 
+            }
+        }
+        &-2{
+            position: absolute;
+            top: 6%;
+            right: -4%;
+            z-index: -1;
+            animation: zoom2 3s infinite;  
+            & img {
+                @media #{$lg}{
+                    transform: scale(.6);
+                } 
+            }
+        }
+        &-3 {
+            position: absolute;
+            bottom: 9%;
+            right: 57%;
+            z-index: -1;
+            animation: ittranslateX2 4s infinite alternate;
+            & img {
+                @media #{$lg}{
+                    transform: scale(.6);
+                } 
+            }
+        }
+        &-4 {
+            position: absolute;
+            bottom: 10%;
+            right: 4%;
+            animation: moving 7s linear infinite;
+            z-index: -1;
+        }
+        &-5 {
+            position: absolute;
+            top: 16%;
+            right: 54%;
+            animation: moving 11s linear infinite;
+            z-index: -1;
+        }
+        &-6 {
+            position: absolute;
+            top: -1%;
+            left: 7%;
+            animation: itswing 0.9s forwards infinite alternate;
+            transform-origin: bottom right;     
+            z-index: -1;       
+        }
+    }
+}

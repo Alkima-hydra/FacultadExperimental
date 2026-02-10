@@ -1,0 +1,26 @@
+@use '../utils' as *;
+
+/*----------------------------------------*/
+/*  05. text-slide css start
+/*----------------------------------------*/
+
+.ed-text-slider{
+    &-height {
+        height: 100px;
+        line-height: 100px;
+        background-color: var(--it-theme-2);
+    }
+    &-wrap {
+        animation: scrollText-2 20s infinite linear;
+    }
+    &-content {
+        & span {
+            font-size: 35px;
+            display: inline-block;
+            margin-right: 55px;
+            color: var(--it-common-white);
+            white-space: nowrap;
+            margin-left: 60px;
+        }
+    }
+}

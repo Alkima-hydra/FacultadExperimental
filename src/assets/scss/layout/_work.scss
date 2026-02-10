@@ -1,0 +1,129 @@
+@use '../utils' as *;
+
+/*----------------------------------------*/
+/*  31. work css start
+/*----------------------------------------*/
+
+.it-work {
+    &-bg{
+        background-repeat: no-repeat;
+        background-size: cover;
+    }
+    &-item{
+        border-radius: 30px;
+        padding: 70px 40px;
+        background-color: var(--it-common-white);
+        border: 4px dashed var(--it-common-black);
+        @media #{$xl}{
+            padding: 60px 20px;
+        }
+        @media #{$lg}{
+            padding: 20px;
+        }
+        @media #{$md}{
+            padding: 30px;
+        }
+        &.active{
+            background-color: var(--it-common-purple-3);
+            border-color: var(--it-common-purple-3);
+            & .it-work-icon {
+                & span {
+                    background-color: var(--it-common-white);
+                }
+            }
+            & .it-work-title-sm {
+               color: var(--it-common-white);
+            }
+            & .it-work-content p {
+               color: var(--it-common-white);
+            }
+        }
+    }
+    &-icon{
+        & span{
+            height: 100px;
+            width: 100px;
+            line-height: 100px;
+            border-radius: 50%;
+            text-align: center; 
+            display: inline-block;
+            background-color: var(--it-common-black);
+            margin-bottom: 30px;
+        }
+    }
+    &-title-sm{
+        font-size: 21px;
+        font-weight: 700;
+        line-height: 1;
+        text-transform: uppercase;
+        font-family: var(--it-ff-poppins);
+        margin-bottom: 20px;
+    }
+    &-content{
+        & p{
+            color:#4D5756;
+            font-size: 17px;
+            font-weight: 400;
+            line-height: 32px;
+        }
+    }
+}
+.ed-work-style-2{
+    & .it-work-item {
+        padding-top: 70px;
+        padding-bottom: 60px;
+        border: none;
+        border-radius: 60px;
+        background-color: #F3F5F5;
+        transition: .3s;
+        @media #{$xs}{
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+        & .it-work-content {
+            & p {
+                @media #{$xs}{
+                    font-size: 15px;
+                } 
+            }
+        }
+        &.active {
+            background-color: #00BEAE;
+            & .it-work-title-sm {
+                color: var(--it-common-white);
+            }
+            & .it-work-content {
+                & p {
+                    color: var(--it-common-white);
+                }
+            }
+            & .it-work-icon {
+               & span {
+                    background-color: var(--it-common-white);
+               }
+            }
+        }
+    }
+    & .it-work-title-sm {
+       transition: .3s;
+    }
+    & .it-work-content {
+        & p {
+            transition: .3s;
+        }
+    }
+}
+.ed-work-style-3 {
+    & .it-work-icon {
+       & span {
+        background-color: var(--it-theme-5);
+       }
+    }
+    &.inner-style {
+        & .it-work-icon {
+            & span {
+                background-color: var(--it-common-purple-3);
+            }
+         }
+    }
+}
