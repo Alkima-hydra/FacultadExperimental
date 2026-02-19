@@ -38,6 +38,8 @@ import BlogSidebar from './blog/blog-sidebar';
 import BlogDetails from './blog/blog-details';
 import Contact from './contact';
 
+import Admin from './admin';
+
 export {
   Home,
   HomeOnePage,
@@ -78,4 +80,5 @@ export {
   BlogSidebar,
   BlogDetails,
   Contact,
+  Admin,
 };
