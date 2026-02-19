@@ -10,28 +10,28 @@ import productImg4 from '../../assets/img/cart/cart-4.png';
 const items = [
   {
     id: 1,
-    name: 'Libro académico',
+    name: 'Curso: Introducción a Programación (Java)',
     price: 180,
     quantity: 1,
     image: productImg1,
   },
   {
     id: 2,
-    name: 'Cuaderno universitario',
+    name: 'Curso: Bases de Datos (PostgreSQL)',
     price: 90.5,
     quantity: 1,
     image: productImg2,
   },
   {
     id: 3,
-    name: 'Diccionario técnico',
+    name: 'Curso: Desarrollo Web (React)',
     price: 160,
     quantity: 1,
     image: productImg3,
   },
   {
     id: 4,
-    name: 'Manual de estudio',
+    name: 'Curso: Git y GitHub (Control de Versiones)',
     price: 99.5,
     quantity: 1,
     image: productImg4,
@@ -87,8 +87,8 @@ const CartMain = () => {
                     <thead>
                       <tr>
                         <th className="product-thumbnail">Imagen</th>
-                        <th className="cart-product-name">Producto</th>
-                        <th className="product-price">Precio unitario</th>
+                        <th className="cart-product-name">Curso</th>
+                        <th className="product-price">Precio</th>
                         <th className="product-quantity">Cantidad</th>
                         <th className="product-subtotal">Total</th>
                         <th className="product-remove">Eliminar</th>
@@ -98,12 +98,12 @@ const CartMain = () => {
                       {products.map((product) => (
                         <tr key={product.id}>
                           <td className="product-thumbnail">
-                            <Link to="/product-details">
+                            <Link to="/course-details">
                               <img src={product.image} alt={product.name} />
                             </Link>
                           </td>
                           <td className="product-name">
-                            <Link to="/product-details">{product.name}</Link>
+                            <Link to="/course-details">{product.name}</Link>
                           </td>
                           <td className="product-price">
                             <span className="amount">
@@ -144,39 +144,6 @@ const CartMain = () => {
                       ))}
                     </tbody>
                   </table>
-                </div>
-
-                {/* CUPÓN */}
-                <div className="row">
-                  <div className="col-12">
-                    <div className="coupon-all">
-                      <div className="coupon">
-                        <input
-                          id="coupon_code"
-                          className="input-text"
-                          name="coupon_code"
-                          placeholder="Código de cupón"
-                          type="text"
-                        />
-                        <button
-                          className="ed-btn-square purple-4"
-                          name="apply_coupon"
-                          type="submit"
-                        >
-                          <span>Aplicar cupón</span>
-                        </button>
-                      </div>
-                      <div className="coupon2">
-                        <button
-                          className="ed-btn-square purple-4"
-                          name="update_cart"
-                          type="submit"
-                        >
-                          <span>Actualizar carrito</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 {/* TOTALES */}

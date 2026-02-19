@@ -14,21 +14,15 @@ const CheckoutMain = () => {
   const items = [
     {
       id: 'a',
-      btnText: 'Transferencia bancaria directa',
+      btnText: 'Tarjeta (débito/crédito)',
       description:
-        'Realiza tu pago directamente en nuestra cuenta bancaria. Usa tu ID de pedido como referencia de pago. Tu pedido no será enviado hasta que los fondos se reflejen en nuestra cuenta.',
+        'Paga de forma segura con tu tarjeta. Aceptamos tarjetas de débito y crédito.',
     },
     {
       id: 'b',
-      btnText: 'Pago con cheque',
+      btnText: 'Pago por QR',
       description:
-        'Por favor envía tu cheque a: Nombre de la tienda, Calle, Ciudad, Departamento/Provincia, Código Postal.',
-    },
-    {
-      id: 'c',
-      btnText: 'PayPal',
-      description:
-        'Paga con PayPal; puedes pagar con tu tarjeta de crédito si no tienes una cuenta PayPal.',
+        'Escanea el código QR desde tu app bancaria o billetera digital y confirma el pago.',
     },
   ];
 
@@ -65,8 +59,7 @@ const CheckoutMain = () => {
                 >
                   <div className="coupon-info">
                     <p className="coupon-text">
-                      Ingresa tus datos para acceder a tu cuenta y continuar con
-                      la compra.
+                      Ingresa tus datos para acceder a tu cuenta y continuar.
                     </p>
 
                     <form action="#">
@@ -168,14 +161,14 @@ const CheckoutMain = () => {
                           País <span className="required">*</span>
                         </label>
                         <select>
-                          <option value="volvo">Bangladesh</option>
-                          <option value="saab">Argelia</option>
-                          <option value="mercedes">Afganistán</option>
-                          <option value="audi">Ghana</option>
-                          <option value="audi2">Albania</option>
-                          <option value="audi3">Baréin</option>
-                          <option value="audi4">Colombia</option>
-                          <option value="audi5">República Dominicana</option>
+                          <option value="bolivia">Bolivia</option>
+                          <option value="colombia">Colombia</option>
+                          <option value="peru">Perú</option>
+                          <option value="argentina">Argentina</option>
+                          <option value="chile">Chile</option>
+                          <option value="ecuador">Ecuador</option>
+                          <option value="paraguay">Paraguay</option>
+                          <option value="uruguay">Uruguay</option>
                         </select>
                       </div>
                     </div>
@@ -210,7 +203,10 @@ const CheckoutMain = () => {
                         <label>
                           Dirección <span className="required">*</span>
                         </label>
-                        <input type="text" placeholder="Dirección (calle y número)" />
+                        <input
+                          type="text"
+                          placeholder="Dirección (calle y número)"
+                        />
                       </div>
                     </div>
 
@@ -267,162 +263,9 @@ const CheckoutMain = () => {
                         <input type="text" placeholder="Teléfono" />
                       </div>
                     </div>
-
-                    <div className="col-md-12">
-                      <div className="checkout-form-list create-acc">
-                        <input id="cbox" type="checkbox" />
-                        <label>¿Crear una cuenta?</label>
-                      </div>
-
-                      <div
-                        id="cbox_info"
-                        className="checkout-form-list create-account"
-                      >
-                        <p>
-                          Crea una cuenta ingresando tu información abajo. Si ya
-                          eres cliente, inicia sesión en la parte superior de la
-                          página.
-                        </p>
-                        <label>
-                          Contraseña de la cuenta{' '}
-                          <span className="required">*</span>
-                        </label>
-                        <input type="password" placeholder="contraseña" />
-                      </div>
-                    </div>
                   </div>
 
-                  <div className="different-address">
-                    <div className="ship-different-title">
-                      <h3>
-                        <label>¿Enviar a una dirección diferente?</label>
-                        <input id="ship-box" type="checkbox" />
-                      </h3>
-                    </div>
-
-                    <div id="ship-box-info">
-                      <div className="row">
-                        <div className="col-md-12">
-                          <div className="country-select">
-                            <label>
-                              País <span className="required">*</span>
-                            </label>
-                            <select>
-                              <option value="volvo">Bangladesh</option>
-                              <option value="saab">Argelia</option>
-                              <option value="mercedes">Afganistán</option>
-                              <option value="audi">Ghana</option>
-                              <option value="audi2">Albania</option>
-                              <option value="audi3">Baréin</option>
-                              <option value="audi4">Colombia</option>
-                              <option value="audi5">República Dominicana</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div className="col-md-6">
-                          <div className="checkout-form-list">
-                            <label>
-                              Nombres <span className="required">*</span>
-                            </label>
-                            <input type="text" placeholder="" />
-                          </div>
-                        </div>
-
-                        <div className="col-md-6">
-                          <div className="checkout-form-list">
-                            <label>
-                              Apellidos <span className="required">*</span>
-                            </label>
-                            <input type="text" placeholder="" />
-                          </div>
-                        </div>
-
-                        <div className="col-md-12">
-                          <div className="checkout-form-list">
-                            <label>Nombre de la empresa</label>
-                            <input type="text" placeholder="" />
-                          </div>
-                        </div>
-
-                        <div className="col-md-12">
-                          <div className="checkout-form-list">
-                            <label>
-                              Dirección <span className="required">*</span>
-                            </label>
-                            <input type="text" placeholder="Dirección (calle y número)" />
-                          </div>
-                        </div>
-
-                        <div className="col-md-12">
-                          <div className="checkout-form-list">
-                            <input
-                              type="text"
-                              placeholder="Departamento, piso, unidad, etc. (opcional)"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="col-md-12">
-                          <div className="checkout-form-list">
-                            <label>
-                              Ciudad / Localidad <span className="required">*</span>
-                            </label>
-                            <input type="text" placeholder="Ciudad / Localidad" />
-                          </div>
-                        </div>
-
-                        <div className="col-md-6">
-                          <div className="checkout-form-list">
-                            <label>
-                              Estado / Provincia <span className="required">*</span>
-                            </label>
-                            <input type="text" placeholder="" />
-                          </div>
-                        </div>
-
-                        <div className="col-md-6">
-                          <div className="checkout-form-list">
-                            <label>
-                              Código postal <span className="required">*</span>
-                            </label>
-                            <input type="text" placeholder="Código postal" />
-                          </div>
-                        </div>
-
-                        <div className="col-md-6">
-                          <div className="checkout-form-list">
-                            <label>
-                              Correo electrónico <span className="required">*</span>
-                            </label>
-                            <input type="email" placeholder="" />
-                          </div>
-                        </div>
-
-                        <div className="col-md-6">
-                          <div className="checkout-form-list">
-                            <label>
-                              Teléfono <span className="required">*</span>
-                            </label>
-                            <input type="text" placeholder="Teléfono" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="order-notes">
-                      <div className="checkout-form-list">
-                        <label>Notas del pedido</label>
-                        <textarea
-                          id="checkout-mess"
-                          cols="30"
-                          rows="10"
-                          placeholder="Notas sobre tu pedido, por ejemplo: indicaciones especiales para la entrega."
-                        ></textarea>
-                      </div>
-                    </div>
-
-                  </div>
+                  {/* Quitado: Crear cuenta / Enviar a otra dirección / Notas */}
                 </div>
               </div>
 
@@ -447,7 +290,7 @@ const CheckoutMain = () => {
                             <strong className="product-quantity"> × 1</strong>
                           </td>
                           <td className="product-total">
-                            <span className="amount">$165.00</span>
+                            <span className="amount">Bs. 165.00</span>
                           </td>
                         </tr>
 
@@ -457,7 +300,7 @@ const CheckoutMain = () => {
                             <strong className="product-quantity"> × 1</strong>
                           </td>
                           <td className="product-total">
-                            <span className="amount">$50.00</span>
+                            <span className="amount">Bs. 50.00</span>
                           </td>
                         </tr>
                       </tbody>
@@ -466,34 +309,17 @@ const CheckoutMain = () => {
                         <tr className="cart-subtotal">
                           <th>Subtotal del carrito</th>
                           <td>
-                            <span className="amount">$215.00</span>
+                            <span className="amount">Bs.215.00</span>
                           </td>
                         </tr>
 
-                        <tr className="shipping">
-                          <th>Envío</th>
-                          <td>
-                            <ul>
-                              <li>
-                                <input type="radio" name="shipping" />
-                                <label>
-                                  Tarifa plana:{' '}
-                                  <span className="amount">$7.00</span>
-                                </label>
-                              </li>
-                              <li>
-                                <input type="radio" name="shipping" />
-                                <label>Envío gratis</label>
-                              </li>
-                            </ul>
-                          </td>
-                        </tr>
+                        {/* Quitado: Shipping */}
 
                         <tr className="order-total">
                           <th>Total del pedido</th>
                           <td>
                             <strong>
-                              <span className="amount">$215.00</span>
+                              <span className="amount">Bs.215.00</span>
                             </strong>
                           </td>
                         </tr>
