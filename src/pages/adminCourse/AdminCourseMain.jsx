@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiX } from 'react-icons/fi';
+
 import Breadcrumb from '../../components/Breadcrumb';
-import CourseEditModal from '../../components/CourseEditModal'; // ajusta la ruta según tu estructura
+import CourseEditModal from '../../components/Forms/CourseForm'; // ajusta la ruta según tu estructura
 
 import productImg1 from '../../assets/img/cart/cart-1.png';
 import productImg2 from '../../assets/img/cart/cart-2.png';
@@ -124,7 +126,7 @@ const AdminCourseMain = () => {
                   pointerEvents: 'none',
                 }}
               >
-                🔍
+                <FiSearch />
               </span>
               <input
                 type="text"
@@ -135,7 +137,6 @@ const AdminCourseMain = () => {
                   width: '100%',
                   padding: '10px 14px 10px 40px',
                   border: '1.5px solid #ddd6f3',
-                  borderRadius: 10,
                   fontSize: 14,
                   color: '#333',
                   background: '#fff',
@@ -168,7 +169,8 @@ const AdminCourseMain = () => {
                     lineHeight: 1,
                   }}
                 >
-                  ×
+                  <FiX />
+
                 </button>
               )}
             </div>
@@ -181,32 +183,12 @@ const AdminCourseMain = () => {
             {/* Acciones */}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <button
+                type="button"
+                className="ed-btn-square purple-4"
                 onClick={handleAdd}
-                style={{
-                  padding: '10px 20px',
-                  background: 'linear-gradient(135deg, #6c3fc5, #9b59b6)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 10,
-                  fontWeight: 700,
-                  fontSize: 14,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 7,
-                  boxShadow: '0 4px 14px rgba(108,63,197,0.3)',
-                  transition: 'opacity .2s, transform .15s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = '0.88';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = '1';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
               >
-                <span style={{ fontSize: 18, lineHeight: 1 }}>＋</span> Agregar curso
+                <FiPlus style={{ marginRight: 6 }} />
+                <span>Agregar curso</span>
               </button>
 
               <button
@@ -215,7 +197,6 @@ const AdminCourseMain = () => {
                   background: '#fff',
                   color: '#6c3fc5',
                   border: '1.5px solid #c2b0e8',
-                  borderRadius: 10,
                   fontWeight: 600,
                   fontSize: 14,
                   cursor: 'pointer',
@@ -238,7 +219,7 @@ const AdminCourseMain = () => {
             </div>
           </div>
 
-          {/* Estadísticas rápidas */}
+          {/* Estadísticas rápidas 
           <div
             style={{
               display: 'flex',
@@ -277,11 +258,12 @@ const AdminCourseMain = () => {
               </div>
             ))}
           </div>
+          */}
         </div>
       </section>
 
       {/* ── Tabla de cursos ── */}
-      <section className="cart-area pt-40 pb-120">
+      <section className="cart-area pt-80 pb-120">
         <div className="container">
           <div className="row">
             <div className="col-12">
@@ -331,23 +313,11 @@ const AdminCourseMain = () => {
                             <td className="product-remove">
                               <button
                                 type="button"
+                                className="ed-btn-square purple-4"
                                 onClick={() => handleEdit(product)}
-                                title="Editar curso"
-                                style={{
-                                  background: 'linear-gradient(135deg, #6c3fc5, #9b59b6)',
-                                  border: 'none',
-                                  borderRadius: 6,
-                                  padding: '6px 12px',
-                                  color: '#fff',
-                                  cursor: 'pointer',
-                                  fontSize: 13,
-                                  fontWeight: 600,
-                                  transition: 'opacity .2s',
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.8')}
-                                onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
                               >
-                                ✏️ Editar
+                                <FiEdit2 style={{ marginRight: 6 }} />
+                                <span>Editar</span>
                               </button>
                             </td>
 
@@ -355,20 +325,11 @@ const AdminCourseMain = () => {
                             <td className="product-remove">
                               <button
                                 type="button"
+                                className="ed-btn-square"
+                                style={{ background: '#e74c3c', color: '#fff' }}
                                 onClick={() => handleDelete(product.id)}
-                                title="Eliminar curso"
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: '#e74c3c',
-                                  cursor: 'pointer',
-                                  fontSize: 18,
-                                  transition: 'transform .15s',
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.2)')}
-                                onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                               >
-                                <i className="fa fa-times"></i>
+                                <FiTrash2 />
                               </button>
                             </td>
                           </tr>
