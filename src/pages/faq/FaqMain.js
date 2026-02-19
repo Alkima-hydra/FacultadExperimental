@@ -8,43 +8,44 @@ const FaqMain = () => {
   const items = [
     {
       id: 'a',
-      btnText: 'Why do students prefer online learning?',
+      btnText: '¿Por qué los estudiantes prefieren el aprendizaje en línea?',
       description:
-        'Lorem ipsum dolor sit amet, consectetur adipiscingelit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+        'Porque ofrece flexibilidad para estudiar a tu ritmo, desde cualquier lugar y con horarios adaptados a tu rutina. Además, permite acceder a recursos actualizados, repasar las clases cuando lo necesites y combinar estudio con trabajo u otras responsabilidades.',
       faqImage: faqImg,
     },
     {
       id: 'b',
-      btnText: 'Where should I study abroad?',
+      btnText: '¿Qué debo considerar si quiero estudiar en el extranjero?',
       description:
-        'Lorem ipsum dolor sit amet, consectetur adipiscingelit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+        'Lo más importante es definir tu objetivo (idioma, carrera, intercambio), revisar los requisitos de admisión, presupuesto, opciones de becas y el costo de vida. También conviene comparar la calidad de la institución, la ciudad, el clima, la seguridad y las oportunidades académicas o laborales.',
       faqImage: faqImg,
     },
     {
       id: 'c',
-      btnText: 'How can I contact a school directly?',
+      btnText: '¿Cómo puedo contactar a la universidad o instituto directamente?',
       description:
-        'Lorem ipsum dolor sit amet, consectetur adipiscingelit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+        'Puedes escribir al correo institucional, usar el formulario de contacto del sitio web o comunicarte por teléfono. Muchas instituciones también atienden por redes sociales. Si buscas una respuesta rápida, lo ideal es enviar un mensaje con tu nombre, el programa de interés y tus preguntas específicas.',
       faqImage: faqImg,
     },
     {
       id: 'd',
-      btnText: 'How do I find a school where I want to study?',
+      btnText: '¿Cómo encuentro una institución adecuada para lo que quiero estudiar?',
       description:
-        'Lorem ipsum dolor sit amet, consectetur adipiscingelit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+        'Empieza por identificar el área y el nivel (técnico, licenciatura, posgrado). Luego compara malla curricular, duración, modalidad (presencial/virtual), reputación, acreditaciones y opiniones de estudiantes. También revisa si el programa ofrece prácticas, proyectos y apoyo académico.',
       faqImage: faqImg,
     },
     {
       id: 'e',
-      btnText: 'How do I find a school where I want to study?',
+      btnText: '¿Qué hago si tengo dudas antes de inscribirme?',
       description:
-        'Lorem ipsum dolor sit amet, consectetur adipiscingelit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+        'Lo mejor es pedir información oficial: requisitos, costos, horarios, plan de estudios y fechas de inicio. Si puedes, solicita una orientación o asesoría. Así tomas una decisión informada y evitas sorpresas con pagos, materias o trámites.',
       faqImage: faqImg,
     },
   ];
+
   return (
     <main>
-      <Breadcrumb title="Faqs" />
+      <Breadcrumb title="Preguntas frecuentes" />
 
       <div className="it-faq-area p-relative pt-120 pb-120">
         <div className="container">
@@ -63,4 +64,5 @@ const FaqMain = () => {
     </main>
   );
 };
+
 export default FaqMain;
