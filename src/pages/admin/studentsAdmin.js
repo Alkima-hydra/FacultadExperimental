@@ -14,13 +14,13 @@ const MOCK_CARRERAS = [
 const SEMESTRES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
 const INITIAL_STUDENTS = [
-  { id_estudiante: 1, carrera_id: 1, carrera_nombre: 'Ingeniería de Sistemas',  carrera_sigla: 'SIS', nombre: 'María Fernanda', apellido: 'Quispe',     ci: 9876543, correo: 'maria.quispe@ucb.edu.bo',  telefono: 76543210, estado: true  },
-  { id_estudiante: 2, carrera_id: 2, carrera_nombre: 'Ingeniería Civil',        carrera_sigla: 'CIV', nombre: 'José Luis',      apellido: 'Rojas',      ci: 8123456, correo: 'jose.rojas@ucb.edu.bo',    telefono: 71234567, estado: true  },
-  { id_estudiante: 3, carrera_id: 1, carrera_nombre: 'Ingeniería de Sistemas',  carrera_sigla: 'SIS', nombre: 'Andrea',         apellido: 'Mamani',     ci: 7456123, correo: 'andrea.mamani@ucb.edu.bo', telefono: 70112233, estado: false },
-  { id_estudiante: 4, carrera_id: 4, carrera_nombre: 'Derecho',                 carrera_sigla: 'DER', nombre: 'Carlos',         apellido: 'Torrez',     ci: 6543210, correo: 'carlos.torrez@ucb.edu.bo', telefono: 78990011, estado: true  },
-  { id_estudiante: 5, carrera_id: 3, carrera_nombre: 'Administración',          carrera_sigla: 'ADM', nombre: 'Valeria',        apellido: 'Flores',     ci: 9321456, correo: 'valeria.flores@ucb.edu.bo', telefono: 77665544, estado: true  },
-  { id_estudiante: 6, carrera_id: 5, carrera_nombre: 'Contaduría Pública',      carrera_sigla: 'CON', nombre: 'Diego',          apellido: 'Vargas',     ci: 7012345, correo: 'diego.vargas@ucb.edu.bo',  telefono: 69001122, estado: true  },
-  { id_estudiante: 7, carrera_id: 2, carrera_nombre: 'Ingeniería Civil',        carrera_sigla: 'CIV', nombre: 'Lucía',          apellido: 'Paredes',    ci: 8899776, correo: 'lucia.paredes@ucb.edu.bo', telefono: 72223344, estado: false },
+  { id_estudiante: 1, carrera_id: 1, carrera_nombre: 'Ingeniería de Sistemas',  carrera_sigla: 'SIS', semestre: '2-2026', nombre: 'María Fernanda', apellido: 'Quispe',     ci: 9876543, correo: 'maria.quispe@ucb.edu.bo',  telefono: 76543210, estado: true  },
+  { id_estudiante: 2, carrera_id: 2, carrera_nombre: 'Ingeniería Civil',        carrera_sigla: 'CIV', semestre: '1-2026', nombre: 'José Luis',      apellido: 'Rojas',      ci: 8123456, correo: 'jose.rojas@ucb.edu.bo',    telefono: 71234567, estado: true  },
+  { id_estudiante: 3, carrera_id: 1, carrera_nombre: 'Ingeniería de Sistemas',  carrera_sigla: 'SIS', semestre: '2-2025', nombre: 'Andrea',         apellido: 'Mamani',     ci: 7456123, correo: 'andrea.mamani@ucb.edu.bo', telefono: 70112233, estado: false },
+  { id_estudiante: 4, carrera_id: 4, carrera_nombre: 'Derecho',                 carrera_sigla: 'DER', semestre: '1-2025', nombre: 'Carlos',         apellido: 'Torrez',     ci: 6543210, correo: 'carlos.torrez@ucb.edu.bo', telefono: 78990011, estado: true  },
+  { id_estudiante: 5, carrera_id: 3, carrera_nombre: 'Administración',          carrera_sigla: 'ADM', semestre: '2-2024', nombre: 'Valeria',        apellido: 'Flores',     ci: 9321456, correo: 'valeria.flores@ucb.edu.bo', telefono: 77665544, estado: true  },
+  { id_estudiante: 6, carrera_id: 5, carrera_nombre: 'Contaduría Pública',      carrera_sigla: 'CON', semestre: '1-2024', nombre: 'Diego',          apellido: 'Vargas',     ci: 7012345, correo: 'diego.vargas@ucb.edu.bo',  telefono: 69001122, estado: true  },
+  { id_estudiante: 7, carrera_id: 2, carrera_nombre: 'Ingeniería Civil',        carrera_sigla: 'CIV', semestre: '2-2026', nombre: 'Lucía',          apellido: 'Paredes',    ci: 8899776, correo: 'lucia.paredes@ucb.edu.bo', telefono: 72223344, estado: false },
 ];
 
 const PAGE_SIZE = 5;
