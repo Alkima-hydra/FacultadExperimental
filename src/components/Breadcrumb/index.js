@@ -42,7 +42,7 @@ const Breadcrumb = (props) => {
               <div className="it-breadcrumb-list-wrap">
                 <div className="it-breadcrumb-list">
                   <span>
-                    <Link to="/">home</Link>
+                    <Link to="/">Inicio</Link>
                   </span>
                   <span className="dvdr px-2">//</span>
                   <span>

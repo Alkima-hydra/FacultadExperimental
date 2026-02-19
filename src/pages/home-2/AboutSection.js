@@ -22,11 +22,18 @@ const About = () => {
             <div className="ed-about-2-left p-relative text-end">
               <div className="ed-about-2-left-box d-inline-flex align-items-end">
                 <div className="ed-about-2-thumb-one pb-110 mr-20">
-                  <img src={aboutImg1} alt="" />
+                  <img src={aboutImg1} alt="Estudiantes aprendiendo en línea" />
                 </div>
                 <div className="ed-about-2-thumb-two text-start">
-                  <img className="mb-20 inner-top-img" src={aboutImg2} alt="" />
-                  <img src={aboutImg3} alt="" />
+                  <img
+                    className="mb-20 inner-top-img"
+                    src={aboutImg2}
+                    alt="Clase virtual interactiva"
+                  />
+                  <img
+                    src={aboutImg3}
+                    alt="Capacitación profesional digital"
+                  />
                 </div>
               </div>
               <div className="ed-about-2-thumb-shape-1 d-none lg-block">
@@ -37,6 +44,7 @@ const About = () => {
               </div>
             </div>
           </div>
+
           <div
             className="col-xl-6 col-lg-6 wow animate__fadeInRight"
             data-wow-duration=".9s"
@@ -44,43 +52,47 @@ const About = () => {
           >
             <div className="it-about-3-title-box">
               <span className="it-section-subtitle-3">
-                <img src={titleImg} alt="" /> about us
+                <img src={titleImg} alt="" /> Sobre nosotros
               </span>
+
               <h2 className="it-section-title-3 pb-30">
-                Benefit from our online learning expertise earn{' '}
-                <span>professional</span>
+                Aprovecha nuestra experiencia en aprendizaje en línea y alcanza un nivel{' '}
+                <span>profesional</span>
               </h2>
+
               <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                <br />
-                eiusmod tempor incididunt ut labore.
+                Ofrecemos formación práctica y actualizada para que desarrolles habilidades reales,
+                construyas proyectos completos y mejores tu perfil para el mercado laboral.
               </p>
             </div>
+
             <div className="it-about-3-mv-box">
               <div className="row">
                 <div className="col-xl-6 col-md-6">
                   <div className="it-about-3-mv-item">
-                    <span className="it-about-3-mv-title">OUR MISSION:</span>
+                    <span className="it-about-3-mv-title">NUESTRA MISIÓN:</span>
                     <p>
-                      Suspendisse ultrice gravida dictum fusce placerat
-                      ultricies integer quis auctor elit sed vulputate mi sit.
+                      Brindar educación accesible y de calidad, enfocada en habilidades prácticas,
+                      para formar profesionales preparados para los retos del mundo digital.
                     </p>
                   </div>
                 </div>
+
                 <div className="col-xl-6 col-md-6">
                   <div className="it-about-3-mv-item">
-                    <span className="it-about-3-mv-title">OUR VISSION:</span>
+                    <span className="it-about-3-mv-title">NUESTRA VISIÓN:</span>
                     <p>
-                      Suspendisse ultrice gravida dictum fusce placerat
-                      ultricies integer quis auctor elit sed vulputate mi sit.
+                      Ser una plataforma referente en formación digital, destacando por la innovación,
+                      el acompañamiento al estudiante y el impacto real en su crecimiento profesional.
                     </p>
                   </div>
                 </div>
               </div>
             </div>
+
             <div className="it-about-3-btn-box p-relative">
               <Link className="ed-btn-theme theme-2" to="/about-us">
-                Admission open
+                Inscripciones abiertas
                 <i>
                   <RightArrow />
                 </i>
@@ -92,4 +104,5 @@ const About = () => {
     </div>
   );
 };
+
 export default About;

@@ -9,27 +9,28 @@ const FunFact = () => {
       countIcon: 'flaticon-teacher',
       countNum: 3,
       countSubtext: 'K+',
-      countTitle: 'Successfully Trained',
+      countTitle: 'Estudiantes formados con éxito',
     },
     {
       countIcon: 'flaticon-completed-task',
       countNum: 15,
       countSubtext: 'K+',
-      countTitle: 'Classes Completed',
+      countTitle: 'Clases completadas',
     },
     {
       countIcon: 'flaticon-customer-review',
       countNum: 97,
       countSubtext: 'K+',
-      countTitle: 'Satisfaction Rate',
+      countTitle: 'Nivel de satisfacción',
     },
     {
       countIcon: 'flaticon-class',
       countNum: 102,
       countSubtext: 'K+',
-      countTitle: 'Students Community',
+      countTitle: 'Comunidad de estudiantes',
     },
   ];
+
   return (
     <div className="it-funfact-area z-index-5">
       <div className="container">
@@ -46,6 +47,7 @@ const FunFact = () => {
                       <i className={counter.countIcon}></i>
                     </span>
                   </div>
+
                   <div className="it-funfact-content">
                     <h6>
                       <Counter
@@ -68,4 +70,5 @@ const FunFact = () => {
     </div>
   );
 };
+
 export default FunFact;

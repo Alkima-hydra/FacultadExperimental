@@ -12,17 +12,18 @@ const About = () => {
   const items = [
     {
       icon: 'flaticon-video-1',
-      title: 'Sharing a Screen',
+      title: 'Compartir pantalla',
       description:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do tempor incididunt ut labore et dolore magna aliqua.',
+        'Comparte tu pantalla en tiempo real para explicar conceptos, resolver ejercicios y aprender de forma más clara y visual, como si estuvieras en una clase presencial.',
     },
     {
       icon: 'flaticon-puzzle',
-      title: 'presenter Control',
+      title: 'Control del presentador',
       description:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do tempor incididunt ut labore et dolore magna aliqua.',
+        'Administra la sesión con herramientas de presentación: organiza el contenido, guía el ritmo de la clase y mantén la participación para mejorar la experiencia de aprendizaje.',
     },
   ];
+
   return (
     <div
       id="it-about"
@@ -31,6 +32,7 @@ const About = () => {
       <div className="ed-about-3-shape-2">
         <img src={shapeImg1} alt="" />
       </div>
+
       <div className="container">
         <div className="row align-items-center">
           <div className="col-xl-6 col-lg-6">
@@ -39,22 +41,23 @@ const About = () => {
                 <img src={shapeImg2} alt="" />
               </div>
               <div className="ed-about-3-thumb">
-                <img src={aboutImg1} alt="" />
+                <img src={aboutImg1} alt="Aprendizaje en línea" />
               </div>
               <div className="ed-about-3-thumb-sm">
-                <img src={aboutImg2} alt="" />
+                <img src={aboutImg2} alt="Clases prácticas con acompañamiento" />
               </div>
             </div>
           </div>
+
           <div className="col-xl-6 col-lg-6">
             <SectionTitle
               itemClass="it-about-3-title-box"
               subTitleClass="it-section-subtitle-5 purple-2"
-              subTitle="about us"
+              subTitle="Sobre nosotros"
               titleClass="it-section-title-3 pb-30"
-              title="we are always ensure best course for your learning"
+              title="Nos aseguramos de ofrecer los mejores cursos para tu aprendizaje"
               titleImage={titleImg}
-              description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi."
+              description="Nuestra formación está enfocada en resultados reales: contenido actualizado, clases prácticas y una experiencia de aprendizaje clara y estructurada. Aprende a tu ritmo, con recursos que te ayudan a avanzar con confianza y aplicar lo aprendido en proyectos reales."
             />
 
             <div className="it-about-3-mv-box">
@@ -67,10 +70,9 @@ const About = () => {
                           <i className={item.icon}></i>
                         </span>
                       </div>
+
                       <div className="it-about-3-mv-item">
-                        <span className="it-about-3-mv-title">
-                          {item.title}
-                        </span>
+                        <span className="it-about-3-mv-title">{item.title}</span>
                         <p>{item.description}</p>
                       </div>
                     </div>
@@ -78,15 +80,18 @@ const About = () => {
                 ))}
               </div>
             </div>
+
             <div className="it-about-3-btn-box p-relative">
               <Link className="ed-btn-square" to="/student-registration">
-                <span>admission Now</span>
+                <span>Inscribirse ahora</span>
               </Link>
             </div>
           </div>
+
         </div>
       </div>
     </div>
   );
 };
+
 export default About;

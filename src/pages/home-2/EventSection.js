@@ -27,6 +27,7 @@ const Event = () => {
       <div className="it-event-shape-6">
         <img src={shapeImg4} alt="" />
       </div>
+
       <div className="container">
         <div className="row align-items-center">
           <div className="col-xl-7 col-lg-7">
@@ -34,27 +35,26 @@ const Event = () => {
               <SectionTitle
                 itemClass="it-event-title-box"
                 subTitleClass="it-section-subtitle-4"
-                subTitle=" explore Events"
+                subTitle="Explora nuestros eventos"
                 titleClass="it-section-title-3 pb-20"
-                title="our best upcoming events"
+                title="Próximos eventos destacados"
                 titleImage={titleImg}
               />
 
               <div className="it-event-content">
                 <span>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod <br />
-                  tempor incididunt ut labore.
+                  Participa en experiencias formativas diseñadas para potenciar tus habilidades y ampliar tu red profesional.
                 </span>
+
                 <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  Ut enim ad minim veniam, quis nostrud exercitation ullamco
-                  laboris nisi ut aliquip ex ea commodo consequat. Duis aute
-                  irure dolor in reprehenderit in voluptate
+                  Nuestros eventos reúnen a estudiantes, profesionales y expertos del sector
+                  para compartir conocimientos, tendencias y buenas prácticas.
+                  A través de talleres, conferencias y sesiones prácticas,
+                  tendrás la oportunidad de aprender de forma dinámica y aplicada.
                 </p>
+
                 <Link className="ed-btn-theme theme-2" to="/event-details">
-                  Get Ticket Now
+                  Obtener entrada
                   <i>
                     <RightArrow />
                   </i>
@@ -62,6 +62,7 @@ const Event = () => {
               </div>
             </div>
           </div>
+
           <div className="col-xl-5 col-lg-5">
             <div className="it-event-thumb-box text-center text-lg-start p-relative">
               <div className="it-event-shape-1 d-none d-lg-block">
@@ -71,7 +72,7 @@ const Event = () => {
                 <img src={shapeImg6} alt="" />
               </div>
               <div className="it-event-thumb">
-                <img src={eventImg} alt="" />
+                <img src={eventImg} alt="Evento educativo destacado" />
               </div>
             </div>
           </div>
@@ -80,4 +81,5 @@ const Event = () => {
     </div>
   );
 };
+
 export default Event;

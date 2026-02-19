@@ -24,15 +24,16 @@ const Course = () => {
               <SectionTitle
                 itemClass="it-course-title-box"
                 subTitleClass="ed-section-subtitle"
-                subTitle="Our Courses"
+                subTitle="Nuestros cursos"
                 titleClass="ed-section-title"
-                title="Creating A Community Of Life Long Learners."
+                title="Creando una comunidad de aprendizaje continuo."
               />
             </div>
+
             <div className="col-xl-6">
               <div className="ed-course-button text-lg-end">
                 <Link className="ed-btn-square orange" to="/course-details">
-                  Explore courses
+                  Explorar cursos
                   <i>
                     <RightArrow />
                   </i>
@@ -41,6 +42,7 @@ const Course = () => {
             </div>
           </div>
         </div>
+
         <div className="row">
           <div
             className="col-xl-4 col-lg-6 col-md-6 mb-30 wow animate__fadeInUp"
@@ -49,12 +51,13 @@ const Course = () => {
           >
             <SingleCourse
               courseImage={courseImg1}
-              thumbText="Digital Marketing"
-              title="It Statistics Data Science And Business Analysis"
+              thumbText="Marketing Digital"
+              title="Estadística aplicada y análisis de datos para negocios"
               authorAvatar={avatarImg1}
               authorName="Samantha"
             />
           </div>
+
           <div
             className="col-xl-4 col-lg-6 col-md-6 mb-30 wow animate__fadeInUp"
             data-wow-duration=".9s"
@@ -62,12 +65,13 @@ const Course = () => {
           >
             <SingleCourse
               courseImage={courseImg2}
-              thumbText="Digital Marketing"
-              title="It Statistics Data Science And Business Analysis"
+              thumbText="Ciencia de Datos"
+              title="Fundamentos de análisis de datos y visualización profesional"
               authorAvatar={avatarImg2}
               authorName="Augusto"
             />
           </div>
+
           <div
             className="col-xl-4 col-lg-6 col-md-6 mb-30 wow animate__fadeInUp"
             data-wow-duration=".9s"
@@ -75,8 +79,8 @@ const Course = () => {
           >
             <SingleCourse
               courseImage={courseImg3}
-              thumbText="Digital Marketing"
-              title="It Statistics Data Science And Business Analysis"
+              thumbText="Inteligencia de Negocios"
+              title="Toma de decisiones estratégicas basadas en datos"
               authorAvatar={avatarImg3}
               authorName="Renato"
             />
@@ -86,4 +90,5 @@ const Course = () => {
     </div>
   );
 };
+
 export default Course;

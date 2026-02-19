@@ -1,104 +1,105 @@
 import React from 'react';
-import SectionTitleSpecial from '../../components/SectionTitle/SectionTitleSpecial';
+import SectionTitle from '../../components/SectionTitle';
 
-import shapeImg1 from '../../assets/img/choose/shape-1-1.png';
-import shapeImg2 from '../../assets/img/choose/shape-1-2.png';
-import shapeImg3 from '../../assets/img/choose/shape-1-3.png';
-import shapeImg4 from '../../assets/img/choose/shape-1-4.png';
-import chooseImg from '../../assets/img/choose/choose-2-1.jpg';
+import shapeImg1 from '../../assets/img/choose/shape-1-7.png';
+import shapeImg2 from '../../assets/img/choose/shape-1-8.png';
+import shapeImg3 from '../../assets/img/choose/shape-1-9.png';
+import shapeImg4 from '../../assets/img/choose/shape-1-10.png';
+import shapeImg5 from '../../assets/img/choose/shape-1-5.png';
+import shapeImg6 from '../../assets/img/choose/shape-1-6.png';
+import chooseImg from '../../assets/img/choose/choose-2-2.jpg';
 
 const WhyChooseUs = () => {
+  const items = [
+    {
+      icon: 'flaticon-skill',
+      title: 'Cursos accesibles',
+      description:
+        'Ofrecemos programas de alta calidad a precios competitivos, brindando educación profesional al alcance de todos.',
+    },
+    {
+      icon: 'flaticon-funds',
+      title: 'Eficiencia y flexibilidad',
+      description:
+        'Nuestra metodología permite aprender a tu propio ritmo, con horarios adaptables y contenidos optimizados.',
+    },
+    {
+      icon: 'flaticon-flexibility',
+      title: 'Docentes especializados',
+      description:
+        'Contamos con profesionales altamente capacitados que combinan experiencia académica y práctica.',
+    },
+  ];
+
   return (
-    <div className="it-choose-area p-relative fix pt-180 pb-110">
-      <div className="it-choose-shape-4 d-none d-md-block">
+    <div className="it-choose-area it-choose-style-2 z-index fix p-relative grey-bg pt-180 pb-110">
+      <div className="it-choose-shape-5 d-none d-xl-block">
+        <img src={shapeImg1} alt="" />
+      </div>
+      <div className="it-choose-shape-6 d-none d-xl-block">
+        <img src={shapeImg2} alt="" />
+      </div>
+      <div className="it-choose-shape-7 d-none d-xl-block">
+        <img src={shapeImg3} alt="" />
+      </div>
+      <div className="it-choose-shape-8 d-none d-xl-block">
         <img src={shapeImg4} alt="" />
       </div>
+
       <div className="container">
         <div className="row align-items-center">
-          <div
-            className="col-xl-6 col-lg-6 mb-30 wow animate__fadeInLeft"
-            data-wow-duration=".9s"
-            data-wow-delay=".5s"
-          >
-            <div className="it-choose-left">
-              <SectionTitleSpecial
-                itemClass="it-choose-title-box mb-30"
-                subTitle="¿Por qué elegirnos?"
-                preTitle="Creando una comunidad de"
-                highlightText="profesionales."
-              />
 
-              <div className="it-choose-text pb-15">
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  Ut enim ad minim veniam, quis nostrud exercitation ullamco
-                  laboris..
-                </p>
-              </div>
-              <div className="it-choose-content-box">
-                <div className="row gx-20">
-                  <div className="col-md-6 col-sm-6 mb-20">
-                    <div className="it-choose-content">
-                      <h5>
-                        <i className="fa-solid fa-circle-check"></i>Docentes
-                          Expertos
-                      </h5>
-                      <p>Gravida dictum fusce placerat ultricies integer</p>
-                    </div>
-                  </div>
-                  <div className="col-md-6 col-sm-6 mb-20">
-                    <div className="it-choose-content">
-                      <h5>
-                        <i className="fa-solid fa-circle-check"></i>Aprendizaje
-                        Fácil
-                      </h5>
-                      <p>Gravida dictum fusce placerat ultricies integer</p>
-                    </div>
-                  </div>
-                  <div className="col-md-6 col-sm-6 mb-20">
-                    <div className="it-choose-content">
-                      <h5>
-                        <i className="fa-solid fa-circle-check"></i>Flexible
-                      </h5>
-                      <p>Gravida dictum fusce placerat ultricies integer</p>
-                    </div>
-                  </div>
-                  <div className="col-md-6 col-sm-6 mb-20">
-                    <div className="it-choose-content">
-                      <h5>
-                        <i className="fa-solid fa-circle-check"></i>Accesible en Costo
-                      </h5>
-                      <p>Gravida dictum fusce placerat ultricies integer</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            className="col-xl-6 col-lg-6 mb-30 wow animate__fadeInRight"
-            data-wow-duration=".9s"
-            data-wow-delay=".7s"
-          >
+          <div className="col-xl-6 col-lg-6 mb-30">
             <div className="it-choose-thumb-box text-center text-lg-end">
               <div className="it-choose-thumb p-relative">
-                <img src={chooseImg} alt="" />
+                <img src={chooseImg} alt="Estudiantes en clase" />
                 <div className="it-choose-shape-1">
-                  <img src={shapeImg1} alt="" />
+                  <img src={shapeImg5} alt="" />
                 </div>
                 <div className="it-choose-shape-2">
-                  <img src={shapeImg2} alt="" />
-                </div>
-                <div className="it-choose-shape-3 d-none d-lg-block">
-                  <img src={shapeImg3} alt="" />
+                  <img src={shapeImg6} alt="" />
                 </div>
               </div>
             </div>
           </div>
+
+          <div className="col-xl-6 col-lg-6 mb-30">
+            <div className="it-choose-left">
+              <SectionTitle
+                itemClass="it-choose-title-box mb-30"
+                subTitleClass="it-section-subtitle-2 white-bg"
+                subTitle="¿Por qué elegirnos?"
+                titleClass="ed-section-title"
+                title="Construyendo una comunidad de aprendizaje continuo."
+              />
+
+              <div className="it-choose-content-box">
+                {items.map((item, index) => (
+                  <div
+                    key={index}
+                    className="it-choose-content d-flex align-items-center mb-30"
+                  >
+                    <div className="it-choose-icon">
+                      <span>
+                        <i className={item.icon}></i>
+                      </span>
+                    </div>
+
+                    <div className="it-choose-text">
+                      <h4 className="it-choose-title">{item.title}</h4>
+                      <p className="mb-0">{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
   );
 };
+
 export default WhyChooseUs;

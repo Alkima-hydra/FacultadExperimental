@@ -48,7 +48,7 @@ const MenuItems = (props) => {
     <ul>
       <li>
         <Link to="/">
-          <span>Home</span>
+          <span>Inicio</span>
         </Link>
       </li>
       <li>

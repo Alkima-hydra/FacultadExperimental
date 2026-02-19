@@ -39,7 +39,7 @@ const FooterTwo = (props) => {
                       target="_blank"
                       href="https://www.google.com/maps/@25.1314121,87.0325089,8.83z?entry=ttu"
                     >
-                      Universidad Lorem Ipsum
+                      UCB “San Pablo” – La Paz
                     </a>
                   </div>
                 </div>
@@ -89,9 +89,7 @@ const FooterTwo = (props) => {
                   </div>
                   <div className="it-footer-text pb-5">
                     <p>
-                      Interdum velit laoreet id donec ultrices <br />
-                      tincidunt arcu. Tincidunt tortor aliqua <br />
-                      mfacilisi cras fermentum odio eu.
+                      UCB “San Pablo” – La Paz
                     </p>
                   </div>
                   <div className="it-footer-social">

@@ -82,7 +82,6 @@ export {
   BlogDetails,
   Contact,
   Admin,
-};
   AdminCourse,
+};
 
-}
