@@ -47,6 +47,7 @@ import {
   Teacher,
   TeacherDetails,
   Testimonial,
+  Admin,
   AdminCourse,
 } from '../pages';
 
@@ -115,6 +116,8 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/admin-course" element={<AdminCourse />} />
         <Route path="*" element={<Error />} />
+
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </div>
   );
