@@ -21,13 +21,113 @@ const MOCK_DOCENTES = [
 const PERIODOS = ['2024-I', '2024-II', '2025-I', '2025-II', '2026-I'];
 
 const INITIAL_COURSES = [
-  { id_curso: 1, materia_id: 1, materia_nombre: 'Matemáticas I',  materia_codigo: 'MAT001', docente_id: 1, docente_nombre: 'Dr. Carlos Mendoza', periodo: '2025-I',  cupos: 30, precio: 350.00, estado: true  },
-  { id_curso: 2, materia_id: 2, materia_nombre: 'Física General', materia_codigo: 'FIS001', docente_id: 2, docente_nombre: 'Mg. Laura Vargas',    periodo: '2025-I',  cupos: 25, precio: 300.00, estado: true  },
-  { id_curso: 3, materia_id: 3, materia_nombre: 'Programación I', materia_codigo: 'INF001', docente_id: 3, docente_nombre: 'Lic. Pedro Soliz',    periodo: '2025-II', cupos: 40, precio: 400.00, estado: true  },
-  { id_curso: 4, materia_id: 4, materia_nombre: 'Cálculo II',     materia_codigo: 'MAT002', docente_id: 1, docente_nombre: 'Dr. Carlos Mendoza',  periodo: '2024-II', cupos: 35, precio: 350.00, estado: false },
-  { id_curso: 5, materia_id: 5, materia_nombre: 'Base de Datos',  materia_codigo: 'INF002', docente_id: 4, docente_nombre: 'Dr. Ana Torres',      periodo: '2025-II', cupos: 30, precio: 420.00, estado: true  },
-  { id_curso: 6, materia_id: 1, materia_nombre: 'Matemáticas I',  materia_codigo: 'MAT001', docente_id: 2, docente_nombre: 'Mg. Laura Vargas',    periodo: '2026-I',  cupos: 28, precio: 350.00, estado: true  },
-  { id_curso: 7, materia_id: 3, materia_nombre: 'Programación I', materia_codigo: 'INF001', docente_id: 4, docente_nombre: 'Dr. Ana Torres',      periodo: '2026-I',  cupos: 40, precio: 400.00, estado: false },
+  {
+    id_curso: 1,
+    materia_id: 1,
+    materia_nombre: 'Matemáticas I',
+    materia_codigo: 'MAT001',
+    docente_id: 1,
+    docente_nombre: 'Dr. Carlos Mendoza',
+    periodo: '2025-I',
+    cupos: 30,
+    precio: 350.0,
+    estado: true,
+    prerequisitos: [],
+    prerequisitos_detalle: [],
+  },
+  {
+    id_curso: 2,
+    materia_id: 2,
+    materia_nombre: 'Física General',
+    materia_codigo: 'FIS001',
+    docente_id: 2,
+    docente_nombre: 'Mg. Laura Vargas',
+    periodo: '2025-I',
+    cupos: 25,
+    precio: 300.0,
+    estado: true,
+    prerequisitos: [1],
+    prerequisitos_detalle: [
+      { id_materia: 1, codigo: 'MAT001', nombre: 'Matemáticas I' }
+    ],
+  },
+  {
+    id_curso: 3,
+    materia_id: 3,
+    materia_nombre: 'Programación I',
+    materia_codigo: 'INF001',
+    docente_id: 3,
+    docente_nombre: 'Lic. Pedro Soliz',
+    periodo: '2025-II',
+    cupos: 40,
+    precio: 400.0,
+    estado: true,
+    prerequisitos: [],
+    prerequisitos_detalle: [],
+  },
+  {
+    id_curso: 4,
+    materia_id: 4,
+    materia_nombre: 'Cálculo II',
+    materia_codigo: 'MAT002',
+    docente_id: 1,
+    docente_nombre: 'Dr. Carlos Mendoza',
+    periodo: '2024-II',
+    cupos: 35,
+    precio: 350.0,
+    estado: false,
+    prerequisitos: [1, 2],
+    prerequisitos_detalle: [
+      { id_materia: 1, codigo: 'MAT001', nombre: 'Matemáticas I' },
+      { id_materia: 2, codigo: 'FIS001', nombre: 'Física General' },
+    ],
+  },
+  {
+    id_curso: 5,
+    materia_id: 5,
+    materia_nombre: 'Base de Datos',
+    materia_codigo: 'INF002',
+    docente_id: 4,
+    docente_nombre: 'Dr. Ana Torres',
+    periodo: '2025-II',
+    cupos: 30,
+    precio: 420.0,
+    estado: true,
+    prerequisitos: [3],
+    prerequisitos_detalle: [
+      { id_materia: 3, codigo: 'INF001', nombre: 'Programación I' }
+    ],
+  },
+  {
+    id_curso: 6,
+    materia_id: 1,
+    materia_nombre: 'Matemáticas I',
+    materia_codigo: 'MAT001',
+    docente_id: 2,
+    docente_nombre: 'Mg. Laura Vargas',
+    periodo: '2026-I',
+    cupos: 28,
+    precio: 350.0,
+    estado: true,
+    prerequisitos: [],
+    prerequisitos_detalle: [],
+  },
+  {
+    id_curso: 7,
+    materia_id: 3,
+    materia_nombre: 'Programación I',
+    materia_codigo: 'INF001',
+    docente_id: 4,
+    docente_nombre: 'Dr. Ana Torres',
+    periodo: '2026-I',
+    cupos: 40,
+    precio: 400.0,
+    estado: false,
+    prerequisitos: [1],
+    prerequisitos_detalle: [
+      { id_materia: 1, codigo: 'MAT001', nombre: 'Matemáticas I' }
+    ],
+  },
 ];
 
 const PAGE_SIZE = 5;
@@ -38,6 +138,7 @@ const emptyForm = {
   periodo:     '',
   cupos:       '',
   precio:      '',
+  prerequisitos: [],
   estado:      true,
 };
 
@@ -91,6 +192,7 @@ const CoursesAdmin = () => {
       periodo:    curso.periodo,
       cupos:      curso.cupos,
       precio:     curso.precio,
+      prerequisitos: Array.isArray(curso.prerequisitos) ? curso.prerequisitos : [],
       estado:     curso.estado,
     });
     setFormErrors({});
@@ -98,6 +200,17 @@ const CoursesAdmin = () => {
   };
 
   const closeModal = () => setShowModal(false);
+
+  const togglePrerequisito = (id) => {
+    setForm(prev => {
+      const current = Array.isArray(prev.prerequisitos) ? prev.prerequisitos.map(String) : [];
+      const sid = String(id);
+      const next = current.includes(sid)
+        ? current.filter(x => x !== sid)
+        : [...current, sid];
+      return { ...prev, prerequisitos: next };
+    });
+  };
 
   const validate = () => {
     const errs = {};
@@ -115,6 +228,11 @@ const CoursesAdmin = () => {
 
     const materia = MOCK_MATERIAS.find(m => m.id_materia === Number(form.materia_id));
     const docente = MOCK_DOCENTES.find(d => d.id_docente === Number(form.docente_id));
+    const prerequisitosIds = (Array.isArray(form.prerequisitos) ? form.prerequisitos : []).map(Number);
+    const prerequisitos_detalle = (Array.isArray(form.prerequisitos) ? form.prerequisitos : []).map(id => {
+      const m = MOCK_MATERIAS.find(x => x.id_materia === Number(id));
+      return m ? { id_materia: m.id_materia, codigo: m.codigo, nombre: m.nombre } : null;
+    }).filter(Boolean);
 
     if (editTarget) {
       Swal.fire({
@@ -129,7 +247,19 @@ const CoursesAdmin = () => {
         if (res.isConfirmed) {
           setCourses(prev => prev.map(c =>
             c.id_curso === editTarget.id_curso
-              ? { ...c, ...form, materia_id: Number(form.materia_id), docente_id: Number(form.docente_id), cupos: Number(form.cupos), precio: Number(form.precio), materia_nombre: materia.nombre, materia_codigo: materia.codigo, docente_nombre: docente.nombre }
+              ? {
+                  ...c,
+                  ...form,
+                  materia_id: Number(form.materia_id),
+                  docente_id: Number(form.docente_id),
+                  cupos: Number(form.cupos),
+                  precio: Number(form.precio),
+                  materia_nombre: materia.nombre,
+                  materia_codigo: materia.codigo,
+                  docente_nombre: docente.nombre,
+                  prerequisitos: prerequisitosIds,
+                  prerequisitos_detalle: prerequisitos_detalle,
+                }
               : c
           ));
           setShowModal(false);
@@ -158,6 +288,8 @@ const CoursesAdmin = () => {
             periodo:        form.periodo,
             cupos:          Number(form.cupos),
             precio:         Number(form.precio),
+            prerequisitos:  prerequisitosIds,
+            prerequisitos_detalle: prerequisitos_detalle,
             estado:         form.estado,
           }]);
           setShowModal(false);
@@ -206,6 +338,12 @@ const CoursesAdmin = () => {
 
   const handleFormChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === 'prerequisitos') {
+      const selected = Array.from(e.target.selectedOptions).map(o => o.value);
+      setForm(prev => ({ ...prev, prerequisitos: selected }));
+      if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
+      return;
+    }
     setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -285,6 +423,7 @@ const CoursesAdmin = () => {
                 <th>Período</th>
                 <th>Cupos</th>
                 <th>Precio</th>
+                <th>Pre requisitos</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -292,52 +431,99 @@ const CoursesAdmin = () => {
             <tbody>
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="it-cadm-table__empty">
+                  <td colSpan={9} className="it-cadm-table__empty">
                     <FiBook style={{ fontSize: 28, marginBottom: 8, opacity: 0.3 }} />
                     <p>No se encontraron cursos</p>
                   </td>
                 </tr>
-              ) : paginated.map((c, idx) => (
-                <tr key={c.id_curso} className="it-cadm-table__row">
-                  <td className="it-cadm-table__num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
-                  <td>
-                    <div className="it-cadm-table__materia">
-                      <span className="it-cadm-table__codigo">{c.materia_codigo}</span>
-                      <span className="it-cadm-table__nombre">{c.materia_nombre}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="it-cadm-table__docente">
-                      <span className="it-cadm-table__docente-avatar">
-                        {c.docente_nombre.charAt(0)}
-                      </span>
-                      <span>{c.docente_nombre}</span>
-                    </div>
-                  </td>
-                  <td><span className="it-cadm-table__periodo">{c.periodo}</span></td>
-                  <td className="it-cadm-table__cupos">{c.cupos}</td>
-                  <td className="it-cadm-table__precio">Bs. {c.precio.toFixed(2)}</td>
-                  <td>
-                    <button
-                      className={`it-cadm-badge${c.estado ? ' it-cadm-badge--active' : ' it-cadm-badge--inactive'}`}
-                      onClick={() => handleToggleEstado(c)}
-                      title="Click para cambiar estado"
-                    >
-                      {c.estado ? 'Activo' : 'Inactivo'}
-                    </button>
-                  </td>
-                  <td>
-                    <div className="it-cadm-table__actions">
-                      <button className="it-cadm-action-btn it-cadm-action-btn--edit" onClick={() => openEdit(c)} title="Editar">
-                        <FiEdit2 />
-                      </button>
-                      <button className="it-cadm-action-btn it-cadm-action-btn--delete" onClick={() => handleDelete(c)} title="Eliminar">
-                        <FiTrash2 />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              ) : paginated.map((c, idx) => {
+                  // Get prerequisite codes (robust)
+                  let prereqCodes = [];
+
+                  // 1) Prefer detail array if present
+                  const detalle =
+                    (Array.isArray(c.prerequisitos_detalle) && c.prerequisitos_detalle) ||
+                    (Array.isArray(c.prerequisitosDetalle) && c.prerequisitosDetalle) ||
+                    (Array.isArray(c.prerequisitos_detalles) && c.prerequisitos_detalles) ||
+                    [];
+
+                  if (detalle.length > 0) {
+                    prereqCodes = detalle
+                      .map(p => p?.codigo ?? p?.materia_codigo ?? p?.sigla ?? p?.code ?? null)
+                      .filter(Boolean)
+                      .map(String);
+                  } else {
+                    // 2) Else map ids to MOCK_MATERIAS
+                    const ids =
+                      (Array.isArray(c.prerequisitos) && c.prerequisitos) ||
+                      (Array.isArray(c.pre_requisitos) && c.pre_requisitos) ||
+                      (Array.isArray(c.prerequisito_ids) && c.prerequisito_ids) ||
+                      [];
+
+                    if (ids.length > 0) {
+                      prereqCodes = ids
+                        .map(id => {
+                          const m = MOCK_MATERIAS.find(x => x.id_materia === Number(id));
+                          return m ? m.codigo : null;
+                        })
+                        .filter(Boolean)
+                        .map(String);
+                    }
+                  }
+                   console.log('curso', c.id_curso, 'detalle', detalle, 'ids', c.prerequisitos, 'codes', prereqCodes);
+                  return (
+                    <tr key={c.id_curso} className="it-cadm-table__row">
+                      <td className="it-cadm-table__num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
+                      <td>
+                        <div className="it-cadm-table__materia">
+                          <span className="it-cadm-table__codigo">{c.materia_codigo}</span>
+                          <span className="it-cadm-table__nombre">{c.materia_nombre}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="it-cadm-table__docente">
+                          <span className="it-cadm-table__docente-avatar">
+                            {c.docente_nombre.charAt(0)}
+                          </span>
+                          <span>{c.docente_nombre}</span>
+                        </div>
+                      </td>
+                      <td><span className="it-cadm-table__periodo">{c.periodo}</span></td>
+                      <td className="it-cadm-table__cupos">{c.cupos}</td>
+                      <td className="it-cadm-table__precio">Bs. {c.precio.toFixed(2)}</td>
+                      <td>
+                        {prereqCodes.length === 0 ? (
+                          <span>&mdash;</span>
+                        ) : (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {prereqCodes.map(code => (
+                              <span key={code} className="it-cadm-badge it-cadm-badge--inactive">{code}</span>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <button
+                          className={`it-cadm-badge${c.estado ? ' it-cadm-badge--active' : ' it-cadm-badge--inactive'}`}
+                          onClick={() => handleToggleEstado(c)}
+                          title="Click para cambiar estado"
+                        >
+                          {c.estado ? 'Activo' : 'Inactivo'}
+                        </button>
+                      </td>
+                      <td>
+                        <div className="it-cadm-table__actions">
+                          <button className="it-cadm-action-btn it-cadm-action-btn--edit" onClick={() => openEdit(c)} title="Editar">
+                            <FiEdit2 />
+                          </button>
+                          <button className="it-cadm-action-btn it-cadm-action-btn--delete" onClick={() => handleDelete(c)} title="Eliminar">
+                            <FiTrash2 />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -430,6 +616,37 @@ const CoursesAdmin = () => {
                   ))}
                 </select>
                 {formErrors.docente_id && <span className="it-cadm-field__error">{formErrors.docente_id}</span>}
+              </div>
+
+              {/* Prerequisitos field */}
+              <div className="it-cadm-field">
+                <label className="it-cadm-field__label">
+                  <FiBook /> Pre requisitos (materias)
+                </label>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {MOCK_MATERIAS.map((m) => {
+                    const selected = Array.isArray(form.prerequisitos)
+                      ? form.prerequisitos.map(String).includes(String(m.id_materia))
+                      : false;
+
+                    return (
+                      <button
+                        key={m.id_materia}
+                        type="button"
+                        className={`it-cadm-badge${selected ? ' it-cadm-badge--active' : ' it-cadm-badge--inactive'}`}
+                        onClick={() => togglePrerequisito(m.id_materia)}
+                        title={selected ? 'Quitar pre requisito' : 'Agregar pre requisito'}
+                      >
+                        [{m.codigo}] {m.nombre}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <p style={{ marginTop: 8, color: '#4D5756', fontSize: 12, opacity: 0.85 }}>
+                  Seleccionadas: {Array.isArray(form.prerequisitos) ? form.prerequisitos.length : 0}
+                </p>
               </div>
 
               <div className="it-cadm-field">
