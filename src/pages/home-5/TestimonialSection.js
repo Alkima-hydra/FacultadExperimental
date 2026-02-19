@@ -29,6 +29,7 @@ const Testimonial = () => {
       },
     },
   };
+
   return (
     <div className="it-testimonial-area ed-testimonial-style-2 pt-120 pb-120 fix p-relative">
       <div className="container">
@@ -38,13 +39,14 @@ const Testimonial = () => {
               <SectionTitle
                 itemClass="it-testimonial-title-box text-center"
                 subTitleClass="ed-section-subtitle"
-                subTitle="testimonial"
+                subTitle="Testimonios"
                 titleClass="ed-section-title"
-                title="Creating A Community Of Life Long Learners."
+                title="Construyendo una comunidad de aprendizaje continuo."
               />
             </div>
           </div>
         </div>
+
         <div className="row">
           <div className="col-xl-12">
             <div className="ed-testimonial-wrapper">
@@ -56,62 +58,55 @@ const Testimonial = () => {
                 >
                   <SwiperSlide className="swiper-slide">
                     <SingleTestimonialThree
-                      description={`“Lorem ipsum dolor sit amet, elit, sed do eiusmod tempor 
-                        incididunt ut labore et dolore magna aliqua. Orci nulla pellentesque 
-                        dignissim enim. Amet consectetur adipiscing”`}
+                      description={`“La plataforma me ayudó a aprender de forma práctica y ordenada. Los contenidos están bien explicados y pude avanzar con confianza desde lo básico hasta temas más avanzados.”`}
                       authorAvatar={avatarImg1}
                       authorName="Ellen Perera"
-                      designation="CEO at House of Ramen"
+                      designation="Gerente General"
                     />
                   </SwiperSlide>
+
                   <SwiperSlide className="swiper-slide">
                     <SingleTestimonialThree
-                      description={`“Lorem ipsum dolor sit amet, elit, sed do eiusmod tempor 
-                        incididunt ut labore et dolore magna aliqua. Orci nulla pellentesque 
-                        dignissim enim. Amet consectetur adipiscing”`}
+                      description={`“Los cursos son claros, actuales y muy aplicables. Lo mejor fue el enfoque en proyectos, porque me permitió armar un portafolio real para postular a oportunidades.”`}
                       authorAvatar={avatarImg2}
                       authorName="Kathy Sullivan"
-                      designation="CEO at ordian it"
+                      designation="Directora Ejecutiva"
                     />
                   </SwiperSlide>
+
                   <SwiperSlide className="swiper-slide">
                     <SingleTestimonialThree
-                      description={`“Lorem ipsum dolor sit amet, elit, sed do eiusmod tempor 
-                        incididunt ut labore et dolore magna aliqua. Orci nulla pellentesque 
-                        dignissim enim. Amet consectetur adipiscing”`}
+                      description={`“Me gustó el acompañamiento y la estructura de cada módulo. No es contenido suelto: te guía paso a paso y te deja con bases sólidas para seguir creciendo.”`}
                       authorAvatar={avatarImg3}
                       authorName="Elsie Stroud"
-                      designation="CEO at Edwards"
+                      designation="Consultora Empresarial"
                     />
                   </SwiperSlide>
+
                   <SwiperSlide className="swiper-slide">
                     <SingleTestimonialThree
-                      description={`“Lorem ipsum dolor sit amet, elit, sed do eiusmod tempor 
-                        incididunt ut labore et dolore magna aliqua. Orci nulla pellentesque 
-                        dignissim enim. Amet consectetur adipiscing”`}
+                      description={`“La experiencia fue excelente: material actualizado, clases dinámicas y recursos que realmente ayudan a aprender. Lo recomiendo totalmente.”`}
                       authorAvatar={avatarImg1}
                       authorName="Ellen Perera"
-                      designation="CEO at House of Ramen"
+                      designation="Líder de Proyectos"
                     />
                   </SwiperSlide>
+
                   <SwiperSlide className="swiper-slide">
                     <SingleTestimonialThree
-                      description={`“Lorem ipsum dolor sit amet, elit, sed do eiusmod tempor 
-                        incididunt ut labore et dolore magna aliqua. Orci nulla pellentesque 
-                        dignissim enim. Amet consectetur adipiscing”`}
+                      description={`“Aprendí más rápido de lo que esperaba. La plataforma es fácil de usar y la metodología hace que el progreso se sienta claro y medible.”`}
                       authorAvatar={avatarImg2}
                       authorName="Kathy Sullivan"
-                      designation="CEO at ordian it"
+                      designation="Coordinadora Académica"
                     />
                   </SwiperSlide>
+
                   <SwiperSlide className="swiper-slide">
                     <SingleTestimonialThree
-                      description={`“Lorem ipsum dolor sit amet, elit, sed do eiusmod tempor 
-                        incididunt ut labore et dolore magna aliqua. Orci nulla pellentesque 
-                        dignissim enim. Amet consectetur adipiscing”`}
+                      description={`“Excelente calidad. Me sirvió tanto para reforzar conceptos como para prepararme mejor para evaluaciones y entrevistas.”`}
                       authorAvatar={avatarImg1}
                       authorName="Ellen Perera"
-                      designation="CEO at House of Ramen"
+                      designation="Profesional en formación"
                     />
                   </SwiperSlide>
                 </Swiper>
@@ -123,4 +118,5 @@ const Testimonial = () => {
     </div>
   );
 };
+
 export default Testimonial;

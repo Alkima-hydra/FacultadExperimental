@@ -17,19 +17,21 @@ const Career = () => {
       <div className="it-career-shape-6 d-none d-xl-block">
         <img src={shapeImg2} alt="" />
       </div>
+
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-xl-8">
             <SectionTitle
               itemClass="it-career-title-box text-center mb-70"
               subTitleClass="it-section-subtitle-4"
-              subTitle="Exam preparation"
-              title="Annual exam preparation"
+              subTitle="Preparación académica"
+              title="Preparación para exámenes anuales"
               titleImage={titleImg}
               hasAfterImage
             />
           </div>
         </div>
+
         <div className="row">
           <div
             className="col-xl-6 col-lg-6 mb-30 wow animate__fadeInLeft"
@@ -42,6 +44,7 @@ const Career = () => {
               btnClass="ed-btn-theme theme-2"
             />
           </div>
+
           <div
             className="col-xl-6 col-lg-6 mb-30 wow animate__fadeInRight"
             data-wow-duration=".9s"
@@ -58,4 +61,5 @@ const Career = () => {
     </div>
   );
 };
+
 export default Career;

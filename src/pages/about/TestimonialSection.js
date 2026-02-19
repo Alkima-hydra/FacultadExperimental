@@ -16,20 +16,13 @@ const Testimonial = () => {
       delay: 3000,
     },
     breakpoints: {
-      1400: {
-        slidesPerView: 3,
-      },
-      1200: {
-        slidesPerView: 3,
-      },
-      992: {
-        slidesPerView: 2,
-      },
-      0: {
-        slidesPerView: 1,
-      },
+      1400: { slidesPerView: 3 },
+      1200: { slidesPerView: 3 },
+      992: { slidesPerView: 2 },
+      0: { slidesPerView: 1 },
     },
   };
+
   return (
     <div
       className="it-testimonial-area ed-testimonial-ptb fix p-relative"
@@ -41,12 +34,13 @@ const Testimonial = () => {
             <div className="col-xl-6">
               <SectionTitle
                 itemClass="it-testimonial-title-box text-center"
-                subTitle="testimonial"
-                title="Creating A Community Of Life Long Learners."
+                subTitle="Testimonios"
+                title="Construyendo una comunidad de aprendizaje continuo."
               />
             </div>
           </div>
         </div>
+
         <div className="row">
           <div className="col-xl-12">
             <div className="ed-testimonial-wrapper">
@@ -58,44 +52,36 @@ const Testimonial = () => {
                 >
                   <SwiperSlide className="swiper-slide">
                     <SingleTestimonial
-                      description={`“Lorem ipsum dolor sit amet, elit, sed do eiusmod
-                          tempor incididunt ut labore et dolore magna aliqua.
-                          Orci nulla pellentesque dignissim enim. Amet
-                          consectetur adipiscing”`}
+                      description={`“Gracias a esta plataforma pude fortalecer mis habilidades profesionales y aplicar lo aprendido en proyectos reales. La metodología es clara, práctica y muy bien estructurada.”`}
                       authorName="Ellen Perera"
-                      designation="CEO at House of Ramen"
+                      designation="Gerente General"
                     />
                   </SwiperSlide>
+
                   <SwiperSlide className="swiper-slide">
                     <SingleTestimonial
-                      description={`“Lorem ipsum dolor sit amet, elit, sed do eiusmod
-                          tempor incididunt ut labore et dolore magna aliqua.
-                          Orci nulla pellentesque dignissim enim. Amet
-                          consectetur adipiscing”`}
+                      description={`“Los cursos están actualizados y enfocados en el mercado laboral. Me ayudaron a mejorar mi perfil profesional y conseguir nuevas oportunidades.”`}
                       authorName="Kathy Sullivan"
-                      designation="CEO at ordian it"
+                      designation="Directora Ejecutiva"
                     />
                   </SwiperSlide>
+
                   <SwiperSlide className="swiper-slide">
                     <SingleTestimonial
-                      description={`“Lorem ipsum dolor sit amet, elit, sed do eiusmod
-                          tempor incididunt ut labore et dolore magna aliqua.
-                          Orci nulla pellentesque dignissim enim. Amet
-                          consectetur adipiscing”`}
+                      description={`“La experiencia de aprendizaje fue excelente. Los docentes explican con claridad y el contenido es muy completo. Recomiendo totalmente esta institución.”`}
                       authorName="Elsie Stroud"
-                      designation="CEO at Edwards"
+                      designation="Consultora Empresarial"
                     />
                   </SwiperSlide>
+
                   <SwiperSlide className="swiper-slide">
                     <SingleTestimonial
-                      description={`“Lorem ipsum dolor sit amet, elit, sed do eiusmod
-                          tempor incididunt ut labore et dolore magna aliqua.
-                          Orci nulla pellentesque dignissim enim. Amet
-                          consectetur adipiscing”`}
+                      description={`“Destaco la calidad académica y el acompañamiento constante. Es un espacio ideal para quienes desean crecer profesionalmente.”`}
                       authorName="Kathy Sullivan"
-                      designation="CEO at ordian it"
+                      designation="Líder de Proyectos"
                     />
                   </SwiperSlide>
+
                 </Swiper>
               </div>
             </div>
@@ -105,4 +91,5 @@ const Testimonial = () => {
     </div>
   );
 };
+
 export default Testimonial;

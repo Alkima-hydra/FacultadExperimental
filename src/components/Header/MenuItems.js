@@ -48,7 +48,7 @@ const MenuItems = (props) => {
     <ul>
       <li>
         <Link to="/">
-          <span>Home</span>
+          <span>Inicio</span>
         </Link>
       </li>
       <li>
@@ -58,7 +58,7 @@ const MenuItems = (props) => {
       </li>
       <li>
         <Link to="/faq">
-          <span>FAQ</span>
+          <span>Preguntas Frecuentes</span>
         </Link>
       </li>
       <li>

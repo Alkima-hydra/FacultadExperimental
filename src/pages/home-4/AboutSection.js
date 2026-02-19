@@ -25,6 +25,7 @@ const About = () => {
       <div className="it-about-5-shape-5 d-none d-xl-block">
         <img src={shapeImg2} alt="" />
       </div>
+
       <div className="container container-3">
         <div className="row align-items-center">
           <div
@@ -32,19 +33,21 @@ const About = () => {
             data-wow-duration=".9s"
             data-wow-delay=".5s"
           >
-            <div className="ed-hero-thumb-wrap text-center text-md-end  p-relative">
+            <div className="ed-hero-thumb-wrap text-center text-md-end p-relative">
               <div className="ed-hero-thumb-main p-relative">
-                <img src={aboutImg1} alt="" />
+                <img src={aboutImg1} alt="Aprendizaje en un entorno educativo" />
                 <div className="ed-hero-thumb-shape-1 d-none d-md-block">
                   <img src={shapeImg3} alt="" />
                 </div>
               </div>
+
               <div className="ed-hero-thumb-sm">
-                <img src={aboutImg2} alt="" />
+                <img src={aboutImg2} alt="Acompañamiento y aprendizaje práctico" />
                 <div className="ed-hero-thumb-shape-1">
                   <img src={shapeImg4} alt="" />
                 </div>
               </div>
+
               <div className="ed-hero-thumb-shape-2">
                 <img src={shapeImg5} alt="" />
               </div>
@@ -54,17 +57,19 @@ const About = () => {
               <div className="ed-hero-thumb-shape-4">
                 <img src={shapeImg7} alt="" />
               </div>
+
               <div className="ed-hero-thumb-student d-none d-md-flex align-items-center">
                 <span>
                   <i>
-                    Happy <br />
+                    Estudiantes <br />
                   </i>
-                  Student
+                  satisfechos
                 </span>
-                <img src={studentImg} alt="" />
+                <img src={studentImg} alt="Comunidad de estudiantes" />
               </div>
             </div>
           </div>
+
           <div
             className="col-xl-6 col-lg-6 wow animate__fadeInRight"
             data-wow-duration=".9s"
@@ -73,21 +78,24 @@ const About = () => {
             <div className="it-about-5-right">
               <div className="it-about-5-title-box pb-10">
                 <span className="it-section-subtitle-5 orange">
-                  <i class="fa-light fa-book"></i>about us
+                  <i className="fa-light fa-book"></i> Sobre nosotros
                 </span>
+
                 <h4 className="ed-section-title orange">
-                  It's our passion to work with <br /> children at
-                  <span> kindergarten.</span>
+                  Nos apasiona acompañarte en tu aprendizaje <br />
+                  y ayudarte a crecer <span>de forma profesional.</span>
                 </h4>
               </div>
 
               <div className="it-about-5-text mb-30">
                 <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod <br /> tempor incididunt ut labore et dolore magna
-                  aliqua. Ut enim ad minim <br /> veniam, quis nostrud..
+                  Creemos en la educación práctica y accesible. Por eso diseñamos
+                  cursos claros, actualizados y orientados a resultados, para que
+                  desarrolles habilidades reales y avances con confianza en tu camino
+                  académico y profesional.
                 </p>
               </div>
+
               <div className="it-about-5-content">
                 <div className="row">
                   <div className="col-xl-6 col-lg-6">
@@ -95,34 +103,36 @@ const About = () => {
                       <ul>
                         <li>
                           <i className="fa-sharp fa-solid fa-circle-check"></i>
-                          QUALITY EDUCATIORS
+                          Instructores calificados
                         </li>
                         <li>
                           <i className="fa-sharp fa-solid fa-circle-check"></i>
-                          SAFETY AND SECURITY
+                          Seguimiento y acompañamiento
                         </li>
                       </ul>
                     </div>
                   </div>
+
                   <div className="col-xl-6 col-lg-6">
                     <div className="it-about-5-list list-style-2 mb-20">
                       <ul>
                         <li>
                           <i className="fa-sharp fa-solid fa-circle-check"></i>
-                          PLAY TO LEARN
+                          Aprendizaje práctico por proyectos
                         </li>
                         <li>
                           <i className="fa-sharp fa-solid fa-circle-check"></i>
-                          HOMELIKE ENVIROMEND
+                          Plataforma cómoda y fácil de usar
                         </li>
                       </ul>
                     </div>
                   </div>
                 </div>
               </div>
+
               <div className="it-feature-button">
                 <Link className="ed-btn-radius" to="/student-registration">
-                  admission open
+                  Inscripciones abiertas
                 </Link>
               </div>
             </div>
@@ -132,4 +142,5 @@ const About = () => {
     </div>
   );
 };
+
 export default About;

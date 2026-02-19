@@ -9,13 +9,12 @@ import Testimonial from './TestimonialSection';
 const AboutMain = () => {
   return (
     <main>
-      <Breadcrumb title="about us" />
+      <Breadcrumb title="Sobre nosotros" />
       <About />
       <FunFact />
       <Testimonial />
-      <Course />
-      <Team />
     </main>
   );
 };
+
 export default AboutMain;

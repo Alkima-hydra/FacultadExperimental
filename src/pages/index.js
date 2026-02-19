@@ -84,6 +84,4 @@ export {
   Admin,
   AdminCourse,
 };
-  
-
 

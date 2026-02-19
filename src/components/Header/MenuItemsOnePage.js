@@ -47,7 +47,7 @@ const MenuItemsOnePage = (props) => {
         className={`${home ? 'expanded' : ''}`}
         onClick={handleClick}
       >
-        <span>Home</span>
+        <span>Inicio</span>
         <button
           className={`${
             home ? 'dropdown-toggle-btn dropdown-opened' : 'dropdown-toggle-btn'
@@ -59,6 +59,7 @@ const MenuItemsOnePage = (props) => {
           <i className="fal fa-angle-right"></i>
         </button>
       </Link>
+
       <div
         className={
           home
@@ -69,111 +70,115 @@ const MenuItemsOnePage = (props) => {
         <div className="row gx-6 row-cols-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-5">
           <div className="col home-img">
             <div className="home-img-thumb mb-15">
-              <img src={homeImg1} alt="" />
+              <img src={homeImg1} alt="Vista previa Home 01" />
               <div className="home-img-btn">
                 <Link className="it-btn-white-sm" to="/">
-                  Multi Page
+                  Multi página
                 </Link>
                 <Link
                   className="it-btn-white-sm"
                   to="/home-one-page"
                   onClick={() => setIsActive('home')}
                 >
-                  One Page
+                  Una página
                 </Link>
               </div>
             </div>
             <div className="home-img-content text-center">
               <h4 className="home-img-title">
-                <Link to="/">Home 01</Link>
+                <Link to="/">Inicio 01</Link>
               </h4>
             </div>
           </div>
+
           <div className="col home-img">
             <div className="home-img-thumb mb-15">
-              <img src={homeImg2} alt="" />
+              <img src={homeImg2} alt="Vista previa Home 02" />
               <div className="home-img-btn">
                 <Link className="it-btn-white-sm" to="/home-2">
-                  Multi Page
+                  Multi página
                 </Link>
                 <Link
                   className="it-btn-white-sm"
                   to="/home-2-one-page"
                   onClick={() => setIsActive('home')}
                 >
-                  One Page
+                  Una página
                 </Link>
               </div>
             </div>
             <div className="home-img-content text-center">
               <h4 className="home-img-title">
-                <Link to="/home-2">Home 02</Link>
+                <Link to="/home-2">Inicio 02</Link>
               </h4>
             </div>
           </div>
+
           <div className="col home-img">
             <div className="home-img-thumb mb-15">
-              <img src={homeImg3} alt="" />
+              <img src={homeImg3} alt="Vista previa Home 03" />
               <div className="home-img-btn">
                 <Link className="it-btn-white-sm" to="/home-3">
-                  Multi Page
+                  Multi página
                 </Link>
                 <Link
                   className="it-btn-white-sm"
                   to="/home-3-one-page"
                   onClick={() => setIsActive('home')}
                 >
-                  One Page
+                  Una página
                 </Link>
               </div>
             </div>
             <div className="home-img-content text-center">
               <h4 className="home-img-title">
-                <Link to="/home-3">Home 03</Link>
+                <Link to="/home-3">Inicio 03</Link>
               </h4>
             </div>
           </div>
+
           <div className="col home-img">
             <div className="home-img-thumb mb-15">
-              <img src={homeImg4} alt="" />
+              <img src={homeImg4} alt="Vista previa Home 04" />
               <div className="home-img-btn">
                 <Link className="it-btn-white-sm" to="/home-4">
-                  Multi Page
+                  Multi página
                 </Link>
                 <Link
                   className="it-btn-white-sm"
                   to="/home-4-one-page"
                   onClick={() => setIsActive('home')}
                 >
-                  One Page
+                  Una página
                 </Link>
               </div>
             </div>
             <div className="home-img-content text-center">
               <h4 className="home-img-title">
-                <Link to="/home-4">Home 04</Link>
+                <Link to="/home-4">Inicio 04</Link>
               </h4>
             </div>
           </div>
+
           <div className="col home-img">
             <div className="home-img-thumb mb-15">
-              <img src={homeImg5} alt="" />
+              <img src={homeImg5} alt="Vista previa Home 05" />
               <div className="home-img-btn">
                 <Link className="it-btn-white-sm" to="/home-5">
-                  Multi Page
+                  Multi página
                 </Link>
                 <Link
                   className="it-btn-white-sm"
                   to="/home-5-one-page"
                   onClick={() => setIsActive('home')}
                 >
-                  One Page
+                  Una página
                 </Link>
               </div>
             </div>
             <div className="home-img-content text-center">
               <h4 className="home-img-title">
-                <Link to="/home-5">Home 05</Link>
+                <Link to="/home-5">Inicio 05</Link>
               </h4>
             </div>
           </div>
@@ -189,17 +194,17 @@ const MenuItemsOnePage = (props) => {
           {onePageHomeMenu}
           <li className={isActive === 'it-course' ? 'active' : ''}>
             <Link to="#it-course" onClick={() => scrollToSection('it-course')}>
-              <span>Courses</span>
+              <span>Cursos</span>
             </Link>
           </li>
           <li className={isActive === 'it-about' ? 'active' : ''}>
             <Link to="#it-course" onClick={() => scrollToSection('it-about')}>
-              <span>About us</span>
+              <span>Sobre nosotros</span>
             </Link>
           </li>
           <li className={isActive === 'it-team' ? 'active' : ''}>
             <Link to="#it-team" onClick={() => scrollToSection('it-team')}>
-              <span>Team</span>
+              <span>Equipo</span>
             </Link>
           </li>
           <li className={isActive === 'it-blog' ? 'active' : ''}>
@@ -208,11 +213,8 @@ const MenuItemsOnePage = (props) => {
             </Link>
           </li>
           <li className={isActive === 'it-contact' ? 'active' : ''}>
-            <Link
-              to="#it-contact"
-              onClick={() => scrollToSection('it-contact')}
-            >
-              <span>Contact</span>
+            <Link to="#it-contact" onClick={() => scrollToSection('it-contact')}>
+              <span>Contacto</span>
             </Link>
           </li>
         </ul>
@@ -221,22 +223,22 @@ const MenuItemsOnePage = (props) => {
           {onePageHomeMenu}
           <li className={isActive === 'it-about' ? 'active' : ''}>
             <Link to="#it-course" onClick={() => scrollToSection('it-about')}>
-              <span>About us</span>
+              <span>Sobre nosotros</span>
             </Link>
           </li>
           <li className={isActive === 'it-course' ? 'active' : ''}>
             <Link to="#it-course" onClick={() => scrollToSection('it-course')}>
-              <span>Courses</span>
+              <span>Cursos</span>
             </Link>
           </li>
           <li className={isActive === 'it-event' ? 'active' : ''}>
             <Link to="#it-event" onClick={() => scrollToSection('it-event')}>
-              <span>Event</span>
+              <span>Eventos</span>
             </Link>
           </li>
           <li className={isActive === 'it-team' ? 'active' : ''}>
             <Link to="#it-team" onClick={() => scrollToSection('it-team')}>
-              <span>Team</span>
+              <span>Equipo</span>
             </Link>
           </li>
           <li className={isActive === 'it-blog' ? 'active' : ''}>
@@ -250,25 +252,22 @@ const MenuItemsOnePage = (props) => {
           {onePageHomeMenu}
           <li className={isActive === 'it-about' ? 'active' : ''}>
             <Link to="#it-about" onClick={() => scrollToSection('it-about')}>
-              <span>About us</span>
+              <span>Sobre nosotros</span>
             </Link>
           </li>
           <li className={isActive === 'it-course' ? 'active' : ''}>
             <Link to="#it-course" onClick={() => scrollToSection('it-course')}>
-              <span>Courses</span>
+              <span>Cursos</span>
             </Link>
           </li>
           <li className={isActive === 'it-contact' ? 'active' : ''}>
-            <Link
-              to="#it-contact"
-              onClick={() => scrollToSection('it-contact')}
-            >
-              <span>Contact</span>
+            <Link to="#it-contact" onClick={() => scrollToSection('it-contact')}>
+              <span>Contacto</span>
             </Link>
           </li>
           <li className={isActive === 'it-event' ? 'active' : ''}>
             <Link to="#it-event" onClick={() => scrollToSection('it-event')}>
-              <span>Event</span>
+              <span>Eventos</span>
             </Link>
           </li>
           <li className={isActive === 'it-blog' ? 'active' : ''}>
@@ -282,12 +281,12 @@ const MenuItemsOnePage = (props) => {
           {onePageHomeMenu}
           <li className={isActive === 'it-work' ? 'active' : ''}>
             <Link to="#it-work" onClick={() => scrollToSection('it-work')}>
-              <span>Work</span>
+              <span>Trabajo</span>
             </Link>
           </li>
           <li className={isActive === 'it-about' ? 'active' : ''}>
             <Link to="#it-about" onClick={() => scrollToSection('it-about')}>
-              <span>About us</span>
+              <span>Sobre nosotros</span>
             </Link>
           </li>
           <li className={isActive === 'it-testimonial' ? 'active' : ''}>
@@ -295,12 +294,12 @@ const MenuItemsOnePage = (props) => {
               to="#it-testimonial"
               onClick={() => scrollToSection('it-testimonial')}
             >
-              <span>Testimonial</span>
+              <span>Testimonios</span>
             </Link>
           </li>
           <li className={isActive === 'it-team' ? 'active' : ''}>
             <Link to="#it-team" onClick={() => scrollToSection('it-team')}>
-              <span>Team</span>
+              <span>Equipo</span>
             </Link>
           </li>
           <li className={isActive === 'it-blog' ? 'active' : ''}>
@@ -313,26 +312,23 @@ const MenuItemsOnePage = (props) => {
         <ul className="onepage-menu">
           {onePageHomeMenu}
           <li className={isActive === 'it-feature' ? 'active' : ''}>
-            <Link
-              to="#it-feature"
-              onClick={() => scrollToSection('it-feature')}
-            >
-              <span>Feature</span>
+            <Link to="#it-feature" onClick={() => scrollToSection('it-feature')}>
+              <span>Características</span>
             </Link>
           </li>
           <li className={isActive === 'it-about' ? 'active' : ''}>
             <Link to="#it-about" onClick={() => scrollToSection('it-about')}>
-              <span>About us</span>
+              <span>Sobre nosotros</span>
             </Link>
           </li>
           <li className={isActive === 'it-course' ? 'active' : ''}>
             <Link to="#it-course" onClick={() => scrollToSection('it-course')}>
-              <span>Courses</span>
+              <span>Cursos</span>
             </Link>
           </li>
           <li className={isActive === 'it-faq' ? 'active' : ''}>
             <Link to="#it-faq" onClick={() => scrollToSection('it-faq')}>
-              <span>Faq</span>
+              <span>Preguntas frecuentes</span>
             </Link>
           </li>
           <li className={isActive === 'it-blog' ? 'active' : ''}>
@@ -347,4 +343,5 @@ const MenuItemsOnePage = (props) => {
     </>
   );
 };
+
 export default MenuItemsOnePage;

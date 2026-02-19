@@ -23,35 +23,38 @@ const HomeTwoBanner = () => {
               <div className="ed-hero-content">
                 <div className="ed-hero-title-box">
                   <span
-                    className="ed-hero-subtitle  wow animate__fadeInUp"
+                    className="ed-hero-subtitle wow animate__fadeInUp"
                     data-wow-duration=".9s"
                     data-wow-delay=".3s"
                   >
-                    Learn & Get Certificates
+                    Aprende y obtén certificaciones
                   </span>
+
                   <h1
-                    className="ed-slider-title  wow animate__fadeInUp"
+                    className="ed-slider-title wow animate__fadeInUp"
                     data-wow-duration=".9s"
                     data-wow-delay=".5s"
                   >
-                    Free online Courses With Certificates & Diplomas
+                    Cursos en línea con certificados y diplomas profesionales
                   </h1>
                 </div>
+
                 <span
-                  className="pb-25  wow animate__fadeInUp"
+                  className="pb-25 wow animate__fadeInUp"
                   data-wow-duration=".9s"
                   data-wow-delay=".7s"
                 >
-                  25 Million Learners. 15 Years.100%
+                  25 millones de estudiantes · 15 años de experiencia · 100% aprendizaje práctico
                 </span>
+
                 <div
-                  className="ed-hero-search p-relative  wow animate__fadeInUp"
+                  className="ed-hero-search p-relative wow animate__fadeInUp"
                   data-wow-duration=".9s"
                   data-wow-delay=".9s"
                 >
                   <input
                     type="text"
-                    placeholder="What do you want to learn today?"
+                    placeholder="¿Qué deseas aprender hoy?"
                   />
                   <span>
                     <svg
@@ -70,41 +73,48 @@ const HomeTwoBanner = () => {
                 </div>
               </div>
             </div>
+
             <div className="col-xl-6 col-lg-6">
-              <div className="ed-hero-thumb-wrap text-center text-md-end  p-relative">
-                <div className="ed-hero-thumb-main  p-relative">
-                  <img src={bannerImg1} alt="" />
+              <div className="ed-hero-thumb-wrap text-center text-md-end p-relative">
+                <div className="ed-hero-thumb-main p-relative">
+                  <img src={bannerImg1} alt="Estudiante aprendiendo en línea" />
                   <div className="ed-hero-thumb-shape-1">
                     <img src={bannerShapeImg1} alt="" />
                   </div>
                 </div>
+
                 <div className="ed-hero-thumb-sm">
-                  <img src={bannerImg2} alt="" />
+                  <img src={bannerImg2} alt="Clase virtual interactiva" />
                   <div className="ed-hero-thumb-shape-1">
                     <img src={bannerShapeImg2} alt="" />
                   </div>
                 </div>
+
                 <div className="ed-hero-thumb-shape-2">
                   <img src={shapeImg1} alt="" />
                 </div>
+
                 <div className="ed-hero-thumb-shape-3">
                   <img src={shapeImg2} alt="" />
                 </div>
+
                 <div className="ed-hero-thumb-shape-4">
                   <img src={shapeImg3} alt="" />
                 </div>
+
                 <div className="ed-hero-thumb-student d-none d-md-flex align-items-center">
                   <span>
                     <i>
                       2k+ <br />
                     </i>
-                    Student
+                    Estudiantes
                   </span>
-                  <img src={studentImg} alt="" />
+                  <img src={studentImg} alt="Estudiantes registrados" />
                 </div>
+
                 <div className="ed-hero-thumb-courses d-none d-md-block">
                   <i>5.8k</i>
-                  <span>Success Courses</span>
+                  <span>Cursos completados con éxito</span>
                 </div>
               </div>
             </div>
@@ -114,4 +124,5 @@ const HomeTwoBanner = () => {
     </div>
   );
 };
+
 export default HomeTwoBanner;
