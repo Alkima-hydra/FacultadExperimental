@@ -147,7 +147,7 @@ const Header = (props) => {
               </div>
               <div className="itoffcanvas__info-address">
                 <span>Email</span>
-                <a href="maito:hello@yourmail.com">hello@yourmail.com</a>
+                <a href="maito:hello@yourmail.com">contacto@gmail.com</a>
               </div>
             </div>
             <div className="it-info-wrapper mb-20 d-flex align-items-center">
@@ -158,7 +158,7 @@ const Header = (props) => {
               </div>
               <div className="itoffcanvas__info-address">
                 <span>Phone</span>
-                <a href="tel:(00)45611227890">(00) 456 1122 7890</a>
+                <a href="tel:(591)12345678">(591) 12345678 </a>
               </div>
             </div>
             <div className="it-info-wrapper mb-20 d-flex align-items-center">
@@ -173,7 +173,7 @@ const Header = (props) => {
                   href="htits://www.google.com/maps/@37.4801311,22.8928877,3z"
                   target="_blank"
                 >
-                  Riverside 255, San Francisco.
+                  Calle de Prueba.
                 </a>
               </div>
             </div>

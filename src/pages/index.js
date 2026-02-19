@@ -37,6 +37,7 @@ import BlogTwo from './blog/blog-2';
 import BlogSidebar from './blog/blog-sidebar';
 import BlogDetails from './blog/blog-details';
 import Contact from './contact';
+import AdminCourse from './adminCourse';
 
 export {
   Home,
@@ -78,4 +79,6 @@ export {
   BlogSidebar,
   BlogDetails,
   Contact,
-};
+  AdminCourse,
+
+}
