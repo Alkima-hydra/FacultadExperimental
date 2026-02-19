@@ -192,7 +192,27 @@ const CoursesAdmin = () => {
       periodo:    curso.periodo,
       cupos:      curso.cupos,
       precio:     curso.precio,
-      prerequisitos: Array.isArray(curso.prerequisitos) ? curso.prerequisitos : [],
+      prerequisitos: (() => {
+        const det =
+          asArray(curso.prerequisitos_detalle).length ? asArray(curso.prerequisitos_detalle) :
+          asArray(curso.prerequisitosDetalle).length ? asArray(curso.prerequisitosDetalle) :
+          [];
+
+        if (det.length > 0) {
+          return det
+            .map(p => p?.id_materia ?? p?.materia_id ?? p?.id ?? null)
+            .filter(Boolean)
+            .map(String);
+        }
+
+        const ids =
+          asArray(curso.prerequisitos).length ? asArray(curso.prerequisitos) :
+          asArray(curso.pre_requisitos).length ? asArray(curso.pre_requisitos) :
+          asArray(curso.prerequisitos_ids).length ? asArray(curso.prerequisitos_ids) :
+          [];
+
+        return ids.filter(Boolean).map(String);
+      })(),
       estado:     curso.estado,
     });
     setFormErrors({});
@@ -200,6 +220,19 @@ const CoursesAdmin = () => {
   };
 
   const closeModal = () => setShowModal(false);
+
+  const asArray = (v) => {
+    if (Array.isArray(v)) return v;
+    if (typeof v === 'string') {
+      try {
+        const parsed = JSON.parse(v);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
 
   const togglePrerequisito = (id) => {
     setForm(prev => {
@@ -470,7 +503,6 @@ const CoursesAdmin = () => {
                         .map(String);
                     }
                   }
-                   console.log('curso', c.id_curso, 'detalle', detalle, 'ids', c.prerequisitos, 'codes', prereqCodes);
                   return (
                     <tr key={c.id_curso} className="it-cadm-table__row">
                       <td className="it-cadm-table__num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
@@ -497,7 +529,7 @@ const CoursesAdmin = () => {
                         ) : (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                             {prereqCodes.map(code => (
-                              <span key={code} className="it-cadm-badge it-cadm-badge--inactive">{code}</span>
+                              <span key={code} className="it-cadm-badge it-cadm-badge--code">{code}</span>
                             ))}
                           </div>
                         )}
@@ -626,9 +658,9 @@ const CoursesAdmin = () => {
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {MOCK_MATERIAS.map((m) => {
-                    const selected = Array.isArray(form.prerequisitos)
-                      ? form.prerequisitos.map(String).includes(String(m.id_materia))
-                      : false;
+                    const selected = asArray(form.prerequisitos)
+                      .map(String)
+                      .includes(String(m.id_materia));
 
                     return (
                       <button

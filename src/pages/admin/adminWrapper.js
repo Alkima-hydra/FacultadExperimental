@@ -50,7 +50,7 @@ const AdminWrapper = () => {
                 onClick={() => setMobileOpen(false)}
             />
 
-            <div className="it-admin-layout">
+            <div className="it-admin-layout" style={{ height: '100vh' }}>
 
                 <aside
                     className={[
@@ -105,7 +105,7 @@ const AdminWrapper = () => {
                     </div>
                 </aside>
 
-                <main className="it-admin-content">
+                <main className="it-admin-content" style={{ minHeight: 0, overflowY: 'auto' }}>
                     {renderContent(activeTab)}
                 </main>
             </div>

@@ -407,6 +407,12 @@
 
             &:hover { background-color: rgba(254, 84, 61, 0.2); }
         }
+        &--code {
+            background-color: rgba(83, 61, 254, 0.1);
+            color: var(--it-theme-1);
+
+            &:hover { background-color: rgba(61, 83, 254, 0.2); }
+        }
     }
 
     &-action-btn {
