@@ -341,7 +341,7 @@ function StudentsAdmin() {
                   </td>
                   <td><span className="it-cadm-table__periodo">{c.semestre || ''}</span></td>
                   <td className="it-cadm-table__cupos">{c.ci}</td>
-                  <td className="it-cadm-table__precio">Tel. {c.telefono}</td>
+                  <td className="it-cadm-table__precio"> {c.correo}</td>
                   <td>
                     <button
                       className={`it-cadm-badge${c.estado ? ' it-cadm-badge--active' : ' it-cadm-badge--inactive'}`}
