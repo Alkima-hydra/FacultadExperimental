@@ -58,7 +58,7 @@ const MenuItems = (props) => {
       </li>
       <li>
         <Link to="/faq">
-          <span>Preguntas Frecuentes</span>
+          <span>FAQ</span>
         </Link>
       </li>
       <li>
