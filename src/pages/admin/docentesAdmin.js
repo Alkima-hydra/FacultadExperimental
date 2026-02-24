@@ -7,71 +7,26 @@ import Swal from 'sweetalert2';
 
 //para consumo
 import {
-  fetchEstudiantes,
-  fetchAllEstudiantes,
-  fetchEstudianteById,
-  createEstudiante,
-  updateEstudiante,
-  deleteEstudiante,
-} from './slicesStudents/StudentsThunk'
+  fetchDocentes,
+  fetchAllDocentes,
+  fetchDocenteById,
+  createDocente,
+  updateDocente,
+  deleteDocente,
+} from './slicesDocentes/DocentesThunk'
 
 import {
   selectIsLoading,
-  selectEstudiantes,
-  selectAllEstudiantes,
-  selectEstudianteseleccionado,
-  selectIsCreating,
   selectIsUpdating,
-  selectIsDeleting
-} from './slicesStudents/StudentsSlice';
+} from './slicesDocentes/DocentesSlice';
 
 
-// datos iniciales de prueba - en producción, estos vendrían de la API
-const MOCK_CARRERAS = [
-  { id_carrera: 1, nombre: 'Ingeniería de Sistemas',  sigla: 'SIS' },
-  { id_carrera: 2, nombre: 'Ingeniería Civil',        sigla: 'CIV' },
-  { id_carrera: 3, nombre: 'Administración',          sigla: 'ADM' },
-  { id_carrera: 4, nombre: 'Derecho',                 sigla: 'DER' },
-  { id_carrera: 5, nombre: 'Contaduría Pública',      sigla: 'CON' },
-];
-
-// CAMBIO: antes teníamos una lista fija de semestres (2024-2026).
-// La API puede devolver semestres de otros años (ej: "2023-1" -> UI "1-2023"),
-// por eso generamos opciones dinámicamente.
-const buildSemestres = (startYear, endYear) => {
-  const out = [];
-  for (let y = startYear; y <= endYear; y++) {
-    out.push(`1-${y}`);
-    out.push(`2-${y}`);
-  }
-  return out;
-};
-
-// CAMBIO: helper para ordenar semestres tipo "1-2023" por año y semestre
-const sortSemestres = (a, b) => {
-  const [sa, ya] = String(a).split('-');
-  const [sb, yb] = String(b).split('-');
-  const yaN = Number(ya);
-  const ybN = Number(yb);
-  if (yaN !== ybN) return yaN - ybN;
-  return Number(sa) - Number(sb);
-};
-
-const INITIAL_STUDENTS_FALLBACK = [
-  { id_estudiante: 1, carrera_id: 1, carrera_nombre: 'Ingeniería de Sistemas',  carrera_sigla: 'SIS', semestre: '2-2026', nombre: 'María Fernanda', apellido: 'Quispe',     ci: 9876543, correo: 'maria.quispe@ucb.edu.bo',  direccion: '---', estado: true  }, // CAMBIO: placeholder de dirección (antes teléfono)
-  { id_estudiante: 2, carrera_id: 2, carrera_nombre: 'Ingeniería Civil',        carrera_sigla: 'CIV', semestre: '1-2026', nombre: 'José Luis',      apellido: 'Rojas',      ci: 8123456, correo: 'jose.rojas@ucb.edu.bo',    direccion: '---', estado: true  },
-  { id_estudiante: 3, carrera_id: 1, carrera_nombre: 'Ingeniería de Sistemas',  carrera_sigla: 'SIS', semestre: '2-2025', nombre: 'Andrea',         apellido: 'Mamani',     ci: 7456123, correo: 'andrea.mamani@ucb.edu.bo', direccion: '---', estado: false },
-  { id_estudiante: 4, carrera_id: 4, carrera_nombre: 'Derecho',                 carrera_sigla: 'DER', semestre: '1-2025', nombre: 'Carlos',         apellido: 'Torrez',     ci: 6543210, correo: 'carlos.torrez@ucb.edu.bo', direccion: '---', estado: true  },
-  { id_estudiante: 5, carrera_id: 3, carrera_nombre: 'Administración',          carrera_sigla: 'ADM', semestre: '2-2024', nombre: 'Valeria',        apellido: 'Flores',     ci: 9321456, correo: 'valeria.flores@ucb.edu.bo', direccion: '---', estado: true  },
-  { id_estudiante: 6, carrera_id: 5, carrera_nombre: 'Contaduría Pública',      carrera_sigla: 'CON', semestre: '1-2024', nombre: 'Diego',          apellido: 'Vargas',     ci: 7012345, correo: 'diego.vargas@ucb.edu.bo',  direccion: '---', estado: true  },
-  { id_estudiante: 7, carrera_id: 2, carrera_nombre: 'Ingeniería Civil',        carrera_sigla: 'CIV', semestre: '2-2026', nombre: 'Lucía',          apellido: 'Paredes',    ci: 8899776, correo: 'lucia.paredes@ucb.edu.bo', direccion: '---', estado: false },
-];
 
 const PAGE_SIZE = 5;
 
 const emptyForm = {
-  carrera: '',
-  semestre_ingreso: '',
+  titulo: '',
+  tipo_docente: '',
 
   // UI (nombre/apellidos)
   nombre: '',
@@ -84,7 +39,6 @@ const emptyForm = {
 
   ci: '',
   correo: '',
-  direccion: '', // CAMBIO: en vez de teléfono, usamos dirección (así viene en el GET)
 
   // Persona/usuario (solo creación)
   genero: '',
@@ -101,15 +55,33 @@ const swalTheme = {
   customClass: { popup: 'it-cadm-swal-popup' },
 };
 
-function StudentsAdmin() {
+function DocentesAdmin() {
   const dispatch = useDispatch();
 
   // Redux state (API)
   const isLoading = useSelector(selectIsLoading);
 
-  // Puede venir como array o como objeto { ok, estudiantes: [...] } según cómo lo guarde el slice
-  const rawAllEstudiantes = useSelector(selectAllEstudiantes);
-  const rawEstudiantes = useSelector(selectEstudiantes);
+  // Puede venir como array o como objeto { ok, docentes: [...] } según cómo lo guarde el slice.
+  // Además, el slice puede estar montado con distintas keys en el rootReducer (Docente/docente/docentes/Docentes).
+  const rawAllDocentes = useSelector((state) =>
+    state?.Docente?.allDocentes ??
+    state?.Docente?.Docentes ??
+    state?.docente?.allDocentes ??
+    state?.docente?.Docentes ??
+    state?.docentes?.allDocentes ??
+    state?.docentes?.Docentes ??
+    state?.Docentes?.allDocentes ??
+    state?.Docentes?.Docentes ??
+    null
+  );
+
+  const rawDocentes = useSelector((state) =>
+    state?.Docente?.Docenteseleccionado ??
+    state?.docente?.Docenteseleccionado ??
+    state?.docentes?.Docenteseleccionado ??
+    state?.Docentes?.Docenteseleccionado ??
+    null
+  );
 
   const isUpdating = useSelector(selectIsUpdating);
 
@@ -117,9 +89,9 @@ function StudentsAdmin() {
   const isBlocking = Boolean(isLoading);
 
   // Local state (UI)
-  // Mientras conectamos todo el CRUD, usamos un fallback estático.
+  // Mientras conectamos todo el CRUD, usamos un fallback vacío.
   // Apenas llega data real desde la API (Redux), reemplazamos este arreglo.
-  const [students, setStudents] = useState(INITIAL_STUDENTS_FALLBACK);
+  const [Docentes, setDocentes] = useState([]);
   const [search, setSearch] = useState('');
   const [filterPer, setFilterPer] = useState('');
   const [filterEst, setFilterEst] = useState('');
@@ -131,142 +103,85 @@ function StudentsAdmin() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // CAMBIO: opciones de semestre dinámicas para que el <select> muestre el valor real del estudiante
-  const semestreOptions = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const base = buildSemestres(currentYear - 6, currentYear + 1);
-
-    const extras = new Set(
-      students
-        .map((s) => s?.semestre)
-        .filter(Boolean)
-    );
-
-    // CAMBIO: si estamos editando y el semestre no está en la lista, lo incluimos igual
-    if (form?.semestre) extras.add(form.semestre);
-
-    const merged = Array.from(new Set([...base, ...extras]));
-    return merged.sort(sortSemestres);
-  }, [students, form?.semestre]);
-
-  // Mapper: API -> UI
-  const mapApiEstudianteToUi = (e) => {
-    const usuario = e?.usuario || {};
+  // Mapper: API -> UI (docentes)
+  const mapApiDocenteToUi = (d) => {
+    const usuario = d?.usuario || {};
     const apellidoP = usuario?.apellido_paterno || '';
     const apellidoM = usuario?.apellido_materno || '';
     const apellido = `${apellidoP} ${apellidoM}`.trim();
 
-    // "semestre_ingreso" viene como "2023-1" y en UI se usa "1-2023" (semestre-año)
-    const semestreIngreso = String(e?.semestre_ingreso || '').trim();
-    const semestreUi = semestreIngreso.includes('-')
-      ? (() => {
-          const [anio, sem] = semestreIngreso.split('-');
-          return `${sem}-${anio}`;
-        })()
-      : semestreIngreso;
-
-    const carreraNombre = e?.carrera || '';
-    // CAMBIO: La API devuelve `carrera` como texto. Para que el <select> funcione,
-    // convertimos ese texto a un `carrera_id` de nuestro mock.
-    const carreraMatch = MOCK_CARRERAS.find(
-      (c) => String(c?.nombre || '').toLowerCase() === String(carreraNombre || '').toLowerCase()
-    );
-    const carreraSigla = carreraNombre
-      ? carreraNombre
-          .split(' ')
-          .filter(Boolean)
-          .slice(0, 3)
-          .map(w => w[0]?.toUpperCase() || '')
-          .join('')
-      : '';
-
     return {
-      id_estudiante: e?.id_estudiante,
-      carrera_id: carreraMatch?.id_carrera ?? '', // CAMBIO: id derivado para que el select muestre bien
-      carrera_nombre: carreraNombre,
-      carrera_sigla: carreraSigla,
-      semestre: semestreUi,
-      nombre: usuario?.nombres || '',
+      id_docente: d?.id_docente,
+      titulo: String(d?.titulo || '').trim(),
+      tipo_docente: String(d?.tipo_docente || '').trim(),
+      usuarios_id_persona: d?.usuarios_id_persona,
+      usuario,
+      nombre: String(usuario?.nombres || '').trim(),
       apellido,
-      ci: usuario?.ci ? Number(usuario.ci) : '',
-      correo: usuario?.mail || '',
-      direccion: e?.direccion || '', // CAMBIO: guardamos dirección para editarla
+      ci: usuario?.ci ? String(usuario.ci) : '',
+      correo: String(usuario?.mail || '').trim(),
       estado: Boolean(usuario?.estado),
     };
   };
 
-  // Mapper: UI(form) -> API payload
+  // Mapper: UI(form) -> API payload (docentes)
   const mapUiFormToApiUpdate = (current, formState) => {
     const apellidoTxt = String(formState?.apellido || '').trim();
     const partes = apellidoTxt.split(' ').filter(Boolean);
     const apellido_paterno = partes[0] || '';
     const apellido_materno = partes.slice(1).join(' ') || '';
 
-    // UI usa "1-2026" y API usa "2026-1"
-    const semestreUi = String(formState?.semestre || '').trim();
-    const semestre_ingreso = semestreUi.includes('-')
-      ? (() => {
-          const [sem, anio] = semestreUi.split('-');
-          return `${anio}-${sem}`;
-        })()
-      : semestreUi;
-
     return {
-      id_estudiante: current?.id_estudiante,
-      carrera_id: Number(formState?.carrera_id),
-      semestre_ingreso,
-      // CAMBIO: ahora dirección se edita desde el formulario
-      direccion: String(formState?.direccion || '').trim(),
-      // si tu backend necesita vincular a persona/usuario
-      usuarios_id_persona: current?.usuarios_id_persona ?? undefined,
-      usuario: {
-        id_persona: current?.usuario?.id_persona ?? current?.usuarios_id_persona ?? undefined,
+      id_docente: current?.id_docente,
+      titulo: String(formState?.titulo || '').trim(),
+      tipo_docente: String(formState?.tipo_docente || '').trim(),
         nombres: String(formState?.nombre || '').trim(),
         apellido_paterno,
         apellido_materno,
         ci: String(formState?.ci || '').trim(),
         mail: String(formState?.correo || '').trim(),
-        // telefono: String(formState?.telefono || '').trim(), // CAMBIO: ya no usamos teléfono en el form
         estado: Boolean(formState?.estado),
-      },
+      
     };
   };
 
   // 1) Al montar, pedimos la lista completa
   useEffect(() => {
-    dispatch(fetchAllEstudiantes());
+    dispatch(fetchAllDocentes());
   }, [dispatch]);
 
   // 2) Cuando llegue la data del store, la pasamos a nuestro formato UI
   useEffect(() => {
-    // Normalizamos la respuesta del store:
-    // - si es array -> lo usamos tal cual
-    // - si es objeto { ok, estudiantes } -> usamos estudiantes
-    // - si el slice usa otra propiedad -> también probamos rawEstudiantes
-    const apiList =
-      (Array.isArray(rawAllEstudiantes) ? rawAllEstudiantes : null) ||
-      (Array.isArray(rawAllEstudiantes?.estudiantes) ? rawAllEstudiantes.estudiantes : null) ||
-      (Array.isArray(rawEstudiantes) ? rawEstudiantes : null) ||
-      (Array.isArray(rawEstudiantes?.estudiantes) ? rawEstudiantes.estudiantes : null) ||
+    const list =
+      (Array.isArray(rawAllDocentes) ? rawAllDocentes : null) ||
+      (Array.isArray(rawAllDocentes?.docentes) ? rawAllDocentes.docentes : null) ||
+      // a veces el thunk guarda { ok, docentes: [...] } dentro de otra propiedad
+      (Array.isArray(rawAllDocentes?.data?.docentes) ? rawAllDocentes.data.docentes : null) ||
+      (Array.isArray(rawDocentes) ? rawDocentes : null) ||
+      (Array.isArray(rawDocentes?.docentes) ? rawDocentes.docentes : null) ||
+      (Array.isArray(rawDocentes?.data?.docentes) ? rawDocentes.data.docentes : null) ||
       null;
 
-    if (apiList && apiList.length > 0) {
-      setStudents(apiList.map(mapApiEstudianteToUi));
+    if (list) {
+      setDocentes(list.map(mapApiDocenteToUi));
+    } else {
+      setDocentes([]);
     }
-    // Nota: si apiList viene vacío, dejamos el fallback estático para no mostrar tabla vacía
-  }, [rawAllEstudiantes, rawEstudiantes]);
+  }, [rawAllDocentes, rawDocentes]);
 
-  const filtered = students.filter(c => {
+  const filtered = Docentes.filter(d => {
     const q = search.toLowerCase();
     const matchSearch =
-      (c.nombre && c.nombre.toLowerCase().includes(q)) ||
-      (c.apellido && c.apellido.toLowerCase().includes(q)) ||
-      (c.ci && String(c.ci).includes(q)) ||
-      (c.correo && c.correo.toLowerCase().includes(q)) ||
-      (c.carrera_nombre && c.carrera_nombre.toLowerCase().includes(q));
-    const matchPer = filterPer ? String(c.carrera_id) === String(filterPer) : true;
-    const matchEst = filterEst === '' ? true : c.estado === (filterEst === 'activo');
-    return matchSearch && matchPer && matchEst;
+      (d.nombre && d.nombre.toLowerCase().includes(q)) ||
+      (d.apellido && d.apellido.toLowerCase().includes(q)) ||
+      (d.ci && String(d.ci).includes(q)) ||
+      (d.correo && d.correo.toLowerCase().includes(q)) ||
+      (d.titulo && d.titulo.toLowerCase().includes(q)) ||
+      (d.tipo_docente && d.tipo_docente.toLowerCase().includes(q));
+
+    const matchTipo = filterPer ? String(d.tipo_docente) === String(filterPer) : true;
+    const matchEst = filterEst === '' ? true : d.estado === (filterEst === 'activo');
+    return matchSearch && matchTipo && matchEst;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -282,26 +197,25 @@ function StudentsAdmin() {
     setShowModal(true);
   };
 
-  const openEdit = (estudiante) => {
-    setEditTarget(estudiante);
-    const u = estudiante?.usuario || {};
+  const openEdit = (docente) => {
+    setEditTarget(docente);
+    const u = docente?.usuario || {};
     setForm({
-      carrera_id: estudiante.carrera_id,
-      semestre: estudiante.semestre || '',
-      nombre: estudiante.nombre,
-      apellido: estudiante.apellido,
+      titulo: docente.titulo || '',
+      tipo_docente: docente.tipo_docente || '',
+      nombre: docente.nombre,
+      apellido: docente.apellido,
 
-      // campos de creación (no se muestran en edición, pero los dejamos vacíos/según API)
+      // campos de creación (no se muestran en edición)
       apellido_paterno: u.apellido_paterno || '',
       apellido_materno: u.apellido_materno || '',
       genero: u.genero || '',
       fecha_nacimiento: u.fecha_nacimiento || '',
       password: '',
 
-      ci: estudiante.ci,
-      correo: estudiante.correo,
-      direccion: estudiante.direccion || '',
-      estado: estudiante.estado,
+      ci: docente.ci,
+      correo: docente.correo,
+      estado: docente.estado,
     });
     setFormErrors({});
     setShowPassword(false);
@@ -311,29 +225,28 @@ function StudentsAdmin() {
   const closeModal = () => setShowModal(false);
 
   const validatePasswordBasic = (pwd) => {
-    const p = String(pwd || '');
-    if (p.length < 8) return 'La contraseña debe tener al menos 8 caracteres';
-    if (!/[A-Z]/.test(p)) return 'La contraseña debe incluir al menos 1 mayúscula';
-    if (!/[a-z]/.test(p)) return 'La contraseña debe incluir al menos 1 minúscula';
-    if (!/\d/.test(p)) return 'La contraseña debe incluir al menos 1 número';
-    return '';
-  };
+  const p = String(pwd || '');
+  if (p.length < 8) return 'La contraseña debe tener al menos 8 caracteres';
+  if (!/[A-Z]/.test(p)) return 'La contraseña debe incluir al menos 1 mayúscula';
+  if (!/[a-z]/.test(p)) return 'La contraseña debe incluir al menos 1 minúscula';
+  if (!/\d/.test(p)) return 'La contraseña debe incluir al menos 1 número';
+  return '';
+};
 
-  const getPasswordChecks = (pwd) => {
-    const p = String(pwd || '');
-    return {
-      minLen: p.length >= 8,
-      hasUpper: /[A-Z]/.test(p),
-      hasLower: /[a-z]/.test(p),
-      hasNumber: /\d/.test(p),
-    };
+const getPasswordChecks = (pwd) => {
+  const p = String(pwd || '');
+  return {
+    minLen: p.length >= 8,
+    hasUpper: /[A-Z]/.test(p),
+    hasLower: /[a-z]/.test(p),
+    hasNumber: /\d/.test(p),
   };
+};
 
   const validate = () => {
     const errs = {};
-
-    if (!form.carrera_id) errs.carrera_id = 'Selecciona una carrera';
-    if (!form.semestre) errs.semestre = 'Selecciona un semestre';
+    if (!form.titulo) errs.titulo = 'Ingresa el título';
+    if (!form.tipo_docente) errs.tipo_docente = 'Selecciona el tipo de docente';
     if (!form.nombre) errs.nombre = 'Ingresa el nombre';
 
     // Edición: apellido combinado
@@ -347,15 +260,14 @@ function StudentsAdmin() {
       if (!form.fecha_nacimiento) errs.fecha_nacimiento = 'Ingresa la fecha de nacimiento';
       if (!form.password) {
         errs.password = 'Ingresa una contraseña';
-      } else {
+        } else {
         const pwdErr = validatePasswordBasic(form.password);
         if (pwdErr) errs.password = pwdErr;
-      }
+        }
     }
 
     if (!form.ci || String(form.ci).trim().length === 0) errs.ci = 'Ingresa el CI';
     if (!form.correo) errs.correo = 'Ingresa el correo';
-    if (!form.direccion) errs.direccion = 'Ingresa la dirección';
 
     setFormErrors(errs);
     return Object.keys(errs).length === 0;
@@ -363,20 +275,9 @@ function StudentsAdmin() {
 
   // Mapper: UI(form) -> API payload (CREATE)
   const mapUiFormToApiCreate = (formState) => {
-    // UI usa "1-2026" y API usa "2026-1"
-    const semestreUi = String(formState?.semestre || '').trim();
-    const semestre_ingreso = semestreUi.includes('-')
-      ? (() => {
-          const [sem, anio] = semestreUi.split('-');
-          return `${anio}-${sem}`;
-        })()
-      : semestreUi;
-
     return {
-      carrera: MOCK_CARRERAS.find(c => String(c.id_carrera) === String(formState?.carrera_id))?.nombre || '',
-      semestre_ingreso,
-      direccion: String(formState?.direccion || '').trim(),
-      // datos de usuario para la creación directa mediante la api
+      titulo: String(formState?.titulo || '').trim(),
+      tipo_docente: String(formState?.tipo_docente || '').trim(),
         nombres: String(formState?.nombre || '').trim(),
         apellido_paterno: String(formState?.apellido_paterno || '').trim(),
         apellido_materno: String(formState?.apellido_materno || '').trim(),
@@ -393,11 +294,10 @@ function StudentsAdmin() {
   const handleSave = () => {
     if (!validate()) return;
 
-    const carrera = MOCK_CARRERAS.find(x => x.id_carrera === Number(form.carrera_id));
     if (editTarget) {
       Swal.fire({
         title: '¿Guardar cambios?',
-        text: `Actualizar al estudiante ${form.nombre} ${form.apellido}`,
+        text: `Actualizar al docente ${form.nombre} ${form.apellido}`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Sí, guardar',
@@ -407,22 +307,19 @@ function StudentsAdmin() {
         if (res.isConfirmed) {
           try {
             const apiPayload = mapUiFormToApiUpdate(editTarget, form);
-
-            // Nota: asumimos que el thunk recibe un objeto con { id_estudiante, data }
             const action = await dispatch(
-              updateEstudiante({
-                id_estudiante: editTarget.id_estudiante,
+              updateDocente({
+                id_docente: editTarget.id_docente,
                 data: apiPayload,
               })
             );
-
-            if (updateEstudiante.fulfilled && updateEstudiante.fulfilled.match(action)) {
+            if (updateDocente.fulfilled && updateDocente.fulfilled.match(action)) {
               setShowModal(false);
               // recargar desde API para evitar inconsistencias
-              dispatch(fetchAllEstudiantes());
+              dispatch(fetchAllDocentes());
               Swal.fire({
                 title: '¡Actualizado!',
-                text: 'El estudiante fue actualizado.',
+                text: 'El docente fue actualizado.',
                 icon: 'success',
                 ...swalTheme,
                 showCancelButton: false,
@@ -431,7 +328,7 @@ function StudentsAdmin() {
               const msg =
                 action?.payload?.message ||
                 action?.error?.message ||
-                'No se pudo actualizar el estudiante.';
+                'No se pudo actualizar el docente.';
               Swal.fire({
                 title: 'Error',
                 text: msg,
@@ -443,7 +340,7 @@ function StudentsAdmin() {
           } catch (e) {
             Swal.fire({
               title: 'Error',
-              text: e?.message || 'No se pudo actualizar el estudiante.',
+              text: e?.message || 'No se pudo actualizar el docente.',
               icon: 'error',
               ...swalTheme,
               showCancelButton: false,
@@ -456,7 +353,7 @@ function StudentsAdmin() {
       setShowModal(false);
 
       Swal.fire({
-        title: '¿Crear estudiante?',
+        title: '¿Crear docente?',
         text: `Se registrará ${form.nombre} ${form.apellido_paterno} ${form.apellido_materno}`,
         icon: 'question',
         showCancelButton: true,
@@ -476,7 +373,7 @@ function StudentsAdmin() {
           // Mostrar loading mientras se crea
           Swal.fire({
             title: 'Creando…',
-            text: 'Registrando al estudiante',
+            text: 'Registrando al docente',
             allowOutsideClick: false,
             allowEscapeKey: false,
             didOpen: () => {
@@ -485,13 +382,13 @@ function StudentsAdmin() {
             ...swalTheme,
           });
 
-          const action = await dispatch(createEstudiante(apiPayload));
+          const action = await dispatch(createDocente(apiPayload));
 
-          if (createEstudiante.fulfilled && createEstudiante.fulfilled.match(action)) {
-            dispatch(fetchAllEstudiantes());
+          if (createDocente.fulfilled && createDocente.fulfilled.match(action)) {
+            dispatch(fetchAllDocentes());
             Swal.fire({
               title: '¡Creado!',
-              text: 'El estudiante fue registrado.',
+              text: 'El docente fue registrado.',
               icon: 'success',
               ...swalTheme,
               showCancelButton: false,
@@ -500,7 +397,7 @@ function StudentsAdmin() {
             const msg =
               action?.payload?.message ||
               action?.error?.message ||
-              'No se pudo crear el estudiante.';
+              'No se pudo crear el docente.';
             Swal.fire({
               title: 'Error',
               text: msg,
@@ -512,7 +409,7 @@ function StudentsAdmin() {
         } catch (e) {
           Swal.fire({
             title: 'Error',
-            text: e?.message || 'No se pudo crear el estudiante.',
+            text: e?.message || 'No se pudo crear el docente.',
             icon: 'error',
             ...swalTheme,
             showCancelButton: false,
@@ -522,10 +419,10 @@ function StudentsAdmin() {
     }
   };
 
-  const handleDelete = (estudiante) => {
+  const handleDelete = (docente) => {
     Swal.fire({
-      title: '¿Eliminar estudiante?',
-      html: `<span style="color:#4D5756">Se eliminará <strong>${estudiante.nombre} ${estudiante.apellido}</strong> (${estudiante.carrera_sigla}). Esta acción no se puede deshacer.</span>`,
+      title: '¿Eliminar docente?',
+      html: `<span style="color:#4D5756">Se eliminará <strong>${docente.nombre} ${docente.apellido}</strong>. Esta acción no se puede deshacer.</span>`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
@@ -534,17 +431,17 @@ function StudentsAdmin() {
       confirmButtonColor: '#FE543D',
     }).then(res => {
       if (res.isConfirmed) {
-        setStudents(prev => prev.filter(s => s.id_estudiante !== estudiante.id_estudiante));
-        Swal.fire({ title: 'Eliminado', text: 'El estudiante fue eliminado.', icon: 'success', ...swalTheme, showCancelButton: false });
+        setDocentes(prev => prev.filter(s => s.id_docente !== docente.id_docente));
+        Swal.fire({ title: 'Eliminado', text: 'El docente fue eliminado.', icon: 'success', ...swalTheme, showCancelButton: false });
       }
     });
   };
 
-  const handleToggleEstado = (estudiante) => {
-    const accion = estudiante.estado ? 'desactivar' : 'activar';
+  const handleToggleEstado = (docente) => {
+    const accion = docente.estado ? 'desactivar' : 'activar';
     Swal.fire({
-      title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} estudiante?`,
-      text: `El estudiante ${estudiante.nombre} ${estudiante.apellido} será ${accion === 'activar' ? 'habilitado' : 'deshabilitado'}.`,
+      title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} docente?`,
+      text: `El docente ${docente.nombre} ${docente.apellido} será ${accion === 'activar' ? 'habilitado' : 'deshabilitado'}.`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: `Sí, ${accion}`,
@@ -552,8 +449,8 @@ function StudentsAdmin() {
       ...swalTheme,
     }).then(res => {
       if (res.isConfirmed) {
-        setStudents(prev =>
-          prev.map(s => s.id_estudiante === estudiante.id_estudiante ? { ...s, estado: !s.estado } : s)
+        setDocentes(prev =>
+          prev.map(s => s.id_docente === docente.id_docente ? { ...s, estado: !s.estado } : s)
         );
       }
     });
@@ -581,14 +478,14 @@ function StudentsAdmin() {
       <div className="it-cadm-header">
         <div className="it-cadm-header__left">
           <div>
-            <h2 className="it-cadm-header__title">Gestión de Estudiantes</h2>
+            <h2 className="it-cadm-header__title">Gestión de Docentes</h2>
             <p className="it-cadm-header__sub">
-              {filtered.length} estudiante{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
+              {filtered.length} docente{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
         <button className="it-cadm-btn-create" onClick={openCreate}>
-          <FiPlus /> <span>Nuevo estudiante</span>
+          <FiPlus /> <span>Nuevo docente</span>
         </button>
       </div>
 
@@ -619,14 +516,14 @@ function StudentsAdmin() {
       {filterOpen && (
         <div className="it-cadm-filters">
           <div className="it-cadm-filters__group">
-            <label className="it-cadm-filters__label">Carrera</label>
+            <label className="it-cadm-filters__label">Tipo de docente</label>
             <select className="it-cadm-filters__select" value={filterPer} onChange={e => setFilterPer(e.target.value)}>
-              <option value="">Todas</option>
-              {MOCK_CARRERAS.map(c => (
-                <option key={c.id_carrera} value={c.id_carrera}>
-                  [{c.sigla}] {c.nombre}
-                </option>
-              ))}
+              <option value="">Todos</option>
+              {Array.from(new Set(Docentes.map(d => d?.tipo_docente).filter(Boolean)))
+                .sort()
+                .map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
             </select>
           </div>
           <div className="it-cadm-filters__group">
@@ -649,9 +546,9 @@ function StudentsAdmin() {
             <thead>
               <tr>
                 <th>#</th>
-                <th>Estudiante</th>
-                <th>Carrera</th>
-                <th>Semestre</th>
+                <th>Docente</th>
+                <th>Título</th>
+                <th>Tipo</th>
                 <th>CI</th>
                 <th>Correo</th>
                 <th>Estado</th>
@@ -663,36 +560,32 @@ function StudentsAdmin() {
                 <tr>
                   <td colSpan={8} className="it-cadm-table__empty">
                     <ClipLoader size={28} />
-                    <p style={{ marginTop: 10 }}>Cargando estudiantes…</p>
+                    <p style={{ marginTop: 10 }}>Cargando docentes…</p>
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="it-cadm-table__empty">
                     <FiUser style={{ fontSize: 28, marginBottom: 8, opacity: 0.3 }} />
-                    <p>No se encontraron estudiantes</p>
+                    <p>No se encontraron docentes</p>
                   </td>
                 </tr>
               ) : paginated.map((c, idx) => (
-                <tr key={c.id_estudiante} className="it-cadm-table__row">
+                <tr key={c.id_docente} className="it-cadm-table__row">
                   <td className="it-cadm-table__num">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                   <td>
                     <div className="it-cadm-table__materia">
-                      <span className="it-cadm-table__codigo">{c.carrera_sigla}</span>
                       <span className="it-cadm-table__nombre">{c.nombre} {c.apellido}</span>
                     </div>
                   </td>
                   <td>
-                    <div className="it-cadm-table__docente">
-                      <span className="it-cadm-table__docente-avatar">
-                        {c.nombre?.charAt(0)}
-                      </span>
-                      <span>{c.correo}</span>
-                    </div>
+                    <span>{c.titulo}</span>
                   </td>
-                  <td><span className="it-cadm-table__periodo">{c.semestre || ''}</span></td>
+                  <td>
+                    <span className="it-cadm-table__periodo">{c.tipo_docente}</span>
+                  </td>
                   <td className="it-cadm-table__cupos">{c.ci}</td>
-                  <td className="it-cadm-table__precio"> {c.correo}</td>
+                  <td className="it-cadm-table__precio">{c.correo}</td>
                   <td>
                     <button
                       className={`it-cadm-badge${c.estado ? ' it-cadm-badge--active' : ' it-cadm-badge--inactive'}`}
@@ -759,7 +652,7 @@ function StudentsAdmin() {
                   <FiUser />
                 </div>
                 <h3 className="it-cadm-modal__title">
-                  {editTarget ? 'Editar estudiante' : 'Nuevo estudiante'}
+                  {editTarget ? 'Editar docente' : 'Nuevo docente'}
                 </h3>
               </div>
               <button className="it-cadm-modal__close" onClick={closeModal}>
@@ -770,41 +663,35 @@ function StudentsAdmin() {
             <div className="it-cadm-modal__body">
               <div className="it-cadm-field">
                 <label className="it-cadm-field__label">
-                  <FiLayers /> Carrera <span>*</span>
+                  <FiBook /> Título <span>*</span>
                 </label>
-                <select
-                  name="carrera_id"
-                  className={`it-cadm-field__input${formErrors.carrera_id ? ' error' : ''}`}
-                  value={form.carrera_id}
+                <input
+                  type="text"
+                  name="titulo"
+                  placeholder="Ej. Ingeniero en Sistemas"
+                  className={`it-cadm-field__input${formErrors.titulo ? ' error' : ''}`}
+                  value={form.titulo}
                   onChange={handleFormChange}
-                >
-                  <option value="">Seleccionar carrera</option>
-                  {MOCK_CARRERAS.map(c => (
-                    <option key={c.id_carrera} value={c.id_carrera}>
-                      [{c.sigla}] {c.nombre}
-                    </option>
-                  ))}
-                </select>
-                {formErrors.carrera_id && <span className="it-cadm-field__error">{formErrors.carrera_id}</span>}
+                />
+                {formErrors.titulo && <span className="it-cadm-field__error">{formErrors.titulo}</span>}
               </div>
 
               <div className="it-cadm-field">
                 <label className="it-cadm-field__label">
-                  <MdOutlineSchool /> Semestre <span>*</span>
+                  <FiLayers /> Tipo de docente <span>*</span>
                 </label>
                 <select
-                  name="semestre"
-                  className={`it-cadm-field__input${formErrors.semestre ? ' error' : ''}`}
-                  value={form.semestre}
+                  name="tipo_docente"
+                  className={`it-cadm-field__input${formErrors.tipo_docente ? ' error' : ''}`}
+                  value={form.tipo_docente}
                   onChange={handleFormChange}
                 >
-                  <option value="">Seleccionar semestre</option>
-                  {/* CAMBIO: opciones de semestre dinámicas */}
-                  {semestreOptions.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
+                  <option value="">Seleccionar tipo</option>
+                  <option value="Tiempo Completo">Tiempo Completo</option>
+                  <option value="Tiempo Parcial">Tiempo Parcial</option>
+                  <option value="Invitado">Invitado</option>
                 </select>
-                {formErrors.semestre && <span className="it-cadm-field__error">{formErrors.semestre}</span>}
+                {formErrors.tipo_docente && <span className="it-cadm-field__error">{formErrors.tipo_docente}</span>}
               </div>
 
               <div className="it-cadm-field">
@@ -833,7 +720,9 @@ function StudentsAdmin() {
                         value={form.apellido}
                         onChange={handleFormChange}
                       />
-                      {formErrors.apellido && <span className="it-cadm-field__error">{formErrors.apellido}</span>}
+                      {formErrors.apellido && (
+                        <span className="it-cadm-field__error">{formErrors.apellido}</span>
+                      )}
                     </div>
                   ) : (
                     <>
@@ -868,42 +757,19 @@ function StudentsAdmin() {
                 </div>
               </div>
 
-              <div className="it-cadm-field-row">
-                <div className="it-cadm-field">
-                  <label className="it-cadm-field__label">
-                    CI <span>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="ci"
-                    placeholder="Ej. 8461662 / 8461662LP"
-                    autoComplete="off"
-                    className={`it-cadm-field__input${formErrors.ci ? ' error' : ''}`}
-                    value={form.ci}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      // Permitimos letras/números y algunos separadores comunes (.-/ y espacios)
-                      const cleaned = v.replace(/[^a-zA-Z0-9.\-\/\s]/g, '');
-                      setForm((prev) => ({ ...prev, ci: cleaned }));
-                      if (formErrors.ci) setFormErrors((prev) => ({ ...prev, ci: '' }));
-                    }}
-                  />
-                  {formErrors.ci && <span className="it-cadm-field__error">{formErrors.ci}</span>}
-                </div>
-                <div className="it-cadm-field">
-                  <label className="it-cadm-field__label">
-                    Dirección <span>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="direccion"
-                    placeholder="Ej. Sur"
-                    className={`it-cadm-field__input${formErrors.direccion ? ' error' : ''}`}
-                    value={form.direccion}
-                    onChange={handleFormChange}
-                  />
-                  {formErrors.direccion && <span className="it-cadm-field__error">{formErrors.direccion}</span>}
-                </div>
+              <div className="it-cadm-field">
+                <label className="it-cadm-field__label">
+                  CI <span>*</span>
+                </label>
+                <input
+                  type="text"
+                  name="ci"
+                  placeholder="Ej. 12345"
+                  className={`it-cadm-field__input${formErrors.ci ? ' error' : ''}`}
+                  value={form.ci}
+                  onChange={handleFormChange}
+                />
+                {formErrors.ci && <span className="it-cadm-field__error">{formErrors.ci}</span>}
               </div>
 
               <div className="it-cadm-field">
@@ -961,10 +827,11 @@ function StudentsAdmin() {
 
                   <div className="it-cadm-field">
                     <label className="it-cadm-field__label">
-                      Contraseña <span>*</span>
+                        Contraseña <span>*</span>
                     </label>
+
                     <div style={{ position: 'relative' }}>
-                      <input
+                        <input
                         type={showPassword ? 'text' : 'password'}
                         name="password"
                         placeholder="••••••••"
@@ -972,53 +839,54 @@ function StudentsAdmin() {
                         value={form.password}
                         onChange={handleFormChange}
                         autoComplete="new-password"
-                      />
-                      <button
+                        />
+
+                        <button
                         type="button"
                         onClick={() => setShowPassword((s) => !s)}
                         title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                         style={{
-                          position: 'absolute',
-                          right: 10,
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          border: 'none',
-                          background: 'transparent',
-                          padding: 0,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          opacity: 0.75,
+                            position: 'absolute',
+                            right: 10,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            border: 'none',
+                            background: 'transparent',
+                            padding: 0,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0.75,
                         }}
                         aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                      >
+                        >
                         {showPassword ? <FiEyeOff /> : <FiEye />}
-                      </button>
+                        </button>
                     </div>
-                    {(() => {
-                      const checks = getPasswordChecks(form.password);
-                      const Item = ({ ok, text }) => (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, opacity: ok ? 0.9 : 0.7 }}>
-                          {ok ? <FiCheckCircle /> : <FiXCircle />}
-                          <span>{text}</span>
-                        </div>
-                      );
 
-                      return (
-                        <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
-                          <Item ok={checks.minLen} text="Mínimo 8 caracteres" />
-                          <Item ok={checks.hasUpper} text="Al menos 1 mayúscula" />
-                          <Item ok={checks.hasLower} text="Al menos 1 minúscula" />
-                          <Item ok={checks.hasNumber} text="Al menos 1 número" />
+                    {(() => {
+                        const checks = getPasswordChecks(form.password);
+
+                        const Item = ({ ok, text }) => (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, opacity: ok ? 0.9 : 0.7 }}>
+                            {ok ? <FiCheckCircle /> : <FiXCircle />}
+                            <span>{text}</span>
                         </div>
-                      );
+                        );
+
+                        return (
+                        <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
+                            <Item ok={checks.minLen} text="Mínimo 8 caracteres" />
+                            <Item ok={checks.hasUpper} text="Al menos 1 mayúscula" />
+                            <Item ok={checks.hasLower} text="Al menos 1 minúscula" />
+                            <Item ok={checks.hasNumber} text="Al menos 1 número" />
+                        </div>
+                        );
                     })()}
 
-                    {formErrors.password && (
-                      <span className="it-cadm-field__error">{formErrors.password}</span>
-                    )}
-                  </div>
+                    {formErrors.password && <span className="it-cadm-field__error">{formErrors.password}</span>}
+                </div>
                 </>
               )}
 
@@ -1032,7 +900,7 @@ function StudentsAdmin() {
                   />
                   <span className="it-cadm-toggle__track" />
                   <span className="it-cadm-toggle__label">
-                    Estudiante {form.estado ? 'Activo' : 'Inactivo'}
+                    Docente {form.estado ? 'Activo' : 'Inactivo'}
                   </span>
                 </label>
               </div>
@@ -1048,7 +916,7 @@ function StudentsAdmin() {
                 disabled={isUpdating}
                 title={isUpdating ? 'Actualizando…' : undefined}
               >
-                {isUpdating ? 'Actualizando…' : editTarget ? 'Guardar cambios' : 'Crear estudiante'}
+                {isUpdating ? 'Actualizando…' : editTarget ? 'Guardar cambios' : 'Crear docente'}
               </button>
             </div>
           </div>
@@ -1074,7 +942,7 @@ function StudentsAdmin() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             <ClipLoader size={44} />
             <p style={{ margin: 0, color: '#4D5756', fontWeight: 600 }}>
-              Cargando estudiantes…
+              Cargando docentes…
             </p>
           </div>
         </div>
@@ -1082,4 +950,4 @@ function StudentsAdmin() {
     </div>
   );
 }
-export default StudentsAdmin;
+export default DocentesAdmin;
