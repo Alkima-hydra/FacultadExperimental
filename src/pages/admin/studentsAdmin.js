@@ -70,14 +70,28 @@ const INITIAL_STUDENTS_FALLBACK = [
 const PAGE_SIZE = 5;
 
 const emptyForm = {
-  carrera_id:  '',
-  semestre:    '',
-  nombre:      '',
-  apellido:    '',
-  ci:          '',
-  correo:      '',
-  direccion:   '', // CAMBIO: en vez de teléfono, usamos dirección (así viene en el GET)
-  estado:      true,
+  carrera_id: '',
+  semestre: '',
+
+  // UI (nombre/apellidos)
+  nombre: '',
+  // Para edición se mantiene este campo (apellido combinado)
+  apellido: '',
+
+  // Para creación: apellidos separados (persona)
+  apellido_paterno: '',
+  apellido_materno: '',
+
+  ci: '',
+  correo: '',
+  direccion: '', // CAMBIO: en vez de teléfono, usamos dirección (así viene en el GET)
+
+  // Persona/usuario (solo creación)
+  genero: '',
+  fecha_nacimiento: '', // YYYY-MM-DD
+  password: '',
+
+  estado: true,
 };
 
 
@@ -268,14 +282,23 @@ function StudentsAdmin() {
 
   const openEdit = (estudiante) => {
     setEditTarget(estudiante);
+    const u = estudiante?.usuario || {};
     setForm({
       carrera_id: estudiante.carrera_id,
       semestre: estudiante.semestre || '',
       nombre: estudiante.nombre,
       apellido: estudiante.apellido,
+
+      // campos de creación (no se muestran en edición, pero los dejamos vacíos/según API)
+      apellido_paterno: u.apellido_paterno || '',
+      apellido_materno: u.apellido_materno || '',
+      genero: u.genero || '',
+      fecha_nacimiento: u.fecha_nacimiento || '',
+      password: '',
+
       ci: estudiante.ci,
       correo: estudiante.correo,
-      direccion: estudiante.direccion || '', // CAMBIO: en vez de teléfono
+      direccion: estudiante.direccion || '',
       estado: estudiante.estado,
     });
     setFormErrors({});
@@ -286,16 +309,59 @@ function StudentsAdmin() {
 
   const validate = () => {
     const errs = {};
+
     if (!form.carrera_id) errs.carrera_id = 'Selecciona una carrera';
     if (!form.semestre) errs.semestre = 'Selecciona un semestre';
     if (!form.nombre) errs.nombre = 'Ingresa el nombre';
-    if (!form.apellido) errs.apellido = 'Ingresa el apellido';
-    if (!form.ci || Number(form.ci) <= 0) errs.ci = 'Ingresa el CI (> 0)';
+
+    // Edición: apellido combinado
+    if (editTarget) {
+      if (!form.apellido) errs.apellido = 'Ingresa el apellido';
+    } else {
+      // Creación: apellidos separados + datos persona
+      if (!form.apellido_paterno) errs.apellido_paterno = 'Ingresa el apellido paterno';
+      if (!form.apellido_materno) errs.apellido_materno = 'Ingresa el apellido materno';
+      if (!form.genero) errs.genero = 'Selecciona el género';
+      if (!form.fecha_nacimiento) errs.fecha_nacimiento = 'Ingresa la fecha de nacimiento';
+      if (!form.password) errs.password = 'Ingresa una contraseña';
+    }
+
+    if (!form.ci || String(form.ci).trim().length === 0) errs.ci = 'Ingresa el CI';
     if (!form.correo) errs.correo = 'Ingresa el correo';
-    // CAMBIO: validamos dirección (la API maneja dirección en estudiante)
     if (!form.direccion) errs.direccion = 'Ingresa la dirección';
+
     setFormErrors(errs);
     return Object.keys(errs).length === 0;
+  };
+
+  // Mapper: UI(form) -> API payload (CREATE)
+  const mapUiFormToApiCreate = (formState) => {
+    // UI usa "1-2026" y API usa "2026-1"
+    const semestreUi = String(formState?.semestre || '').trim();
+    const semestre_ingreso = semestreUi.includes('-')
+      ? (() => {
+          const [sem, anio] = semestreUi.split('-');
+          return `${anio}-${sem}`;
+        })()
+      : semestreUi;
+
+    return {
+      carrera_id: Number(formState?.carrera_id),
+      semestre_ingreso,
+      direccion: String(formState?.direccion || '').trim(),
+      usuario: {
+        nombres: String(formState?.nombre || '').trim(),
+        apellido_paterno: String(formState?.apellido_paterno || '').trim(),
+        apellido_materno: String(formState?.apellido_materno || '').trim(),
+        ci: String(formState?.ci || '').trim(),
+        mail: String(formState?.correo || '').trim(),
+        genero: String(formState?.genero || '').trim(),
+        fecha_nacimiento: String(formState?.fecha_nacimiento || '').trim(),
+        password: String(formState?.password || '').trim(),
+        estado: Boolean(formState?.estado),
+        admin: false,
+      },
+    };
   };
 
   const handleSave = () => {
@@ -362,36 +428,50 @@ function StudentsAdmin() {
     } else {
       Swal.fire({
         title: '¿Crear estudiante?',
-        text: `Se registrará ${form.nombre} ${form.apellido} en ${carrera?.nombre || ''}`,
+        text: `Se registrará ${form.nombre} ${form.apellido_paterno} ${form.apellido_materno}`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Sí, crear',
         cancelButtonText: 'Cancelar',
         ...swalTheme,
-      }).then(res => {
+      }).then(async (res) => {
         if (res.isConfirmed) {
-          const newId =
-            students.length > 0
-              ? Math.max(...students.map(s => s.id_estudiante)) + 1
-              : 1;
-          setStudents(prev => [
-            ...prev,
-            {
-              id_estudiante: newId,
-              carrera_id: Number(form.carrera_id),
-              carrera_nombre: carrera?.nombre || '',
-              carrera_sigla: carrera?.sigla || '',
-              semestre: form.semestre,
-              nombre: form.nombre,
-              apellido: form.apellido,
-              ci: Number(form.ci),
-              correo: form.correo,
-              direccion: String(form.direccion || '').trim(), // CAMBIO: guardamos dirección
-              estado: form.estado,
-            },
-          ]);
-          setShowModal(false);
-          Swal.fire({ title: '¡Creado!', text: 'El estudiante fue registrado.', icon: 'success', ...swalTheme, showCancelButton: false });
+          try {
+            const apiPayload = mapUiFormToApiCreate(form);
+            const action = await dispatch(createEstudiante({ data: apiPayload }));
+
+            if (createEstudiante.fulfilled && createEstudiante.fulfilled.match(action)) {
+              setShowModal(false);
+              dispatch(fetchAllEstudiantes());
+              Swal.fire({
+                title: '¡Creado!',
+                text: 'El estudiante fue registrado.',
+                icon: 'success',
+                ...swalTheme,
+                showCancelButton: false,
+              });
+            } else {
+              const msg =
+                action?.payload?.message ||
+                action?.error?.message ||
+                'No se pudo crear el estudiante.';
+              Swal.fire({
+                title: 'Error',
+                text: msg,
+                icon: 'error',
+                ...swalTheme,
+                showCancelButton: false,
+              });
+            }
+          } catch (e) {
+            Swal.fire({
+              title: 'Error',
+              text: e?.message || 'No se pudo crear el estudiante.',
+              icon: 'error',
+              ...swalTheme,
+              showCancelButton: false,
+            });
+          }
         }
       });
     }
@@ -698,17 +778,48 @@ function StudentsAdmin() {
                     />
                     {formErrors.nombre && <span className="it-cadm-field__error">{formErrors.nombre}</span>}
                   </div>
-                  <div className="it-cadm-field">
-                    <input
-                      type="text"
-                      name="apellido"
-                      placeholder="Ej. Quispe"
-                      className={`it-cadm-field__input${formErrors.apellido ? ' error' : ''}`}
-                      value={form.apellido}
-                      onChange={handleFormChange}
-                    />
-                    {formErrors.apellido && <span className="it-cadm-field__error">{formErrors.apellido}</span>}
-                  </div>
+                  {editTarget ? (
+                    <div className="it-cadm-field">
+                      <input
+                        type="text"
+                        name="apellido"
+                        placeholder="Ej. Quispe"
+                        className={`it-cadm-field__input${formErrors.apellido ? ' error' : ''}`}
+                        value={form.apellido}
+                        onChange={handleFormChange}
+                      />
+                      {formErrors.apellido && <span className="it-cadm-field__error">{formErrors.apellido}</span>}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="it-cadm-field">
+                        <input
+                          type="text"
+                          name="apellido_paterno"
+                          placeholder="Apellido paterno"
+                          className={`it-cadm-field__input${formErrors.apellido_paterno ? ' error' : ''}`}
+                          value={form.apellido_paterno}
+                          onChange={handleFormChange}
+                        />
+                        {formErrors.apellido_paterno && (
+                          <span className="it-cadm-field__error">{formErrors.apellido_paterno}</span>
+                        )}
+                      </div>
+                      <div className="it-cadm-field">
+                        <input
+                          type="text"
+                          name="apellido_materno"
+                          placeholder="Apellido materno"
+                          className={`it-cadm-field__input${formErrors.apellido_materno ? ' error' : ''}`}
+                          value={form.apellido_materno}
+                          onChange={handleFormChange}
+                        />
+                        {formErrors.apellido_materno && (
+                          <span className="it-cadm-field__error">{formErrors.apellido_materno}</span>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -758,6 +869,62 @@ function StudentsAdmin() {
                 />
                 {formErrors.correo && <span className="it-cadm-field__error">{formErrors.correo}</span>}
               </div>
+
+              {!editTarget && (
+                <>
+                  <div className="it-cadm-field-row">
+                    <div className="it-cadm-field">
+                      <label className="it-cadm-field__label">
+                        Género <span>*</span>
+                      </label>
+                      <select
+                        name="genero"
+                        className={`it-cadm-field__input${formErrors.genero ? ' error' : ''}`}
+                        value={form.genero}
+                        onChange={handleFormChange}
+                      >
+                        <option value="">Seleccionar</option>
+                        <option value="Femenino">Femenino</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Otro">Otro</option>
+                      </select>
+                      {formErrors.genero && <span className="it-cadm-field__error">{formErrors.genero}</span>}
+                    </div>
+
+                    <div className="it-cadm-field">
+                      <label className="it-cadm-field__label">
+                        Fecha de nacimiento <span>*</span>
+                      </label>
+                      <input
+                        type="date"
+                        name="fecha_nacimiento"
+                        className={`it-cadm-field__input${formErrors.fecha_nacimiento ? ' error' : ''}`}
+                        value={form.fecha_nacimiento}
+                        onChange={handleFormChange}
+                      />
+                      {formErrors.fecha_nacimiento && (
+                        <span className="it-cadm-field__error">{formErrors.fecha_nacimiento}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="it-cadm-field">
+                    <label className="it-cadm-field__label">
+                      Contraseña <span>*</span>
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      placeholder="••••••••"
+                      className={`it-cadm-field__input${formErrors.password ? ' error' : ''}`}
+                      value={form.password}
+                      onChange={handleFormChange}
+                      autoComplete="new-password"
+                    />
+                    {formErrors.password && <span className="it-cadm-field__error">{formErrors.password}</span>}
+                  </div>
+                </>
+              )}
 
               <div className="it-cadm-field it-cadm-field--check">
                 <label className="it-cadm-toggle">
