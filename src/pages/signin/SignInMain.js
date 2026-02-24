@@ -6,6 +6,11 @@ import RightArrow from '../../components/SVG';
 import signInImg from '../../assets/img/contact/signin.jpg';
 import iconImg from '../../assets/img/contact/Icon.png';
 
+//para consumir
+import { loginUser } from './slices/loginThunks';
+import { clearError } from './slices/loginSlice';
+import { selectIsLoading, selectError, selectUser } from './slices/loginSelectors';
+
 const SignInMain = () => {
   return (
     <main>
