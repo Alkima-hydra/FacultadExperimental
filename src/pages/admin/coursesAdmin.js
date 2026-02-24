@@ -82,9 +82,17 @@ const buildDocenteLabel = (d) => {
 
 const getCursoMateriaNombre = (c) => c?.materia?.nombre || c?.materia_nombre || '—';
 const getCursoMateriaCodigo = (c) => c?.materia?.codigo || c?.materia_codigo || '—';
-const getCursoDocenteLabel  = (c) => {
-  if (c?.docente) return buildDocenteLabel(c.docente);
-  return c?.docente_nombre || '—';
+const getCursoDocenteLabel = (c, allDocentes = []) => {
+
+  if (c?.docente?.usuario) return buildDocenteLabel(c.docente);
+
+  const id = c?.docente_id_docente ?? c?.docente?.id_docente;
+  if (id && Array.isArray(allDocentes)) {
+    const found = allDocentes.find(d => String(d.id_docente) === String(id));
+    if (found) return buildDocenteLabel(found);
+  }
+
+  return '—';
 };
 
 const getCursoPrereqCodigos = (c) => {
@@ -181,7 +189,7 @@ const CoursesAdmin = () => {
       const matchSearch = !q ||
         getCursoMateriaNombre(c).toLowerCase().includes(q) ||
         getCursoMateriaCodigo(c).toLowerCase().includes(q) ||
-        getCursoDocenteLabel(c).toLowerCase().includes(q);
+        getCursoDocenteLabel(c, allDocentes).toLowerCase().includes(q);
       const matchPer = filterPer ? c.periodo === filterPer : true;
       const matchEst = filterEst === '' ? true : c.estado === (filterEst === 'activo');
       return matchSearch && matchPer && matchEst;
@@ -554,9 +562,9 @@ const CoursesAdmin = () => {
                     <td>
                       <div className="it-cadm-table__docente">
                         <span className="it-cadm-table__docente-avatar">
-                          {getCursoDocenteLabel(c).charAt(0).toUpperCase()}
+                          {getCursoDocenteLabel(c, allDocentes).charAt(0).toUpperCase()}
                         </span>
-                        <span>{getCursoDocenteLabel(c)}</span>
+                        <span>{getCursoDocenteLabel(c, allDocentes)}</span>
                       </div>
                     </td>
                     <td><span className="it-cadm-table__periodo">{c.periodo}</span></td>
