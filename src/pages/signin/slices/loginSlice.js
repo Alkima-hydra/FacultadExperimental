@@ -1,5 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { loginUser } from './loginThunks';
+
+// Nota: no importamos thunks aquí para evitar dependencias circulares.
+// En extraReducers usamos los action types por string.
 
 const initialState = {
   user: {
@@ -18,42 +20,34 @@ const loginSlice = createSlice({
   initialState,
   reducers: {
     logout(state) {
-    state.user = { uid: '', name: '', email: '', rol: '', token: null };
-    state.isLoading = false;
-    state.error = null;
-  },
+      state.user = { uid: '', name: '', email: '', rol: '', token: null };
+      state.isLoading = false;
+      state.error = null;
+    },
     clearError(state) {
       state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loginUser.pending, (state) => {
+      .addCase('login/loginUser/pending', (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(loginUser.fulfilled, (state, action) => {
+      .addCase('login/loginUser/fulfilled', (state, action) => {
         state.isLoading = false;
         state.user = action.payload;
         state.error = null;
-    
-        const { expiresAt } = action.payload;
-    
-        // limpiar timeout previo
-        if (state.logoutTimeout) clearTimeout(state.logoutTimeout);
-    
-        const ms = expiresAt - Date.now();
-    
-        // programar logout exacto
-        state.logoutTimeout = setTimeout(() => {
-          store.dispatch({ type: 'login/logout' });
-        }, ms);
+      })
+      .addCase('login/loginUser/rejected', (state, action) => {
+        state.isLoading = false;
+        state.error =
+          action.payload?.message ||
+          action.error?.message ||
+          'No se pudo iniciar sesión.';
       });
-      
   },
 });
 
 export const { logout, clearError } = loginSlice.actions;
-export const loginReducer = loginSlice.reducer;
-
 export default loginSlice.reducer;

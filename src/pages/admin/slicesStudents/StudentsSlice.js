@@ -153,21 +153,21 @@ const EstudiantesSlice = createSlice({
 export const { clearError, clearEstudianteseleccionado, resetPagination } = EstudiantesSlice.actions;
 
 // Selectores
-export const selectEstudiantes = (state) => state.Estudiantes.Estudiantes;
-export const selectTotalItems = (state) => state.Estudiantes.totalItems;
-export const selectTotalPages = (state) => state.Estudiantes.totalPages;
-export const selectCurrentPage = (state) => state.Estudiantes.currentPage;
-export const selectAllEstudiantes = (state) => state.Estudiantes.allEstudiantes;
-export const selectEstudianteseleccionado = (state) => state.Estudiantes.Estudianteseleccionado;
+// Nota: en rootReducer el slice está montado como `students`
+export const selectEstudiantes = (state) => state?.students?.Estudiantes || [];
+export const selectTotalItems = (state) => state?.students?.totalItems ?? 0;
+export const selectTotalPages = (state) => state?.students?.totalPages ?? 1;
+export const selectCurrentPage = (state) => state?.students?.currentPage ?? 1;
+export const selectAllEstudiantes = (state) => state?.students?.allEstudiantes || [];
+export const selectEstudianteseleccionado = (state) => state?.students?.Estudianteseleccionado ?? null;
 
-// Para loading maybe borrar si no tiene la wea esa que gira al cargar
-export const selectIsLoading = (state) => state.Estudiantes.isLoading;
-export const selectIsLoadingAll = (state) => state.Estudiantes.isLoadingAll;
-export const selectIsLoadingById = (state) => state.Estudiantes.isLoadingById;
-export const selectError = (state) => state.Estudiantes.error;
-export const selectIsCreating = (state) => state.Estudiantes.isCreating;
-export const selectIsUpdating = (state) => state.Estudiantes.isUpdating;
-export const selectIsDeleting = (state) => state.Estudiantes.isDeleting;
+export const selectIsLoading = (state) => Boolean(state?.students?.isLoading);
+export const selectIsLoadingAll = (state) => Boolean(state?.students?.isLoadingAll);
+export const selectIsLoadingById = (state) => Boolean(state?.students?.isLoadingById);
+export const selectError = (state) => state?.students?.error ?? null;
+export const selectIsCreating = (state) => Boolean(state?.students?.isCreating);
+export const selectIsUpdating = (state) => Boolean(state?.students?.isUpdating);
+export const selectIsDeleting = (state) => Boolean(state?.students?.isDeleting);
 
 // Exportar reducer
 export const EstudiantesReducer = EstudiantesSlice.reducer;

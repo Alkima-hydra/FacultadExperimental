@@ -2,9 +2,10 @@ import { combineReducers } from '@reduxjs/toolkit';
 import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
-import { loginReducer } from '../pages/signin/slices/loginSlice';
+import loginReducer from '../pages/signin/slices/loginSlice';
 //para estudiantes
-import { EstudiantesReducer } from '../pages/admin/slicesStudents/StudentsSlice';
+// para estudiantes
+import studentsReducer from '../pages/admin/slicesStudents/StudentsSlice';
 // Agregar otros reducers aqui sdjalsd
 // Mantener los reducers en sus carpetas pofavo
 
@@ -16,7 +17,7 @@ const loginPersistConfig = {
 
 export const rootReducer = combineReducers({
   login: persistReducer(loginPersistConfig, loginReducer),
-  estudiantes: EstudiantesReducer,
+  students: studentsReducer,
 });
 
 export default rootReducer;
