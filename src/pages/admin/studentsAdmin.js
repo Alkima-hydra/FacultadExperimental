@@ -1,8 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiFilter, FiChevronLeft, FiChevronRight, FiX, FiBook, FiUser, FiLayers } from 'react-icons/fi';
 import { MdOutlineSchool } from 'react-icons/md';
+import { ClipLoader } from "react-spinners";
 import Swal from 'sweetalert2';
 
+//para consumo
+import {
+  fetchEstudiantes,
+  fetchAllEstudiantes,
+  fetchEstudianteById,
+  createEstudiante,
+  updateEstudiante,
+  deleteEstudiante,
+} from './slicesStudents/StudentsThunk'
+
+import {
+  selectIsLoading,
+  selectEstudiantes,
+  selectAllEstudiantes,
+  selectEstudianteseleccionado,
+  selectIsCreating,
+  selectIsUpdating,
+  selectIsDeleting
+} from './slicesStudents/StudentsSlice';
+
+
+// datos iniciales de prueba - en producción, estos vendrían de la API
 const MOCK_CARRERAS = [
   { id_carrera: 1, nombre: 'Ingeniería de Sistemas',  sigla: 'SIS' },
   { id_carrera: 2, nombre: 'Ingeniería Civil',        sigla: 'CIV' },
@@ -11,9 +35,13 @@ const MOCK_CARRERAS = [
   { id_carrera: 5, nombre: 'Contaduría Pública',      sigla: 'CON' },
 ];
 
-const SEMESTRES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+const SEMESTRES = [
+  '1-2024', '2-2024',
+  '1-2025', '2-2025',
+  '1-2026', '2-2026',
+];
 
-const INITIAL_STUDENTS = [
+const INITIAL_STUDENTS_FALLBACK = [
   { id_estudiante: 1, carrera_id: 1, carrera_nombre: 'Ingeniería de Sistemas',  carrera_sigla: 'SIS', semestre: '2-2026', nombre: 'María Fernanda', apellido: 'Quispe',     ci: 9876543, correo: 'maria.quispe@ucb.edu.bo',  telefono: 76543210, estado: true  },
   { id_estudiante: 2, carrera_id: 2, carrera_nombre: 'Ingeniería Civil',        carrera_sigla: 'CIV', semestre: '1-2026', nombre: 'José Luis',      apellido: 'Rojas',      ci: 8123456, correo: 'jose.rojas@ucb.edu.bo',    telefono: 71234567, estado: true  },
   { id_estudiante: 3, carrera_id: 1, carrera_nombre: 'Ingeniería de Sistemas',  carrera_sigla: 'SIS', semestre: '2-2025', nombre: 'Andrea',         apellido: 'Mamani',     ci: 7456123, correo: 'andrea.mamani@ucb.edu.bo', telefono: 70112233, estado: false },
@@ -44,7 +72,15 @@ const swalTheme = {
 };
 
 function StudentsAdmin() {
-  const [students, setStudents] = useState(INITIAL_STUDENTS);
+  const dispatch = useDispatch();
+
+  // Redux state (API)
+  const isLoading = useSelector(selectIsLoading);
+  const allEstudiantes = useSelector(selectAllEstudiantes);
+  const isUpdating = useSelector(selectIsUpdating);
+
+  // Local state (UI) - mientras conectamos CRUD, trabajamos con una copia local
+  const [students, setStudents] = useState(INITIAL_STUDENTS_FALLBACK);
   const [search, setSearch] = useState('');
   const [filterPer, setFilterPer] = useState('');
   const [filterEst, setFilterEst] = useState('');
@@ -54,6 +90,96 @@ function StudentsAdmin() {
   const [form, setForm] = useState(emptyForm);
   const [formErrors, setFormErrors] = useState({});
   const [filterOpen, setFilterOpen] = useState(false);
+
+  // Mapper: API -> UI
+  const mapApiEstudianteToUi = (e) => {
+    const usuario = e?.usuario || {};
+    const apellidoP = usuario?.apellido_paterno || '';
+    const apellidoM = usuario?.apellido_materno || '';
+    const apellido = `${apellidoP} ${apellidoM}`.trim();
+
+    // "semestre_ingreso" viene como "2023-1" y en UI se usa "1-2023" (semestre-año)
+    const semestreIngreso = String(e?.semestre_ingreso || '').trim();
+    const semestreUi = semestreIngreso.includes('-')
+      ? (() => {
+          const [anio, sem] = semestreIngreso.split('-');
+          return `${sem}-${anio}`;
+        })()
+      : semestreIngreso;
+
+    const carreraNombre = e?.carrera || '';
+    const carreraSigla = carreraNombre
+      ? carreraNombre
+          .split(' ')
+          .filter(Boolean)
+          .slice(0, 3)
+          .map(w => w[0]?.toUpperCase() || '')
+          .join('')
+      : '';
+
+    return {
+      id_estudiante: e?.id_estudiante,
+      carrera_id: e?.carrera_id ?? '',
+      carrera_nombre: carreraNombre,
+      carrera_sigla: carreraSigla,
+      semestre: semestreUi,
+      nombre: usuario?.nombres || '',
+      apellido,
+      ci: usuario?.ci ? Number(usuario.ci) : '',
+      correo: usuario?.mail || '',
+      telefono: usuario?.telefono ? Number(usuario.telefono) : '',
+      estado: Boolean(usuario?.estado),
+    };
+  };
+
+  // Mapper: UI(form) -> API payload
+  const mapUiFormToApiUpdate = (current, formState) => {
+    const apellidoTxt = String(formState?.apellido || '').trim();
+    const partes = apellidoTxt.split(' ').filter(Boolean);
+    const apellido_paterno = partes[0] || '';
+    const apellido_materno = partes.slice(1).join(' ') || '';
+
+    // UI usa "1-2026" y API usa "2026-1"
+    const semestreUi = String(formState?.semestre || '').trim();
+    const semestre_ingreso = semestreUi.includes('-')
+      ? (() => {
+          const [sem, anio] = semestreUi.split('-');
+          return `${anio}-${sem}`;
+        })()
+      : semestreUi;
+
+    return {
+      id_estudiante: current?.id_estudiante,
+      carrera_id: Number(formState?.carrera_id),
+      semestre_ingreso,
+      // si tu backend maneja direccion en estudiante, mantenemos el valor actual si existe
+      direccion: current?.direccion ?? undefined,
+      // si tu backend necesita vincular a persona/usuario
+      usuarios_id_persona: current?.usuarios_id_persona ?? undefined,
+      usuario: {
+        id_persona: current?.usuario?.id_persona ?? current?.usuarios_id_persona ?? undefined,
+        nombres: String(formState?.nombre || '').trim(),
+        apellido_paterno,
+        apellido_materno,
+        ci: String(formState?.ci || '').trim(),
+        mail: String(formState?.correo || '').trim(),
+        telefono: String(formState?.telefono || '').trim(),
+        estado: Boolean(formState?.estado),
+      },
+    };
+  };
+
+  // 1) Al montar, pedimos la lista completa
+  useEffect(() => {
+    dispatch(fetchAllEstudiantes());
+  }, [dispatch]);
+
+  // 2) Cuando llegue la data del store, la pasamos a nuestro formato UI
+  useEffect(() => {
+    if (Array.isArray(allEstudiantes) && allEstudiantes.length > 0) {
+      setStudents(allEstudiantes.map(mapApiEstudianteToUi));
+    }
+  }, [allEstudiantes]);
 
   const filtered = students.filter(c => {
     const q = search.toLowerCase();
@@ -124,29 +250,52 @@ function StudentsAdmin() {
         confirmButtonText: 'Sí, guardar',
         cancelButtonText: 'Cancelar',
         ...swalTheme,
-      }).then(res => {
+      }).then(async res => {
         if (res.isConfirmed) {
-          setStudents(prev =>
-            prev.map(s =>
-              s.id_estudiante === editTarget.id_estudiante
-                ? {
-                    ...s,
-                    carrera_id: Number(form.carrera_id),
-                    carrera_nombre: carrera?.nombre || '',
-                    carrera_sigla: carrera?.sigla || '',
-                    semestre: form.semestre,
-                    nombre: form.nombre,
-                    apellido: form.apellido,
-                    ci: Number(form.ci),
-                    correo: form.correo,
-                    telefono: Number(form.telefono),
-                    estado: form.estado,
-                  }
-                : s
-            )
-          );
-          setShowModal(false);
-          Swal.fire({ title: '¡Actualizado!', text: 'El estudiante fue actualizado.', icon: 'success', ...swalTheme, showCancelButton: false });
+          try {
+            const apiPayload = mapUiFormToApiUpdate(editTarget, form);
+
+            // Nota: asumimos que el thunk recibe un objeto con { id_estudiante, data }
+            const action = await dispatch(
+              updateEstudiante({
+                id_estudiante: editTarget.id_estudiante,
+                data: apiPayload,
+              })
+            );
+
+            if (updateEstudiante.fulfilled && updateEstudiante.fulfilled.match(action)) {
+              setShowModal(false);
+              // recargar desde API para evitar inconsistencias
+              dispatch(fetchAllEstudiantes());
+              Swal.fire({
+                title: '¡Actualizado!',
+                text: 'El estudiante fue actualizado.',
+                icon: 'success',
+                ...swalTheme,
+                showCancelButton: false,
+              });
+            } else {
+              const msg =
+                action?.payload?.message ||
+                action?.error?.message ||
+                'No se pudo actualizar el estudiante.';
+              Swal.fire({
+                title: 'Error',
+                text: msg,
+                icon: 'error',
+                ...swalTheme,
+                showCancelButton: false,
+              });
+            }
+          } catch (e) {
+            Swal.fire({
+              title: 'Error',
+              text: e?.message || 'No se pudo actualizar el estudiante.',
+              icon: 'error',
+              ...swalTheme,
+              showCancelButton: false,
+            });
+          }
         }
       });
     } else {
@@ -315,7 +464,14 @@ function StudentsAdmin() {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="it-cadm-table__empty">
+                    <ClipLoader size={28} />
+                    <p style={{ marginTop: 10 }}>Cargando estudiantes…</p>
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="it-cadm-table__empty">
                     <FiUser style={{ fontSize: 28, marginBottom: 8, opacity: 0.3 }} />
@@ -553,8 +709,13 @@ function StudentsAdmin() {
               <button className="it-cadm-modal__btn-cancel" onClick={closeModal}>
                 Cancelar
               </button>
-              <button className="it-cadm-modal__btn-save" onClick={handleSave}>
-                {editTarget ? 'Guardar cambios' : 'Crear estudiante'}
+              <button
+                className="it-cadm-modal__btn-save"
+                onClick={handleSave}
+                disabled={isUpdating}
+                title={isUpdating ? 'Actualizando…' : undefined}
+              >
+                {isUpdating ? 'Actualizando…' : editTarget ? 'Guardar cambios' : 'Crear estudiante'}
               </button>
             </div>
           </div>

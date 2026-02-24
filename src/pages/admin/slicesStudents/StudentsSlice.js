@@ -6,7 +6,6 @@ import {
   createEstudiante,
   updateEstudiante,
   deleteEstudiante,
-  fetchEstudiantesParaSacramento,
 } from './StudentsThunk';
 
 const initialState = {
