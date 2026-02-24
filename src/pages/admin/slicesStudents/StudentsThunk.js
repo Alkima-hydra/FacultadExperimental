@@ -1,14 +1,13 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { personasApi } from '../../../lib/api';
-import { sacramentosApi } from '../../../lib/api';
-export const fetchPersonas = createAsyncThunk(
-  'personas/fetchPersonas',
+import { estudiantesApi } from '../../../lib/api';
+export const fetchEstudiantes = createAsyncThunk(
+  'Estudiantes/fetchEstudiantes',
   async (filters = {}, { rejectWithValue }) => {
     try {
-      console.log('[personasThunk] Enviando filtros:', filters);
-      const response = await personasApi.fetchPersonas(filters);
-      console.log('[personasThunk] Respuesta del servidor:', response);
-      console.log('[personasThunk] Personas obtenidas:', response.personas || response);
+      console.log('[EstudiantesThunk] Enviando filtros:', filters);
+      const response = await estudiantesApi.fetchEstudiantes(filters);
+      console.log('[EstudiantesThunk] Respuesta del servidor:', response);
+      console.log('[EstudiantesThunk] Estudiantes obtenidas:', response.Estudiantes || response);
       return response;
     } catch (error) {
       return rejectWithValue(error);
@@ -16,90 +15,72 @@ export const fetchPersonas = createAsyncThunk(
   }
 );
 
-export const fetchAllPersonas = createAsyncThunk(
-  'personas/fetchAllPersonas',
+export const fetchAllEstudiantes = createAsyncThunk(
+  'Estudiantes/fetchAllEstudiantes',
   async (_, { rejectWithValue }) => {
     try {
-      const resp = await personasApi.fetchAllPersonas();
+      const resp = await estudiantesApi.fetchAllEstudiantes();
       const data = resp?.data ?? resp;
-      return data?.personas || data?.items || data;
+      return data?.Estudiantes || data?.items || data;
     } catch (error) {
       return rejectWithValue(error?.response?.data || error.message || error);
     }
   }
 );
 
-export const fetchPersonaById = createAsyncThunk(
-  'personas/fetchPersonaById',
+export const fetchEstudianteById = createAsyncThunk(
+  'Estudiantes/fetchEstudianteById',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await personasApi.fetchPersonaById(id);
-      return response.persona || response;
+      const response = await estudiantesApi.fetchEstudianteById(id);
+      return response.Estudiante || response;
     } catch (error) {
       return rejectWithValue(error?.response?.data || error.message || error);
     }
   }
 );
 
-export const createPersona = createAsyncThunk(
-  'personas/createPersona',
+export const createEstudiante = createAsyncThunk(
+  'Estudiantes/createEstudiante',
   async (payload, { rejectWithValue }) => {
     try {
-      console.log('[personasThunk] Creando persona:', payload)
-      const response = await personasApi.createPersona(payload)
-      console.log('[personasThunk] Persona creada:', response)
-      // Algunos backends devuelven { persona }, otros el objeto directo
-      return response?.persona || response
+      console.log('[EstudiantesThunk] Creando Estudiante:', payload)
+      const response = await estudiantesApi.createEstudiante(payload)
+      console.log('[EstudiantesThunk] Estudiante creada:', response)
+      return response?.Estudiante || response
     } catch (error) {
-      console.error('[personasThunk] Error creando persona:', error)
+      console.error('[EstudiantesThunk] Error creando Estudiante:', error)
       return rejectWithValue(error?.response?.data || error.message || error)
     }
   }
 
 )
-export const updatePersona = createAsyncThunk(
-  'personas/updatePersona',
+export const updateEstudiante = createAsyncThunk(
+  'Estudiantes/updateEstudiante',
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      console.log('[personasThunk] Actualizando persona:', id, data);
-      const response = await personasApi.updatePersona(id, data);
-      console.log('[personasThunk] Persona actualizada:', response);
-      return response?.persona || response;
+      console.log('[EstudiantesThunk] Actualizando Estudiante:', id, data);
+      const response = await estudiantesApi.updateEstudiante(id, data);
+      console.log('[EstudiantesThunk] Estudiante actualizada:', response);
+      return response?.Estudiante || response;
     } catch (error) {
-      console.error('[personasThunk] Error actualizando persona:', error);
+      console.error('[EstudiantesThunk] Error actualizando Estudiante:', error);
       return rejectWithValue(error?.response?.data || error.message || error);
     }
   }
 );
 
-export const deletePersona = createAsyncThunk(
-  'personas/deletePersona',
+export const deleteEstudiante = createAsyncThunk(
+  'Estudiantes/deleteEstudiante',
   async (id, { rejectWithValue }) => {
     try {
-      console.log('[personasThunk] Eliminando persona ID:', id)
-      const response = await personasApi.deletePersona(id)
-      console.log('[personasThunk] Persona eliminada:', response)
-      return response?.persona || response
+      console.log('[EstudiantesThunk] Eliminando Estudiante ID:', id)
+      const response = await estudiantesApi.deleteEstudiante(id)
+      console.log('[EstudiantesThunk] Estudiante eliminada:', response)
+      return response?.Estudiante || response
     } catch (error) {
-      console.error('[personasThunk] Error eliminando persona:', error)
+      console.error('[EstudiantesThunk] Error eliminando Estudiante:', error)
       return rejectWithValue(error?.response?.data || error.message || error)
     }
   }
 );  
-
-export const fetchPersonasParaSacramento = createAsyncThunk(
-  'sacramentos/buscarPersonas',
-  async ({ search, tipo, rol }, { rejectWithValue }) => {
-    try {
-      const response = await sacramentosApi.buscarPersonas({
-        search,
-        tipo,
-        rol,
-      });
-
-      return response;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
-    }
-  }
-);

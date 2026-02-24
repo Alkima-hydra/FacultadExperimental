@@ -76,7 +76,7 @@ api.interceptors.response.use(
 
 // apis para usuarios, estudiantes
 
-export const personasApi = {
+export const estudiantesApi = {
   fetchEstudiantes: (params = {}) =>
     api.get('/estudiantes/', { params }).then((res) => res.data).catch(handleError),
 

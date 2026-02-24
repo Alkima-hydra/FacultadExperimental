@@ -1,22 +1,22 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
-  fetchPersonas,
-  fetchAllPersonas,
-  fetchPersonaById,
-  createPersona,
-  updatePersona,
-  deletePersona,
-  fetchPersonasParaSacramento,
-} from './personasThunk';
+  fetchEstudiantes,
+  fetchAllEstudiantes,
+  fetchEstudianteById,
+  createEstudiante,
+  updateEstudiante,
+  deleteEstudiante,
+  fetchEstudiantesParaSacramento,
+} from './StudentsThunk';
 
 const initialState = {
-  personas: [],
+  Estudiantes: [],
   totalItems: 0,
   totalPages: 1,
   currentPage: 1,
 
-  allPersonas: [],
-  personaSeleccionada: null,
+  allEstudiantes: [],
+  Estudianteseleccionado: null,
 
   isLoading: false,
   isLoadingAll: false,
@@ -27,18 +27,18 @@ const initialState = {
   error: null,
 };
 
-const personasSlice = createSlice({
-  name: 'personas',
+const EstudiantesSlice = createSlice({
+  name: 'Estudiantes',
   initialState,
   reducers: {
     clearError(state) {
       state.error = null;
     },
-    clearPersonaSeleccionada(state) {
-      state.personaSeleccionada = null;
+    clearEstudianteseleccionado(state) {
+      state.Estudianteseleccionado = null;
     },
     resetPagination(state) {
-      state.personas = [];
+      state.Estudiantes = [];
       state.totalItems = 0;
       state.totalPages = 1;
       state.currentPage = 1;
@@ -46,146 +46,130 @@ const personasSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // fetchPersonas (paginado)
-      .addCase(fetchPersonas.pending, (state) => {
+      // fetchEstudiantes (paginado)
+      .addCase(fetchEstudiantes.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchPersonas.fulfilled, (state, action) => {
+      .addCase(fetchEstudiantes.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.personas = action.payload.personas;
+        state.Estudiantes = action.payload.Estudiantes;
         state.totalItems = action.payload.totalItems;
         state.totalPages = action.payload.totalPages;
         state.currentPage = action.payload.currentPage;
       })
-      .addCase(fetchPersonas.rejected, (state, action) => {
+      .addCase(fetchEstudiantes.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload?.message || 'Error al cargar personas';
+        state.error = action.payload?.message || 'Error al cargar Estudiantes';
       })
 
-      // fetchAllPersonas
-      .addCase(fetchAllPersonas.pending, (state) => {
+      // fetchAllEstudiantes
+      .addCase(fetchAllEstudiantes.pending, (state) => {
         state.isLoadingAll = true;
         state.error = null;
       })
-      .addCase(fetchAllPersonas.fulfilled, (state, action) => {
+      .addCase(fetchAllEstudiantes.fulfilled, (state, action) => {
         state.isLoadingAll = false;
-        state.allPersonas = action.payload;
+        state.allEstudiantes = action.payload;
       })
-      .addCase(fetchAllPersonas.rejected, (state, action) => {
+      .addCase(fetchAllEstudiantes.rejected, (state, action) => {
         state.isLoadingAll = false;
-        state.error = action.payload?.message || 'Error al cargar todas las personas';
+        state.error = action.payload?.message || 'Error al cargar todas los Estudiantes';
       })
 
-      // fetchPersonaById 
-      .addCase(fetchPersonaById.pending, (state) => {
+      // fetchEstudianteById 
+      .addCase(fetchEstudianteById.pending, (state) => {
         state.isLoadingById = true;
         state.error = null;
       })
-      .addCase(fetchPersonaById.fulfilled, (state, action) => {
+      .addCase(fetchEstudianteById.fulfilled, (state, action) => {
         state.isLoadingById = false;
-        state.personaSeleccionada = action.payload;
+        state.Estudianteseleccionado = action.payload;
       })
-      .addCase(fetchPersonaById.rejected, (state, action) => {
+      .addCase(fetchEstudianteById.rejected, (state, action) => {
         state.isLoadingById = false;
-        state.error = action.payload?.message || 'Error al cargar la persona';
+        state.error = action.payload?.message || 'Error al cargar el Estudiante';
       })
 
-      // createPersona
-      .addCase(createPersona.pending, (state) => {
+      // createEstudiante
+      .addCase(createEstudiante.pending, (state) => {
         state.isCreating = true;
         state.error = null;
       })
-      .addCase(createPersona.fulfilled, (state, action) => {
+      .addCase(createEstudiante.fulfilled, (state, action) => {
         state.isCreating = false;
         const nueva = action.payload;
         // Si ya hay lista paginada cargada, insertamos al inicio (opcional)
-        if (Array.isArray(state.personas)) {
-          state.personas = [nueva, ...state.personas];
+        if (Array.isArray(state.Estudiantes)) {
+          state.Estudiantes = [nueva, ...state.Estudiantes];
           state.totalItems = (state.totalItems || 0) + 1;
         }
-        state.personaSeleccionada = nueva;
+        state.Estudianteseleccionado = nueva;
       })
-      .addCase(createPersona.rejected, (state, action) => {
+      .addCase(createEstudiante.rejected, (state, action) => {
         state.isCreating = false;
-        state.error = action.payload?.message || 'Error al crear persona';
+        state.error = action.payload?.message || 'Error al crear Estudiante';
       })
 
-      // updatePersona
-      .addCase(updatePersona.pending, (state) => {
+      // updateEstudiante
+      .addCase(updateEstudiante.pending, (state) => {
         state.isUpdating = true;
         state.error = null;
       })
-      .addCase(updatePersona.fulfilled, (state, action) => {
+      .addCase(updateEstudiante.fulfilled, (state, action) => {
         state.isUpdating = false;
         const updated = action.payload;
-        state.personas = state.personas.map(p => p.id === updated.id ? updated : p);
-        if (state.personaSeleccionada?.id === updated.id) {
-          state.personaSeleccionada = updated;
+        state.Estudiantes = state.Estudiantes.map(p => p.id === updated.id ? updated : p);
+        if (state.Estudianteseleccionado?.id === updated.id) {
+          state.Estudianteseleccionado = updated;
         }
       })
-      .addCase(updatePersona.rejected, (state, action) => {
+      .addCase(updateEstudiante.rejected, (state, action) => {
         state.isUpdating = false;
-        state.error = action.payload?.message || 'Error al actualizar persona';
+        state.error = action.payload?.message || 'Error al actualizar Estudiante';
       })
 
-      // deletePersona
-      .addCase(deletePersona.pending, (state) => {
+      // deleteEstudiante
+      .addCase(deleteEstudiante.pending, (state) => {
         state.isDeleting = true;
         state.error = null;
       })
-      .addCase(deletePersona.fulfilled, (state, action) => {
+      .addCase(deleteEstudiante.fulfilled, (state, action) => {
         state.isDeleting = false;
         const deletedId = action.payload.id;
-        state.personas = state.personas.filter(p => p.id !== deletedId);
-        if (state.personaSeleccionada?.id === deletedId) {
-          state.personaSeleccionada = null;
+        state.Estudiantes = state.Estudiantes.filter(p => p.id !== deletedId);
+        if (state.Estudianteseleccionado?.id === deletedId) {
+          state.Estudianteseleccionado = null;
         }
         state.totalItems = Math.max(0, (state.totalItems || 1) - 1);
       })
-      .addCase(deletePersona.rejected, (state, action) => {
+      .addCase(deleteEstudiante.rejected, (state, action) => {
         state.isDeleting = false;
-        state.error = action.payload?.message || 'Error al eliminar persona';
+        state.error = action.payload?.message || 'Error al eliminar Estudiante';
       })
-
-      
-          // 🔵 Buscar personas para sacramento
-          .addCase(fetchPersonasParaSacramento.pending, (state) => {
-            state.isLoading = true;
-            state.error = null;
-            state.personasBusqueda = [];
-          })
-          .addCase(fetchPersonasParaSacramento.fulfilled, (state, action) => {
-            state.isLoading = false;
-            state.personasBusqueda = action.payload.personas;
-          })
-          .addCase(fetchPersonasParaSacramento.rejected, (state, action) => {
-            state.isLoading = false;
-            state.error = action.payload || 'Error al buscar personas';
-          })
   },
 });
 
 // Acciones síncronas
-export const { clearError, clearPersonaSeleccionada, resetPagination } = personasSlice.actions;
+export const { clearError, clearEstudianteseleccionado, resetPagination } = EstudiantesSlice.actions;
 
 // Selectores
-export const selectPersonas = (state) => state.personas.personas;
-export const selectTotalItems = (state) => state.personas.totalItems;
-export const selectTotalPages = (state) => state.personas.totalPages;
-export const selectCurrentPage = (state) => state.personas.currentPage;
-export const selectAllPersonas = (state) => state.personas.allPersonas;
-export const selectPersonaSeleccionada = (state) => state.personas.personaSeleccionada;
+export const selectEstudiantes = (state) => state.Estudiantes.Estudiantes;
+export const selectTotalItems = (state) => state.Estudiantes.totalItems;
+export const selectTotalPages = (state) => state.Estudiantes.totalPages;
+export const selectCurrentPage = (state) => state.Estudiantes.currentPage;
+export const selectAllEstudiantes = (state) => state.Estudiantes.allEstudiantes;
+export const selectEstudianteseleccionado = (state) => state.Estudiantes.Estudianteseleccionado;
 
 // Para loading maybe borrar si no tiene la wea esa que gira al cargar
-export const selectIsLoading = (state) => state.personas.isLoading;
-export const selectIsLoadingAll = (state) => state.personas.isLoadingAll;
-export const selectIsLoadingById = (state) => state.personas.isLoadingById;
-export const selectError = (state) => state.personas.error;
-export const selectIsCreating = (state) => state.personas.isCreating;
-export const selectIsUpdating = (state) => state.personas.isUpdating;
-export const selectIsDeleting = (state) => state.personas.isDeleting;
+export const selectIsLoading = (state) => state.Estudiantes.isLoading;
+export const selectIsLoadingAll = (state) => state.Estudiantes.isLoadingAll;
+export const selectIsLoadingById = (state) => state.Estudiantes.isLoadingById;
+export const selectError = (state) => state.Estudiantes.error;
+export const selectIsCreating = (state) => state.Estudiantes.isCreating;
+export const selectIsUpdating = (state) => state.Estudiantes.isUpdating;
+export const selectIsDeleting = (state) => state.Estudiantes.isDeleting;
 
 // Exportar reducer
-export const personasReducer = personasSlice.reducer;
-export default personasSlice.reducer;
+export const EstudiantesReducer = EstudiantesSlice.reducer;
+export default EstudiantesSlice.reducer;
