@@ -99,6 +99,9 @@ function StudentsAdmin() {
 
   const isUpdating = useSelector(selectIsUpdating);
 
+  // Bloqueo de pantalla mientras carga la lista desde la API
+  const isBlocking = Boolean(isLoading);
+
   // Local state (UI)
   // Mientras conectamos todo el CRUD, usamos un fallback estático.
   // Apenas llega data real desde la API (Redux), reemplazamos este arreglo.
@@ -440,7 +443,16 @@ function StudentsAdmin() {
   const clearFilters = () => { setFilterPer(''); setFilterEst(''); setSearch(''); };
 
   return (
-    <div className="it-cadm">
+    <div className="it-cadm" style={{ position: 'relative' }}>
+      {/* Contenido */}
+      <div
+        style={
+          isBlocking
+            ? { filter: 'blur(3px)', pointerEvents: 'none', userSelect: 'none' }
+            : undefined
+        }
+        aria-hidden={isBlocking}
+      >
       <div className="it-cadm-header">
         <div className="it-cadm-header__left">
           <div>
@@ -776,6 +788,31 @@ function StudentsAdmin() {
                 {isUpdating ? 'Actualizando…' : editTarget ? 'Guardar cambios' : 'Crear estudiante'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      </div>
+
+      {/* Overlay bloqueante */}
+      {isBlocking && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(255, 255, 255, 0.35)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <ClipLoader size={44} />
+            <p style={{ margin: 0, color: '#4D5756', fontWeight: 600 }}>
+              Cargando estudiantes…
+            </p>
           </div>
         </div>
       )}
