@@ -6,6 +6,7 @@ import loginReducer from '../pages/signin/slices/loginSlice';
 //para estudiantes
 // para estudiantes
 import studentsReducer from '../pages/admin/slicesStudents/StudentsSlice';
+import docentesReducer from '../pages/admin/slicesDocentes/DocentesSlice';
 // Agregar otros reducers aqui sdjalsd
 // Mantener los reducers en sus carpetas pofavo
 
@@ -18,6 +19,8 @@ const loginPersistConfig = {
 export const rootReducer = combineReducers({
   login: persistReducer(loginPersistConfig, loginReducer),
   students: studentsReducer,
+  docentes: docentesReducer,
 });
+
 
 export default rootReducer;

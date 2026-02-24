@@ -4,18 +4,21 @@ import { FiUsers, FiBookOpen, FiChevronLeft, FiChevronRight, FiMenu, FiUser } fr
 import { MdOutlineSchool } from 'react-icons/md';
 import StudentsAdmin from './studentsAdmin';
 import CoursesAdmin from './coursesAdmin';
+import DocentesAdmin from './docentesAdmin';
 import Swal from 'sweetalert2';
 
 
 const NAV_ITEMS = [
     { id: 'students', label: 'Estudiantes', icon: <FiUsers /> },
     { id: 'courses',  label: 'Cursos',       icon: <FiBookOpen /> },
+    { id: 'docentes', label: 'Docentes',     icon: <FiUser /> },
 ];
 
 const renderContent = (activeTab) => {
     switch (activeTab) {
         case 'students': return <StudentsAdmin />;
         case 'courses':  return <CoursesAdmin />;
+        case 'docentes': return <DocentesAdmin />;
         default:         return null;
     }
 };

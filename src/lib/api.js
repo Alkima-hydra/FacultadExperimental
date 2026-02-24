@@ -96,6 +96,27 @@ export const estudiantesApi = {
     api.patch(`/estudiantes/${id}`).then((res) => res.data).catch(handleError),
 };
 
+// docentes api
+export const DocentesApi = {
+  fetchDocentes: (params = {}) =>
+    api.get('/docentes/', { params }).then((res) => res.data).catch(handleError),
+  
+  fetchAllDocentes: () =>
+    api.get('/docentes/').then((res) => res.data).catch(handleError),
+
+  fetchDocenteById: (id) =>
+    api.get(`/docentes/${id}`).then((res) => res.data).catch(handleError),
+  
+  createDocente: (data) =>
+    api.post('/docentes/new', data).then((res) => res.data).catch(handleError),
+  
+  updateDocente: (id, data) =>
+    api.put(`/docentes/${id}`, data).then((res) => res.data).catch(handleError),
+
+  deleteDocente: (id) =>
+    api.patch(`/docentes/${id}`).then((res) => res.data).catch(handleError),
+};
+
 export const passwordApi = {
   solicitar: (email) => api.post('/password/solicitar', { email }),
   validar: (token) => api.get('/password/validar', { params: { token } }),
