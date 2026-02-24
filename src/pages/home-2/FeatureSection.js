@@ -17,30 +17,47 @@ const Feature = () => {
             <SectionTitle
               itemClass="it-feature-3-title-box text-center mb-60 section-title-fixed-width"
               subTitleClass="it-section-subtitle-4"
-              subTitle="Edunity Feature"
+              subTitle="Nuestras ventajas"
               titleClass="it-section-title-3"
-              title="Check out educate features win any exam"
+              title="Descubre las características que potencian tu aprendizaje"
               titleImage={titleImg}
               hasAfterImage
             />
           </div>
         </div>
+
         <div className="row">
           <div className="col-xl-3 col-lg-6 col-md-6">
-            <SingleFeature icon="flaticon-study" title="Best Coaching" />
+            <SingleFeature
+              icon="flaticon-study"
+              title="Formación especializada"
+            />
           </div>
+
           <div className="col-xl-3 col-lg-6 col-md-6">
-            <SingleFeature icon="flaticon-coach" title="Best Coaching" />
+            <SingleFeature
+              icon="flaticon-coach"
+              title="Acompañamiento profesional"
+            />
           </div>
+
           <div className="col-xl-3 col-lg-6 col-md-6">
-            <SingleFeature icon="flaticon-booking" title="Best Coaching" />
+            <SingleFeature
+              icon="flaticon-booking"
+              title="Contenido actualizado"
+            />
           </div>
+
           <div className="col-xl-3 col-lg-6 col-md-6">
-            <SingleFeature icon="flaticon-video" title="Best Coaching" />
+            <SingleFeature
+              icon="flaticon-video"
+              title="Clases en línea y grabadas"
+            />
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 export default Feature;

@@ -25,16 +25,17 @@ const Course = () => {
               <SectionTitle
                 itemClass="it-course-title-box section-title-fixed-width-2"
                 subTitleClass="it-section-subtitle-4"
-                subTitle="Top Popular Course"
+                subTitle="Cursos más populares"
                 titleClass="it-section-title-3"
-                title="Check out educate features win any exam"
+                title="Descubre nuestros cursos destacados y potencia tus habilidades"
                 titleImage={titleImg}
               />
             </div>
+
             <div className="col-xl-5 col-lg-5 col-md-12">
               <div className="it-course-button text-start text-lg-end pt-25">
                 <Link className="ed-btn-theme theme-2" to="/course-2">
-                  Browse edunity Courses
+                  Explorar todos los cursos
                   <i>
                     <RightArrow />
                   </i>
@@ -43,39 +44,42 @@ const Course = () => {
             </div>
           </div>
         </div>
+
         <div className="row">
           <div className="col-xl-4 col-lg-4 col-md-6 mb-30">
             <SingleCourseTwo
               courseImage={courseImg1}
-              thumbText="Development"
-              title="It statistics data science and Business analysis"
+              thumbText="Desarrollo"
+              title="Ciencia de Datos y Análisis de Negocios con Enfoque Práctico"
               authorAvatar={avatarImg}
               authorName="Angela"
-              designation="Development"
+              designation="Desarrollo"
               price="60"
               prevPrice="120"
             />
           </div>
+
           <div className="col-xl-4 col-lg-4 col-md-6 mb-30">
             <SingleCourseTwo
               courseImage={courseImg2}
-              thumbText="Development"
-              title="It statistics data science and Business analysis"
+              thumbText="Desarrollo"
+              title="Fundamentos de Programación y Lógica para Principiantes"
               authorAvatar={avatarImg}
               authorName="Angela"
-              designation="Development"
+              designation="Desarrollo"
               price="60"
               prevPrice="120"
             />
           </div>
+
           <div className="col-xl-4 col-lg-4 col-md-6 mb-30">
             <SingleCourseTwo
               courseImage={courseImg3}
-              thumbText="Development"
-              title="It statistics data science and Business analysis"
+              thumbText="Desarrollo"
+              title="Desarrollo Web Profesional: De Cero a Proyecto Real"
               authorAvatar={avatarImg}
               authorName="Angela"
-              designation="Development"
+              designation="Desarrollo"
               price="60"
               prevPrice="120"
             />
@@ -85,4 +89,5 @@ const Course = () => {
     </div>
   );
 };
+
 export default Course;

@@ -19,6 +19,7 @@ const Blog = () => {
       <div className="ed-blog-shape-1">
         <img src={shapeImg} alt="" />
       </div>
+
       <div className="container">
         <div className="it-blog-title-wrap mb-80">
           <div className="row align-items-end">
@@ -26,16 +27,17 @@ const Blog = () => {
               <SectionTitle
                 itemClass="it-blog-title-box"
                 subTitleClass="it-section-subtitle-4"
-                subTitle="all blog post"
+                subTitle="Todas las publicaciones"
                 titleClass="it-section-title-3"
-                title="Most Popular Post."
+                title="Artículos más populares"
                 titleImage={titleImg}
               />
             </div>
+
             <div className="col-xl-5 col-lg-5 col-md-4">
               <div className="it-course-button text-start text-md-end pt-25">
                 <Link className="ed-btn-theme theme-2" to="/blog-2">
-                  all blog post
+                  Ver todos los artículos
                   <i>
                     <RightArrow />
                   </i>
@@ -44,6 +46,7 @@ const Blog = () => {
             </div>
           </div>
         </div>
+
         <div className="row">
           <div
             className="col-xl-4 col-lg-4 col-md-6 mb-30 wow animate__fadeInUp"
@@ -52,12 +55,13 @@ const Blog = () => {
           >
             <SingleBlog
               blogImage={blogImg1}
-              title="velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat"
-              publishedDate="21 April 2023"
+              title="Cómo iniciar en el desarrollo web y construir tu primer proyecto profesional"
+              publishedDate="21 Abril 2023"
               btnClass="ed-btn-blog theme-bg-2"
               hasArrow
             />
           </div>
+
           <div
             className="col-xl-4 col-lg-4 col-md-6 mb-30 wow animate__fadeInUp"
             data-wow-duration=".9s"
@@ -65,12 +69,13 @@ const Blog = () => {
           >
             <SingleBlog
               blogImage={blogImg2}
-              title="velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat"
-              publishedDate="15 April 2024"
+              title="Las habilidades digitales más demandadas en el mercado laboral actual"
+              publishedDate="15 Abril 2024"
               btnClass="ed-btn-blog theme-bg-2"
               hasArrow
             />
           </div>
+
           <div
             className="col-xl-4 col-lg-4 col-md-6 mb-30 wow animate__fadeInUp"
             data-wow-duration=".9s"
@@ -78,8 +83,8 @@ const Blog = () => {
           >
             <SingleBlog
               blogImage={blogImg3}
-              title="velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat"
-              publishedDate="11 May 2024"
+              title="Buenas prácticas para mejorar tu portafolio y destacar como desarrollador"
+              publishedDate="11 Mayo 2024"
               btnClass="ed-btn-blog theme-bg-2"
               hasArrow
             />
@@ -89,4 +94,5 @@ const Blog = () => {
     </div>
   );
 };
+
 export default Blog;

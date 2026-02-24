@@ -14,54 +14,64 @@ const About = () => {
       <div className="ed-about-5-shape-2">
         <img src={shapeImg1} alt="" />
       </div>
+
       <div className="container">
         <div className="row align-items-center">
+
           <div className="col-xl-6 col-lg-6">
             <div className="it-about-5-right">
               <SectionTitle
                 itemClass="it-about-5-title-box pb-10 section-title-fixed-width-2"
                 subTitleClass="ed-section-subtitle"
-                subTitle="our about us"
+                subTitle="Sobre nosotros"
                 titleClass="it-section-title-5"
-                title="We Are High School Since 10 Years Experience"
+                title="Más de 10 años formando estudiantes con excelencia académica"
               />
+
               <div className="it-about-5-text mb-30">
                 <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do <br /> eiusmod tempor incididunt ut labore et dolore magna
-                  aliqua. Ut <br /> enim ad minim veniam, quis nostrud
-                  exercitation ullamco laboris <br /> nisi ut aliquip ex ea
-                  commodo consequat.
+                  Contamos con una sólida trayectoria educativa enfocada en el
+                  desarrollo integral de nuestros estudiantes. Nuestra experiencia
+                  nos permite ofrecer programas actualizados, metodologías
+                  dinámicas y un acompañamiento constante para garantizar un
+                  aprendizaje efectivo y de calidad.
                 </p>
               </div>
+
               <div className="ed-about-5-content">
                 <div className="it-about-5-list mb-10">
                   <ul>
                     <li>
-                      <i className="fa-regular fa-check"></i>Best Teaching
+                      <i className="fa-regular fa-check"></i>
+                      Metodología de enseñanza innovadora
                     </li>
                     <li>
-                      <i className="fa-regular fa-check"></i>Quality Educators
+                      <i className="fa-regular fa-check"></i>
+                      Docentes altamente capacitados
                     </li>
                   </ul>
                 </div>
+
                 <div className="it-about-5-list mb-40">
                   <ul>
                     <li>
-                      <i className="fa-regular fa-check"></i>Expert Tutor
+                      <i className="fa-regular fa-check"></i>
+                      Tutores especializados
                     </li>
                     <li>
-                      <i className="fa-regular fa-check"></i>Affordable
+                      <i className="fa-regular fa-check"></i>
+                      Programas accesibles y flexibles
                     </li>
                   </ul>
                 </div>
               </div>
+
               <div className="it-feature-button">
                 <Link
                   className="ed-btn-square orange"
                   to="/student-registration"
                 >
-                  admission open
+                  Inscripciones abiertas
                   <i>
                     <RightArrow />
                   </i>
@@ -69,22 +79,25 @@ const About = () => {
               </div>
             </div>
           </div>
+
           <div className="col-xl-6 col-lg-6">
             <div className="ed-about-5-right d-flex justify-content-between p-relative">
               <div className="ed-about-5-thumb-2">
-                <img src={aboutImg1} alt="" />
+                <img src={aboutImg1} alt="Estudiantes en clase" />
               </div>
               <div className="ed-about-5-thumb-1">
-                <img src={aboutImg2} alt="" />
+                <img src={aboutImg2} alt="Ambiente académico" />
               </div>
               <div className="ed-about-5-shape-1">
                 <img src={shapeImg2} alt="" />
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
   );
 };
+
 export default About;

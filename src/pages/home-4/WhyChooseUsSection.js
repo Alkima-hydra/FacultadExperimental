@@ -28,6 +28,7 @@ const WhyChooseUs = () => {
       <div className="ed-choose-shape-5 d-none d-xl-block">
         <img src={shapeImg4} alt="" />
       </div>
+
       <div className="container container-3">
         <div className="row align-items-center">
           <div
@@ -40,62 +41,72 @@ const WhyChooseUs = () => {
                 itemClass="it-video-2-title-box mb-10"
                 subtitleClass="it-section-subtitle-5 orange"
                 icon="fa-light fa-book"
-                subtitle="why choose us"
+                subtitle="¿Por qué elegirnos?"
                 titleClass="ed-section-title"
-                title="new approach to fun"
+                title="Un enfoque moderno y motivador para aprender"
               />
 
               <div className="it-video-2-text mb-20">
                 <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do <br />
-                  eiusmod tempor incididunt ut labore et.
+                  Combinamos metodología práctica, acompañamiento constante y
+                  recursos actualizados para que el aprendizaje sea claro,
+                  dinámico y realmente aplicable.
                 </p>
               </div>
+
               <div className="ed-about-5-content mb-30">
                 <div className="it-about-5-list">
                   <ul>
                     <li>
-                      <i className="fa-regular fa-check"></i>Best Teaching
+                      <i className="fa-regular fa-check"></i>
+                      Metodología de enseñanza efectiva
                     </li>
                     <li>
-                      <i className="fa-regular fa-check"></i>Quality Educators
+                      <i className="fa-regular fa-check"></i>
+                      Docentes altamente capacitados
                     </li>
                   </ul>
                 </div>
+
                 <div className="it-about-5-list">
                   <ul>
                     <li>
-                      <i className="fa-regular fa-check"></i>Expert Tutor
+                      <i className="fa-regular fa-check"></i>
+                      Tutores especializados
                     </li>
                     <li>
-                      <i className="fa-regular fa-check"></i>Affordable
+                      <i className="fa-regular fa-check"></i>
+                      Programas accesibles y flexibles
                     </li>
                   </ul>
                 </div>
               </div>
+
               <div className="it-video-2-button">
                 <Link className="ed-btn-radius sky-bg" to="/event-details">
-                  Find Events
+                  Ver eventos
                 </Link>
               </div>
             </div>
           </div>
+
           <div
             className="col-xl-6 col-lg-6 wow animate__fadeInRight"
             data-wow-duration=".9s"
             data-wow-delay=".7s"
           >
             <div className="it-video-2-thumb p-relative">
-              <img src={thumbImg} alt="" />
+              <img src={thumbImg} alt="Actividad educativa" />
               <div className="ed-choose-shape-1">
                 <img src={shapeImg5} alt="" />
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
   );
 };
+
 export default WhyChooseUs;

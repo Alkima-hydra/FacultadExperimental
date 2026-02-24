@@ -7,7 +7,7 @@ import errorImg from '../../assets/img/error/error.png';
 const ErrorMain = () => {
   return (
     <main>
-      <Breadcrumb title="404 page" subTitle="pages" />
+      <Breadcrumb title="Página no encontrada" subTitle="Páginas" />
 
       <div className="it-error-area pt-120 pb-120">
         <div className="container">
@@ -18,20 +18,21 @@ const ErrorMain = () => {
                 data-wow-duration=".9s"
                 data-wow-delay=".3s"
               >
-                <h5 className="it-error-title">Sorry, Page Not Found!</h5>
+                <h5 className="it-error-title">Lo sentimos, no encontramos esta página.</h5>
                 <p className="mb-35">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                  Es posible que el enlace esté roto o que la página haya sido movida.
+                  Puedes volver al inicio y continuar navegando desde allí.
                 </p>
                 <Link className="ed-btn-theme error-btn" to="/">
-                  Back To Home
+                  Volver al inicio
                   <i className="fa-light fa-arrow-left"></i>
                 </Link>
               </div>
             </div>
+
             <div className="col-xl-6 col-lg-6 order-0 order-lg-1">
               <div className="it-error-thumb">
-                <img src={errorImg} alt="" />
+                <img src={errorImg} alt="Ilustración de error 404" />
               </div>
             </div>
           </div>
