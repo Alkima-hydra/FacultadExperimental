@@ -122,3 +122,51 @@ export const passwordApi = {
   validar: (token) => api.get('/password/validar', { params: { token } }),
   cambiar: (token, newPassword) => api.post('/password/cambiar', { token, newPassword }),
 };
+
+// pa los cursos
+export const cursosApi = {
+  fetchCursos: (params = {}) =>
+    api.get('/curso', { params }).then((res) => res.data).catch(handleError),
+  fetchAllCursos: () =>
+    api.get('/curso/all').then((res) => res.data).catch(handleError),
+  fetchCursoById: (id) =>
+    api.get(`/curso/${id}`).then((res) => res.data).catch(handleError),
+  createCurso: (data) =>  
+    api.post('/curso/new', data).then((res) => res.data).catch(handleError),
+  updateCurso: (id, data) =>
+    api.put(`/curso/${id}`, data).then((res) => res.data).catch(handleError),
+  deleteCurso: (id) =>
+    api.patch(`/curso/${id}`).then((res) => res.data).catch(handleError),
+};
+
+// pa las materias
+export const materiasApi = {
+  fetchMaterias: (params = {}) =>
+    api.get('/materia', { params }).then((res) => res.data).catch(handleError),
+  fetchAllMaterias: () =>
+    api.get('/materia/all').then((res) => res.data).catch(handleError),
+  fetchMateriaById: (id) =>
+    api.get(`/materia/${id}`).then((res) => res.data).catch(handleError),
+  createMateria: (data) =>
+    api.post('/materia/new', data).then((res) => res.data).catch(handleError),
+  updateMateria: (id, data) =>
+    api.put(`/materia/${id}`, data).then((res) => res.data).catch(handleError),
+  deleteMateria: (id) =>
+    api.patch(`/materia/${id}`).then((res) => res.data).catch(handleError),
+};
+
+// pa los prerequisitos
+export const prerequisitosApi = {
+  
+  fetchPrerequisitoById: (id) => // Obtener todos los prerequisitos de una materia específica
+    api.get(`/materia-prereq/${id}`).then((res) => res.data).catch(handleError),
+  
+  fetchPrerequisitoDetalle: (id) => //Obtener detalles de un prerequisito
+    api.get(`/materia-prereq/detalle/${id}`).then((res) => res.data).catch(handleError),
+  
+  createPrerequisito: (data) =>
+    api.post('/materia-prereq/new', data).then((res) => res.data).catch(handleError),
+  
+  deletePrerequisito: (id) =>
+    api.delete(`/materia-prereq/${id}`).then((res) => res.data).catch(handleError),
+};
