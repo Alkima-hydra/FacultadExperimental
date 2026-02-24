@@ -35,20 +35,36 @@ const MOCK_CARRERAS = [
   { id_carrera: 5, nombre: 'Contaduría Pública',      sigla: 'CON' },
 ];
 
-const SEMESTRES = [
-  '1-2024', '2-2024',
-  '1-2025', '2-2025',
-  '1-2026', '2-2026',
-];
+// CAMBIO: antes teníamos una lista fija de semestres (2024-2026).
+// La API puede devolver semestres de otros años (ej: "2023-1" -> UI "1-2023"),
+// por eso generamos opciones dinámicamente.
+const buildSemestres = (startYear, endYear) => {
+  const out = [];
+  for (let y = startYear; y <= endYear; y++) {
+    out.push(`1-${y}`);
+    out.push(`2-${y}`);
+  }
+  return out;
+};
+
+// CAMBIO: helper para ordenar semestres tipo "1-2023" por año y semestre
+const sortSemestres = (a, b) => {
+  const [sa, ya] = String(a).split('-');
+  const [sb, yb] = String(b).split('-');
+  const yaN = Number(ya);
+  const ybN = Number(yb);
+  if (yaN !== ybN) return yaN - ybN;
+  return Number(sa) - Number(sb);
+};
 
 const INITIAL_STUDENTS_FALLBACK = [
-  { id_estudiante: 1, carrera_id: 1, carrera_nombre: 'Ingeniería de Sistemas',  carrera_sigla: 'SIS', semestre: '2-2026', nombre: 'María Fernanda', apellido: 'Quispe',     ci: 9876543, correo: 'maria.quispe@ucb.edu.bo',  telefono: 76543210, estado: true  },
-  { id_estudiante: 2, carrera_id: 2, carrera_nombre: 'Ingeniería Civil',        carrera_sigla: 'CIV', semestre: '1-2026', nombre: 'José Luis',      apellido: 'Rojas',      ci: 8123456, correo: 'jose.rojas@ucb.edu.bo',    telefono: 71234567, estado: true  },
-  { id_estudiante: 3, carrera_id: 1, carrera_nombre: 'Ingeniería de Sistemas',  carrera_sigla: 'SIS', semestre: '2-2025', nombre: 'Andrea',         apellido: 'Mamani',     ci: 7456123, correo: 'andrea.mamani@ucb.edu.bo', telefono: 70112233, estado: false },
-  { id_estudiante: 4, carrera_id: 4, carrera_nombre: 'Derecho',                 carrera_sigla: 'DER', semestre: '1-2025', nombre: 'Carlos',         apellido: 'Torrez',     ci: 6543210, correo: 'carlos.torrez@ucb.edu.bo', telefono: 78990011, estado: true  },
-  { id_estudiante: 5, carrera_id: 3, carrera_nombre: 'Administración',          carrera_sigla: 'ADM', semestre: '2-2024', nombre: 'Valeria',        apellido: 'Flores',     ci: 9321456, correo: 'valeria.flores@ucb.edu.bo', telefono: 77665544, estado: true  },
-  { id_estudiante: 6, carrera_id: 5, carrera_nombre: 'Contaduría Pública',      carrera_sigla: 'CON', semestre: '1-2024', nombre: 'Diego',          apellido: 'Vargas',     ci: 7012345, correo: 'diego.vargas@ucb.edu.bo',  telefono: 69001122, estado: true  },
-  { id_estudiante: 7, carrera_id: 2, carrera_nombre: 'Ingeniería Civil',        carrera_sigla: 'CIV', semestre: '2-2026', nombre: 'Lucía',          apellido: 'Paredes',    ci: 8899776, correo: 'lucia.paredes@ucb.edu.bo', telefono: 72223344, estado: false },
+  { id_estudiante: 1, carrera_id: 1, carrera_nombre: 'Ingeniería de Sistemas',  carrera_sigla: 'SIS', semestre: '2-2026', nombre: 'María Fernanda', apellido: 'Quispe',     ci: 9876543, correo: 'maria.quispe@ucb.edu.bo',  direccion: '---', estado: true  }, // CAMBIO: placeholder de dirección (antes teléfono)
+  { id_estudiante: 2, carrera_id: 2, carrera_nombre: 'Ingeniería Civil',        carrera_sigla: 'CIV', semestre: '1-2026', nombre: 'José Luis',      apellido: 'Rojas',      ci: 8123456, correo: 'jose.rojas@ucb.edu.bo',    direccion: '---', estado: true  },
+  { id_estudiante: 3, carrera_id: 1, carrera_nombre: 'Ingeniería de Sistemas',  carrera_sigla: 'SIS', semestre: '2-2025', nombre: 'Andrea',         apellido: 'Mamani',     ci: 7456123, correo: 'andrea.mamani@ucb.edu.bo', direccion: '---', estado: false },
+  { id_estudiante: 4, carrera_id: 4, carrera_nombre: 'Derecho',                 carrera_sigla: 'DER', semestre: '1-2025', nombre: 'Carlos',         apellido: 'Torrez',     ci: 6543210, correo: 'carlos.torrez@ucb.edu.bo', direccion: '---', estado: true  },
+  { id_estudiante: 5, carrera_id: 3, carrera_nombre: 'Administración',          carrera_sigla: 'ADM', semestre: '2-2024', nombre: 'Valeria',        apellido: 'Flores',     ci: 9321456, correo: 'valeria.flores@ucb.edu.bo', direccion: '---', estado: true  },
+  { id_estudiante: 6, carrera_id: 5, carrera_nombre: 'Contaduría Pública',      carrera_sigla: 'CON', semestre: '1-2024', nombre: 'Diego',          apellido: 'Vargas',     ci: 7012345, correo: 'diego.vargas@ucb.edu.bo',  direccion: '---', estado: true  },
+  { id_estudiante: 7, carrera_id: 2, carrera_nombre: 'Ingeniería Civil',        carrera_sigla: 'CIV', semestre: '2-2026', nombre: 'Lucía',          apellido: 'Paredes',    ci: 8899776, correo: 'lucia.paredes@ucb.edu.bo', direccion: '---', estado: false },
 ];
 
 const PAGE_SIZE = 5;
@@ -60,7 +76,7 @@ const emptyForm = {
   apellido:    '',
   ci:          '',
   correo:      '',
-  telefono:    '',
+  direccion:   '', // CAMBIO: en vez de teléfono, usamos dirección (así viene en el GET)
   estado:      true,
 };
 
@@ -76,10 +92,16 @@ function StudentsAdmin() {
 
   // Redux state (API)
   const isLoading = useSelector(selectIsLoading);
-  const allEstudiantes = useSelector(selectAllEstudiantes);
+
+  // Puede venir como array o como objeto { ok, estudiantes: [...] } según cómo lo guarde el slice
+  const rawAllEstudiantes = useSelector(selectAllEstudiantes);
+  const rawEstudiantes = useSelector(selectEstudiantes);
+
   const isUpdating = useSelector(selectIsUpdating);
 
-  // Local state (UI) - mientras conectamos CRUD, trabajamos con una copia local
+  // Local state (UI)
+  // Mientras conectamos todo el CRUD, usamos un fallback estático.
+  // Apenas llega data real desde la API (Redux), reemplazamos este arreglo.
   const [students, setStudents] = useState(INITIAL_STUDENTS_FALLBACK);
   const [search, setSearch] = useState('');
   const [filterPer, setFilterPer] = useState('');
@@ -90,6 +112,24 @@ function StudentsAdmin() {
   const [form, setForm] = useState(emptyForm);
   const [formErrors, setFormErrors] = useState({});
   const [filterOpen, setFilterOpen] = useState(false);
+
+  // CAMBIO: opciones de semestre dinámicas para que el <select> muestre el valor real del estudiante
+  const semestreOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const base = buildSemestres(currentYear - 6, currentYear + 1);
+
+    const extras = new Set(
+      students
+        .map((s) => s?.semestre)
+        .filter(Boolean)
+    );
+
+    // CAMBIO: si estamos editando y el semestre no está en la lista, lo incluimos igual
+    if (form?.semestre) extras.add(form.semestre);
+
+    const merged = Array.from(new Set([...base, ...extras]));
+    return merged.sort(sortSemestres);
+  }, [students, form?.semestre]);
 
   // Mapper: API -> UI
   const mapApiEstudianteToUi = (e) => {
@@ -108,6 +148,11 @@ function StudentsAdmin() {
       : semestreIngreso;
 
     const carreraNombre = e?.carrera || '';
+    // CAMBIO: La API devuelve `carrera` como texto. Para que el <select> funcione,
+    // convertimos ese texto a un `carrera_id` de nuestro mock.
+    const carreraMatch = MOCK_CARRERAS.find(
+      (c) => String(c?.nombre || '').toLowerCase() === String(carreraNombre || '').toLowerCase()
+    );
     const carreraSigla = carreraNombre
       ? carreraNombre
           .split(' ')
@@ -119,7 +164,7 @@ function StudentsAdmin() {
 
     return {
       id_estudiante: e?.id_estudiante,
-      carrera_id: e?.carrera_id ?? '',
+      carrera_id: carreraMatch?.id_carrera ?? '', // CAMBIO: id derivado para que el select muestre bien
       carrera_nombre: carreraNombre,
       carrera_sigla: carreraSigla,
       semestre: semestreUi,
@@ -127,7 +172,7 @@ function StudentsAdmin() {
       apellido,
       ci: usuario?.ci ? Number(usuario.ci) : '',
       correo: usuario?.mail || '',
-      telefono: usuario?.telefono ? Number(usuario.telefono) : '',
+      direccion: e?.direccion || '', // CAMBIO: guardamos dirección para editarla
       estado: Boolean(usuario?.estado),
     };
   };
@@ -152,8 +197,8 @@ function StudentsAdmin() {
       id_estudiante: current?.id_estudiante,
       carrera_id: Number(formState?.carrera_id),
       semestre_ingreso,
-      // si tu backend maneja direccion en estudiante, mantenemos el valor actual si existe
-      direccion: current?.direccion ?? undefined,
+      // CAMBIO: ahora dirección se edita desde el formulario
+      direccion: String(formState?.direccion || '').trim(),
       // si tu backend necesita vincular a persona/usuario
       usuarios_id_persona: current?.usuarios_id_persona ?? undefined,
       usuario: {
@@ -163,7 +208,7 @@ function StudentsAdmin() {
         apellido_materno,
         ci: String(formState?.ci || '').trim(),
         mail: String(formState?.correo || '').trim(),
-        telefono: String(formState?.telefono || '').trim(),
+        // telefono: String(formState?.telefono || '').trim(), // CAMBIO: ya no usamos teléfono en el form
         estado: Boolean(formState?.estado),
       },
     };
@@ -176,10 +221,22 @@ function StudentsAdmin() {
 
   // 2) Cuando llegue la data del store, la pasamos a nuestro formato UI
   useEffect(() => {
-    if (Array.isArray(allEstudiantes) && allEstudiantes.length > 0) {
-      setStudents(allEstudiantes.map(mapApiEstudianteToUi));
+    // Normalizamos la respuesta del store:
+    // - si es array -> lo usamos tal cual
+    // - si es objeto { ok, estudiantes } -> usamos estudiantes
+    // - si el slice usa otra propiedad -> también probamos rawEstudiantes
+    const apiList =
+      (Array.isArray(rawAllEstudiantes) ? rawAllEstudiantes : null) ||
+      (Array.isArray(rawAllEstudiantes?.estudiantes) ? rawAllEstudiantes.estudiantes : null) ||
+      (Array.isArray(rawEstudiantes) ? rawEstudiantes : null) ||
+      (Array.isArray(rawEstudiantes?.estudiantes) ? rawEstudiantes.estudiantes : null) ||
+      null;
+
+    if (apiList && apiList.length > 0) {
+      setStudents(apiList.map(mapApiEstudianteToUi));
     }
-  }, [allEstudiantes]);
+    // Nota: si apiList viene vacío, dejamos el fallback estático para no mostrar tabla vacía
+  }, [rawAllEstudiantes, rawEstudiantes]);
 
   const filtered = students.filter(c => {
     const q = search.toLowerCase();
@@ -215,7 +272,7 @@ function StudentsAdmin() {
       apellido: estudiante.apellido,
       ci: estudiante.ci,
       correo: estudiante.correo,
-      telefono: estudiante.telefono,
+      direccion: estudiante.direccion || '', // CAMBIO: en vez de teléfono
       estado: estudiante.estado,
     });
     setFormErrors({});
@@ -232,7 +289,8 @@ function StudentsAdmin() {
     if (!form.apellido) errs.apellido = 'Ingresa el apellido';
     if (!form.ci || Number(form.ci) <= 0) errs.ci = 'Ingresa el CI (> 0)';
     if (!form.correo) errs.correo = 'Ingresa el correo';
-    if (!form.telefono || Number(form.telefono) <= 0) errs.telefono = 'Ingresa el teléfono (> 0)';
+    // CAMBIO: validamos dirección (la API maneja dirección en estudiante)
+    if (!form.direccion) errs.direccion = 'Ingresa la dirección';
     setFormErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -325,7 +383,7 @@ function StudentsAdmin() {
               apellido: form.apellido,
               ci: Number(form.ci),
               correo: form.correo,
-              telefono: Number(form.telefono),
+              direccion: String(form.direccion || '').trim(), // CAMBIO: guardamos dirección
               estado: form.estado,
             },
           ]);
@@ -604,7 +662,8 @@ function StudentsAdmin() {
                   onChange={handleFormChange}
                 >
                   <option value="">Seleccionar semestre</option>
-                  {SEMESTRES.map(s => (
+                  {/* CAMBIO: opciones de semestre dinámicas */}
+                  {semestreOptions.map(s => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
@@ -659,18 +718,17 @@ function StudentsAdmin() {
                 </div>
                 <div className="it-cadm-field">
                   <label className="it-cadm-field__label">
-                    Teléfono <span>*</span>
+                    Dirección <span>*</span>
                   </label>
                   <input
-                    type="number"
-                    name="telefono"
-                    min="1"
-                    placeholder="Ej. 67019557"
-                    className={`it-cadm-field__input${formErrors.telefono ? ' error' : ''}`}
-                    value={form.telefono}
+                    type="text"
+                    name="direccion"
+                    placeholder="Ej. Sur"
+                    className={`it-cadm-field__input${formErrors.direccion ? ' error' : ''}`}
+                    value={form.direccion}
                     onChange={handleFormChange}
                   />
-                  {formErrors.telefono && <span className="it-cadm-field__error">{formErrors.telefono}</span>}
+                  {formErrors.direccion && <span className="it-cadm-field__error">{formErrors.direccion}</span>}
                 </div>
               </div>
 

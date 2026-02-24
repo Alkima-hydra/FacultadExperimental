@@ -81,7 +81,7 @@ export const estudiantesApi = {
     api.get('/estudiantes/', { params }).then((res) => res.data).catch(handleError),
 
   fetchAllEstudiantes: () =>
-    api.get('/estudiantes/all').then((res) => res.data).catch(handleError),
+    api.get('/estudiantes/').then((res) => res.data).catch(handleError),
 
   fetchEstudianteById: (id) =>
     api.get(`/estudiantes/${id}`).then((res) => res.data).catch(handleError),
