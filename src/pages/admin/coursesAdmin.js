@@ -71,11 +71,10 @@ const buildDocenteLabel = (d) => {
   if (!d) return '—';
   const u = d.usuario;
   if (u) {
-    const titulo  = d.titulo ? `${d.titulo} ` : '';
     const nombres = u.nombres          || '';
     const ap      = u.apellido_paterno || '';
     const am      = u.apellido_materno || '';
-    return `${titulo}${nombres} ${ap} ${am}`.replace(/\s+/g, ' ').trim();
+    return `${nombres} ${ap} ${am}`.replace(/\s+/g, ' ').trim();
   }
   return d.nombre_completo || `Docente #${d.id_docente}`;
 };
@@ -534,7 +533,7 @@ const CoursesAdmin = () => {
           <table className="it-cadm-table">
             <thead>
               <tr>
-                <th>#</th><th>Materia</th><th>Docente</th><th>Período</th>
+                <th>#</th><th>Materia</th><th>Título / Docente</th><th>Período</th>
                 <th>Cupos</th><th>Precio</th><th>Estado</th><th>Acciones</th>
               </tr>
             </thead>
