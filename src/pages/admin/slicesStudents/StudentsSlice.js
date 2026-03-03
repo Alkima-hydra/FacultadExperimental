@@ -6,6 +6,7 @@ import {
   createEstudiante,
   updateEstudiante,
   deleteEstudiante,
+  buscarEstudiantes,
 } from './StudentsThunk';
 
 const initialState = {
@@ -23,6 +24,7 @@ const initialState = {
   isCreating: false,
   isUpdating: false,
   isDeleting: false,
+  isSearching: false,
   error: null,
 };
 
@@ -117,11 +119,6 @@ const EstudiantesSlice = createSlice({
       })
       .addCase(updateEstudiante.fulfilled, (state, action) => {
         state.isUpdating = false;
-        const updated = action.payload;
-        state.Estudiantes = state.Estudiantes.map(p => p.id === updated.id ? updated : p);
-        if (state.Estudianteseleccionado?.id === updated.id) {
-          state.Estudianteseleccionado = updated;
-        }
       })
       .addCase(updateEstudiante.rejected, (state, action) => {
         state.isUpdating = false;
@@ -135,9 +132,11 @@ const EstudiantesSlice = createSlice({
       })
       .addCase(deleteEstudiante.fulfilled, (state, action) => {
         state.isDeleting = false;
-        const deletedId = action.payload.id;
-        state.Estudiantes = state.Estudiantes.filter(p => p.id !== deletedId);
-        if (state.Estudianteseleccionado?.id === deletedId) {
+        const deletedId = action.payload?.id;
+        if (deletedId !== undefined) {
+          state.Estudiantes = state.Estudiantes.filter(p => p.id_estudiante !== deletedId);
+        }
+        if (state.Estudianteseleccionado?.id_estudiante === deletedId) {
           state.Estudianteseleccionado = null;
         }
         state.totalItems = Math.max(0, (state.totalItems || 1) - 1);
@@ -145,6 +144,21 @@ const EstudiantesSlice = createSlice({
       .addCase(deleteEstudiante.rejected, (state, action) => {
         state.isDeleting = false;
         state.error = action.payload?.message || 'Error al eliminar Estudiante';
+      })
+      .addCase(buscarEstudiantes.pending, (state) => {
+        state.isSearching = true;
+        state.error = null;
+      })
+      .addCase(buscarEstudiantes.fulfilled, (state, action) => {
+        state.isSearching = false;
+        state.Estudiantes   = action.payload?.estudiantes  ?? [];
+        state.totalItems    = action.payload?.totalItems   ?? 0;
+        state.totalPages    = action.payload?.totalPages   ?? 1;
+        state.currentPage   = action.payload?.currentPage  ?? 1;
+      })
+      .addCase(buscarEstudiantes.rejected, (state, action) => {
+        state.isSearching = false;
+        state.error = action.payload?.message || 'Error al buscar Estudiantes';
       })
   },
 });
@@ -164,6 +178,7 @@ export const selectEstudianteseleccionado = (state) => state?.students?.Estudian
 export const selectIsLoading = (state) => Boolean(state?.students?.isLoading);
 export const selectIsLoadingAll = (state) => Boolean(state?.students?.isLoadingAll);
 export const selectIsLoadingById = (state) => Boolean(state?.students?.isLoadingById);
+export const selectIsSearching = (state) => Boolean(state?.students?.isSearching);
 export const selectError = (state) => state?.students?.error ?? null;
 export const selectIsCreating = (state) => Boolean(state?.students?.isCreating);
 export const selectIsUpdating = (state) => Boolean(state?.students?.isUpdating);
