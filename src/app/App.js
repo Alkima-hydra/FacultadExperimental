@@ -49,6 +49,7 @@ import {
   Testimonial,
   Admin,
   AdminCourse,
+  Estudiante,
 } from '../pages';
 
 function App() {
@@ -118,6 +119,7 @@ function App() {
         <Route path="*" element={<Error />} />
 
         <Route path="/admin" element={<Admin />} />
+        <Route path="/admin-estudiante" element={<Estudiante />} />
       </Routes>
     </div>
   );
