@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiFilter, FiChevronLeft, FiChevronRight, FiX, FiBook, FiUser, FiLayers } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiFilter, FiChevronLeft, FiChevronRight, FiX, FiBook, FiUser, FiLayers, FiEye, FiEyeOff, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { MdOutlineSchool } from 'react-icons/md';
 import { ClipLoader } from "react-spinners";
 import Swal from 'sweetalert2';
 
@@ -100,6 +101,7 @@ function DocentesAdmin() {
   const [form, setForm] = useState(emptyForm);
   const [formErrors, setFormErrors] = useState({});
   const [filterOpen, setFilterOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Mapper: API -> UI (docentes)
   const mapApiDocenteToUi = (d) => {
@@ -133,16 +135,13 @@ function DocentesAdmin() {
       id_docente: current?.id_docente,
       titulo: String(formState?.titulo || '').trim(),
       tipo_docente: String(formState?.tipo_docente || '').trim(),
-      usuarios_id_persona: current?.usuarios_id_persona ?? undefined,
-      usuario: {
-        id_persona: current?.usuario?.id_persona ?? current?.usuarios_id_persona ?? undefined,
         nombres: String(formState?.nombre || '').trim(),
         apellido_paterno,
         apellido_materno,
         ci: String(formState?.ci || '').trim(),
         mail: String(formState?.correo || '').trim(),
         estado: Boolean(formState?.estado),
-      },
+      
     };
   };
 
@@ -194,6 +193,7 @@ function DocentesAdmin() {
     setEditTarget(null);
     setForm(emptyForm);
     setFormErrors({});
+    setShowPassword(false);
     setShowModal(true);
   };
 
@@ -218,10 +218,30 @@ function DocentesAdmin() {
       estado: docente.estado,
     });
     setFormErrors({});
+    setShowPassword(false);
     setShowModal(true);
   };
 
   const closeModal = () => setShowModal(false);
+
+  const validatePasswordBasic = (pwd) => {
+  const p = String(pwd || '');
+  if (p.length < 8) return 'La contraseña debe tener al menos 8 caracteres';
+  if (!/[A-Z]/.test(p)) return 'La contraseña debe incluir al menos 1 mayúscula';
+  if (!/[a-z]/.test(p)) return 'La contraseña debe incluir al menos 1 minúscula';
+  if (!/\d/.test(p)) return 'La contraseña debe incluir al menos 1 número';
+  return '';
+};
+
+const getPasswordChecks = (pwd) => {
+  const p = String(pwd || '');
+  return {
+    minLen: p.length >= 8,
+    hasUpper: /[A-Z]/.test(p),
+    hasLower: /[a-z]/.test(p),
+    hasNumber: /\d/.test(p),
+  };
+};
 
   const validate = () => {
     const errs = {};
@@ -238,7 +258,12 @@ function DocentesAdmin() {
       if (!form.apellido_materno) errs.apellido_materno = 'Ingresa el apellido materno';
       if (!form.genero) errs.genero = 'Selecciona el género';
       if (!form.fecha_nacimiento) errs.fecha_nacimiento = 'Ingresa la fecha de nacimiento';
-      if (!form.password) errs.password = 'Ingresa una contraseña';
+      if (!form.password) {
+        errs.password = 'Ingresa una contraseña';
+        } else {
+        const pwdErr = validatePasswordBasic(form.password);
+        if (pwdErr) errs.password = pwdErr;
+        }
     }
 
     if (!form.ci || String(form.ci).trim().length === 0) errs.ci = 'Ingresa el CI';
@@ -253,7 +278,6 @@ function DocentesAdmin() {
     return {
       titulo: String(formState?.titulo || '').trim(),
       tipo_docente: String(formState?.tipo_docente || '').trim(),
-      usuario: {
         nombres: String(formState?.nombre || '').trim(),
         apellido_paterno: String(formState?.apellido_paterno || '').trim(),
         apellido_materno: String(formState?.apellido_materno || '').trim(),
@@ -264,7 +288,6 @@ function DocentesAdmin() {
         password: String(formState?.password || '').trim(),
         estado: Boolean(formState?.estado),
         admin: false,
-      },
     };
   };
 
@@ -326,6 +349,9 @@ function DocentesAdmin() {
         }
       });
     } else {
+      // Cerrar el modal ANTES de mostrar el Swal, para que no quede abierto detrás
+      setShowModal(false);
+
       Swal.fire({
         title: '¿Crear docente?',
         text: `Se registrará ${form.nombre} ${form.apellido_paterno} ${form.apellido_materno}`,
@@ -335,43 +361,59 @@ function DocentesAdmin() {
         cancelButtonText: 'Cancelar',
         ...swalTheme,
       }).then(async (res) => {
-        if (res.isConfirmed) {
-          try {
-            const apiPayload = mapUiFormToApiCreate(form);
-            const action = await dispatch(createDocente({ data: apiPayload }));
+        // Si canceló, reabrimos el modal con los mismos datos
+        if (!res.isConfirmed) {
+          setShowModal(true);
+          return;
+        }
 
-            if (createDocente.fulfilled && createDocente.fulfilled.match(action)) {
-              setShowModal(false);
-              dispatch(fetchAllDocentes());
-              Swal.fire({
-                title: '¡Creado!',
-                text: 'El docente fue registrado.',
-                icon: 'success',
-                ...swalTheme,
-                showCancelButton: false,
-              });
-            } else {
-              const msg =
-                action?.payload?.message ||
-                action?.error?.message ||
-                'No se pudo crear el docente.';
-              Swal.fire({
-                title: 'Error',
-                text: msg,
-                icon: 'error',
-                ...swalTheme,
-                showCancelButton: false,
-              });
-            }
-          } catch (e) {
+        try {
+          const apiPayload = mapUiFormToApiCreate(form);
+
+          // Mostrar loading mientras se crea
+          Swal.fire({
+            title: 'Creando…',
+            text: 'Registrando al docente',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+            ...swalTheme,
+          });
+
+          const action = await dispatch(createDocente(apiPayload));
+
+          if (createDocente.fulfilled && createDocente.fulfilled.match(action)) {
+            dispatch(fetchAllDocentes());
+            Swal.fire({
+              title: '¡Creado!',
+              text: 'El docente fue registrado.',
+              icon: 'success',
+              ...swalTheme,
+              showCancelButton: false,
+            });
+          } else {
+            const msg =
+              action?.payload?.message ||
+              action?.error?.message ||
+              'No se pudo crear el docente.';
             Swal.fire({
               title: 'Error',
-              text: e?.message || 'No se pudo crear el docente.',
+              text: msg,
               icon: 'error',
               ...swalTheme,
               showCancelButton: false,
             });
           }
+        } catch (e) {
+          Swal.fire({
+            title: 'Error',
+            text: e?.message || 'No se pudo crear el docente.',
+            icon: 'error',
+            ...swalTheme,
+            showCancelButton: false,
+          });
         }
       });
     }
@@ -785,19 +827,66 @@ function DocentesAdmin() {
 
                   <div className="it-cadm-field">
                     <label className="it-cadm-field__label">
-                      Contraseña <span>*</span>
+                        Contraseña <span>*</span>
                     </label>
-                    <input
-                      type="password"
-                      name="password"
-                      placeholder="••••••••"
-                      className={`it-cadm-field__input${formErrors.password ? ' error' : ''}`}
-                      value={form.password}
-                      onChange={handleFormChange}
-                      autoComplete="new-password"
-                    />
+
+                    <div style={{ position: 'relative' }}>
+                        <input
+                        type={showPassword ? 'text' : 'password'}
+                        name="password"
+                        placeholder="••••••••"
+                        className={`it-cadm-field__input${formErrors.password ? ' error' : ''}`}
+                        value={form.password}
+                        onChange={handleFormChange}
+                        autoComplete="new-password"
+                        />
+
+                        <button
+                        type="button"
+                        onClick={() => setShowPassword((s) => !s)}
+                        title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        style={{
+                            position: 'absolute',
+                            right: 10,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            border: 'none',
+                            background: 'transparent',
+                            padding: 0,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0.75,
+                        }}
+                        aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        >
+                        {showPassword ? <FiEyeOff /> : <FiEye />}
+                        </button>
+                    </div>
+
+                    {(() => {
+                        const checks = getPasswordChecks(form.password);
+
+                        const Item = ({ ok, text }) => (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, opacity: ok ? 0.9 : 0.7 }}>
+                            {ok ? <FiCheckCircle /> : <FiXCircle />}
+                            <span>{text}</span>
+                        </div>
+                        );
+
+                        return (
+                        <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
+                            <Item ok={checks.minLen} text="Mínimo 8 caracteres" />
+                            <Item ok={checks.hasUpper} text="Al menos 1 mayúscula" />
+                            <Item ok={checks.hasLower} text="Al menos 1 minúscula" />
+                            <Item ok={checks.hasNumber} text="Al menos 1 número" />
+                        </div>
+                        );
+                    })()}
+
                     {formErrors.password && <span className="it-cadm-field__error">{formErrors.password}</span>}
-                  </div>
+                </div>
                 </>
               )}
 
