@@ -41,6 +41,7 @@ import AdminCourse from './adminCourse';
 
 import Admin from './admin';
 import Estudiante from './adminEstudiantes';
+import Docente from './adminDocentes';
 
 export {
   Home,
@@ -85,5 +86,7 @@ export {
   Admin,
   AdminCourse,
   Estudiante,
+  Docente,
+
 };
 
