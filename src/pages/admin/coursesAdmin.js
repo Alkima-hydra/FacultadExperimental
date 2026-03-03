@@ -741,7 +741,7 @@ const CoursesAdmin = () => {
           <table className="it-cadm-table">
             <thead>
               <tr>
-                <th>#</th><th>Materia</th><th>Docente</th><th>Período</th>
+                <th>#</th><th>Materia</th><th>Título / Docente</th><th>Período</th>
                 <th>Cupos</th><th>Precio</th><th>Estado</th><th>Acciones</th>
               </tr>
             </thead>

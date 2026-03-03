@@ -685,9 +685,9 @@ function StudentsAdmin() {
                   <td>
                     <div className="it-cadm-table__docente">
                       <span className="it-cadm-table__docente-avatar">
-                        {c.nombre?.charAt(0)}
+                        {c.carrera_nombre?.charAt(0)}
                       </span>
-                      <span>{c.correo}</span>
+                      <span>{c.carrera_nombre}</span>
                     </div>
                   </td>
                   <td><span className="it-cadm-table__periodo">{c.semestre || ''}</span></td>

@@ -40,6 +40,8 @@ import Contact from './contact';
 import AdminCourse from './adminCourse';
 
 import Admin from './admin';
+import Estudiante from './adminEstudiantes';
+import Docente from './adminDocentes';
 
 export {
   Home,
@@ -83,5 +85,8 @@ export {
   Contact,
   Admin,
   AdminCourse,
+  Estudiante,
+  Docente,
+
 };
 
