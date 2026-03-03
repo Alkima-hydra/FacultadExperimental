@@ -6,6 +6,7 @@ import {
   createDocente,
   updateDocente,
   deleteDocente,
+  buscarDocentes,
 } from './DocentesThunk';
 
 const initialState = {
@@ -23,6 +24,7 @@ const initialState = {
   isCreating: false,
   isUpdating: false,
   isDeleting: false,
+  isSearching: false,
   error: null,
 };
 
@@ -45,17 +47,18 @@ const DocentesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // fetchDocentes (paginado)
+      // fetchDocentes
       .addCase(fetchDocentes.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
       .addCase(fetchDocentes.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.Docentes = action.payload.Docentes;
-        state.totalItems = action.payload.totalItems;
-        state.totalPages = action.payload.totalPages;
-        state.currentPage = action.payload.currentPage;
+        const docentes = action.payload?.docentes ?? [];
+        state.Docentes    = docentes;
+        state.totalItems  = action.payload?.totalItems  ?? docentes.length;
+        state.totalPages  = action.payload?.totalPages  ?? 1;
+        state.currentPage = action.payload?.currentPage ?? 1;
       })
       .addCase(fetchDocentes.rejected, (state, action) => {
         state.isLoading = false;
@@ -76,7 +79,7 @@ const DocentesSlice = createSlice({
         state.error = action.payload?.message || 'Error al cargar todas los Docentes';
       })
 
-      // fetchDocenteById 
+      // fetchDocenteById
       .addCase(fetchDocenteById.pending, (state) => {
         state.isLoadingById = true;
         state.error = null;
@@ -98,7 +101,6 @@ const DocentesSlice = createSlice({
       .addCase(createDocente.fulfilled, (state, action) => {
         state.isCreating = false;
         const nueva = action.payload;
-        // Si ya hay lista paginada cargada, insertamos al inicio (opcional)
         if (Array.isArray(state.Docentes)) {
           state.Docentes = [nueva, ...state.Docentes];
           state.totalItems = (state.totalItems || 0) + 1;
@@ -117,11 +119,6 @@ const DocentesSlice = createSlice({
       })
       .addCase(updateDocente.fulfilled, (state, action) => {
         state.isUpdating = false;
-        const updated = action.payload;
-        state.Docentes = state.Docentes.map(p => p.id === updated.id ? updated : p);
-        if (state.Docenteseleccionado?.id === updated.id) {
-          state.Docenteseleccionado = updated;
-        }
       })
       .addCase(updateDocente.rejected, (state, action) => {
         state.isUpdating = false;
@@ -135,9 +132,11 @@ const DocentesSlice = createSlice({
       })
       .addCase(deleteDocente.fulfilled, (state, action) => {
         state.isDeleting = false;
-        const deletedId = action.payload.id;
-        state.Docentes = state.Docentes.filter(p => p.id !== deletedId);
-        if (state.Docenteseleccionado?.id === deletedId) {
+        const deletedId = action.payload?.id;
+        if (deletedId !== undefined) {
+          state.Docentes = state.Docentes.filter(p => p.id_docente !== deletedId);
+        }
+        if (state.Docenteseleccionado?.id_docente === deletedId) {
           state.Docenteseleccionado = null;
         }
         state.totalItems = Math.max(0, (state.totalItems || 1) - 1);
@@ -146,43 +145,58 @@ const DocentesSlice = createSlice({
         state.isDeleting = false;
         state.error = action.payload?.message || 'Error al eliminar Docente';
       })
+
+      // buscarDocentes — misma estructura que fetchDocentes
+      .addCase(buscarDocentes.pending, (state) => {
+        state.isSearching = true;
+        state.error = null;
+      })
+      .addCase(buscarDocentes.fulfilled, (state, action) => {
+        state.isSearching = false;
+        const docentes = action.payload?.docentes ?? [];
+        state.Docentes    = docentes;
+        state.totalItems  = action.payload?.totalItems  ?? docentes.length;
+        state.totalPages  = action.payload?.totalPages  ?? 1;
+        state.currentPage = action.payload?.currentPage ?? 1;
+      })
+      .addCase(buscarDocentes.rejected, (state, action) => {
+        state.isSearching = false;
+        state.error = action.payload?.message || 'Error al buscar Docentes';
+      })
   },
 });
 
-// Acciones síncronas
 export const { clearError, clearDocenteseleccionado, resetPagination } = DocentesSlice.actions;
 
 const EMPTY_ARRAY = [];
 const EMPTY_OBJECT = {};
 
-// Selectores
-// Nota: en rootReducer el slice está montado como `Docente`
-const selectDocenteSlice = (state) => state?.Docente ?? EMPTY_OBJECT;
+const selectDocenteSlice = (state) => state?.docentes ?? EMPTY_OBJECT;
 
 export const selectDocentes = createSelector(
   [selectDocenteSlice],
   (slice) => slice.Docentes ?? EMPTY_ARRAY
 );
 
-export const selectTotalItems = (state) => state?.Docente?.totalItems ?? 0;
-export const selectTotalPages = (state) => state?.Docente?.totalPages ?? 1;
-export const selectCurrentPage = (state) => state?.Docente?.currentPage ?? 1;
+export const selectTotalItems  = (state) => state?.docentes?.totalItems  ?? 0;
+export const selectTotalPages  = (state) => state?.docentes?.totalPages  ?? 1;
+export const selectCurrentPage = (state) => state?.docentes?.currentPage ?? 1;
 
 export const selectAllDocentes = createSelector(
   [selectDocenteSlice],
   (slice) => slice.allDocentes ?? EMPTY_ARRAY
 );
 
-export const selectDocenteseleccionado = (state) => state?.Docente?.Docenteseleccionado ?? null;
+export const selectDocenteseleccionado = (state) => state?.docentes?.Docenteseleccionado ?? null;
 
-export const selectIsLoading = (state) => Boolean(state?.Docente?.isLoading);
-export const selectIsLoadingAll = (state) => Boolean(state?.Docente?.isLoadingAll);
-export const selectIsLoadingById = (state) => Boolean(state?.Docente?.isLoadingById);
-export const selectError = (state) => state?.Docente?.error ?? null;
-export const selectIsCreating = (state) => Boolean(state?.Docente?.isCreating);
-export const selectIsUpdating = (state) => Boolean(state?.Docente?.isUpdating);
-export const selectIsDeleting = (state) => Boolean(state?.Docente?.isDeleting);
+export const selectIsLoading     = (state) => Boolean(state?.docentes?.isLoading);
+export const selectIsLoadingAll  = (state) => Boolean(state?.docentes?.isLoadingAll);
+export const selectIsLoadingById = (state) => Boolean(state?.docentes?.isLoadingById);
+export const selectIsSearching   = (state) => Boolean(state?.docentes?.isSearching);
+export const selectError         = (state) => state?.docentes?.error ?? null;
+export const selectIsCreating    = (state) => Boolean(state?.docentes?.isCreating);
+export const selectIsUpdating    = (state) => Boolean(state?.docentes?.isUpdating);
+export const selectIsDeleting    = (state) => Boolean(state?.docentes?.isDeleting);
 
-// Exportar reducer
 export const DocentesReducer = DocentesSlice.reducer;
 export default DocentesSlice.reducer;

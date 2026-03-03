@@ -53,8 +53,8 @@ export const createEstudiante = createAsyncThunk(
       return rejectWithValue(error?.response?.data || error.message || error)
     }
   }
+);
 
-)
 export const updateEstudiante = createAsyncThunk(
   'Estudiantes/updateEstudiante',
   async ({ id, data }, { rejectWithValue }) => {
@@ -62,7 +62,7 @@ export const updateEstudiante = createAsyncThunk(
       console.log('[EstudiantesThunk] Actualizando Estudiante:', id, data);
       const response = await estudiantesApi.updateEstudiante(id, data);
       console.log('[EstudiantesThunk] Estudiante actualizada:', response);
-      return response?.Estudiante || response;
+      return { id, estudiante: response?.estudiante, usuario: response?.usuario, ...response };
     } catch (error) {
       console.error('[EstudiantesThunk] Error actualizando Estudiante:', error);
       return rejectWithValue(error?.response?.data || error.message || error);
@@ -77,10 +77,26 @@ export const deleteEstudiante = createAsyncThunk(
       console.log('[EstudiantesThunk] Eliminando Estudiante ID:', id)
       const response = await estudiantesApi.deleteEstudiante(id)
       console.log('[EstudiantesThunk] Estudiante eliminada:', response)
-      return response?.Estudiante || response
+      // Devolvemos el id para que el slice pueda filtrar la lista local
+      return { id, ...response }
     } catch (error) {
       console.error('[EstudiantesThunk] Error eliminando Estudiante:', error)
       return rejectWithValue(error?.response?.data || error.message || error)
     }
   }
-);  
+);
+
+export const buscarEstudiantes = createAsyncThunk(
+  'Estudiantes/buscarEstudiantes',
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      console.log('[EstudiantesThunk] Buscando estudiantes:', params);
+      const response = await estudiantesApi.busquedaEstudiantes(params);
+      console.log('[EstudiantesThunk] Resultado búsqueda:', response);
+      return response;
+    } catch (error) {
+      console.error('[EstudiantesThunk] Error buscando estudiantes:', error);
+      return rejectWithValue(error?.response?.data || error.message || error);
+    }
+  }
+);
