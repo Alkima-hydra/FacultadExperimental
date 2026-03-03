@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchCursos } from './slicesCursos/CursosThunk';
+import { selectCursos, selectIsLoadingCursos, selectError, clearError } from './slicesCursos/CursosSlice';
 import Breadcrumb from '../../components/Breadcrumb';
 import SectionTitleSpecial from '../../components/SectionTitle/SectionTitleSpecial';
 import SingleCourse from '../../components/Course';
@@ -18,8 +21,59 @@ import avatarImg3 from '../../assets/img/course/ed-avata-1-3.png';
 import avatarImg4 from '../../assets/img/course/ed-avata-1-4.png';
 import avatarImg5 from '../../assets/img/course/ed-avata-1-5.png';
 import avatarImg6 from '../../assets/img/course/ed-avata-1-6.png';
+import { id } from 'date-fns/locale';
+
+const COURSE_IMAGES = [courseImg1, courseImg2, courseImg3, courseImg4, courseImg5, courseImg6];
+const AVATARS = [avatarImg1, avatarImg2, avatarImg3, avatarImg4, avatarImg5, avatarImg6];
+
+function normalizeCourse(curso, idx) {
+  const c = curso || {};
+  const materia = c?.materia || {};
+  const docente = c?.docente || {};
+
+  const materiaNombre = materia?.nombre || (c?.materia_id_materia ? `Materia #${c.materia_id_materia}` : 'Curso');
+  const docenteNombre =
+    docente?.nombre ||
+    docente?.nombres ||
+    docente?.nombre_completo ||
+    (c?.docente_id_docente ? `Docente #${c.docente_id_docente}` : 'Docente');
+
+  return {
+    courseImage: COURSE_IMAGES[idx % COURSE_IMAGES.length],
+    thumbText: materiaNombre,
+    title: materiaNombre,
+    authorAvatar: AVATARS[idx % AVATARS.length],
+    authorName: docenteNombre,
+
+    // Extra info for the card
+    rating: c?.rating ?? null,
+    price: c?.precio ?? null,
+    lessonCount: c?.lecciones ?? null,
+    duration: c?.horas_academicas != null ? `${c.horas_academicas}h` : null,
+    studentCount: c?.cupos ?? null,
+    periodo: c?.periodo ?? null,
+    id: c?.id_curso ?? id(), // fallback a un id aleatorio si no hay id_curso, para evitar warnings de React
+  };
+}
 
 const CourseOneMain = () => {
+  const dispatch = useDispatch();
+  const cursos = useSelector(selectCursos);
+  const isLoading = useSelector(selectIsLoadingCursos);
+  const error = useSelector(selectError);
+
+  useEffect(() => {
+    dispatch(clearError());
+    // Si tu thunk soporta paginación, manda { page, limit }. Si no, igual no rompe.
+    dispatch(fetchCursos({ page: 1, limit: 60 }));
+  }, [dispatch]);
+
+  const cards = useMemo(() => {
+    const list = Array.isArray(cursos) ? cursos : [];
+    // en esta página mostramos 6 como en el diseño
+    return list.slice(0, 6).map((c, idx) => normalizeCourse(c, idx));
+  }, [cursos]);
+
   return (
     <main>
       {/* Breadcrumb */}
@@ -57,67 +111,40 @@ const CourseOneMain = () => {
             </div>
           </div>
 
+          {/* Errors */}
+          {error ? (
+            <div className="alert alert-danger" role="alert" style={{ marginBottom: 20 }}>
+              {String(error)}
+            </div>
+          ) : null}
+
           {/* Courses Grid */}
           <div className="row">
-            <div className="col-xl-4 col-lg-6 col-md-6 mb-30">
-              <SingleCourse
-                courseImage={courseImg1}
-                thumbText="Marketing Digital"
-                title="Estadística, Ciencia de Datos y Análisis de Negocios"
-                authorAvatar={avatarImg1}
-                authorName="Samantha"
-              />
-            </div>
+            {isLoading ? (
+              <div style={{ padding: '16px 0', color: '#6b7280' }}>Cargando cursos…</div>
+            ) : cards.length === 0 ? (
+              <div style={{ padding: '16px 0', color: '#6b7280' }}>No hay cursos disponibles.</div>
+            ) : (
+              cards.map((c, idx) => (
+                <div className="col-xl-4 col-lg-6 col-md-6 mb-30" key={idx}>
+                  <SingleCourse
 
-            <div className="col-xl-4 col-lg-6 col-md-6 mb-30">
-              <SingleCourse
-                courseImage={courseImg2}
-                thumbText="Marketing Digital"
-                title="Adobe Illustrator para Diseño Gráfico (de Cero a Pro)"
-                authorAvatar={avatarImg2}
-                authorName="Charles"
-              />
-            </div>
-
-            <div className="col-xl-4 col-lg-6 col-md-6 mb-30">
-              <SingleCourse
-                courseImage={courseImg3}
-                thumbText="Marketing Digital"
-                title="SEO desde Cero: Posiciona tu Negocio en Google"
-                authorAvatar={avatarImg3}
-                authorName="Morgan"
-              />
-            </div>
-
-            <div className="col-xl-4 col-lg-6 col-md-6 mb-30">
-              <SingleCourse
-                courseImage={courseImg4}
-                thumbText="Marketing Digital"
-                title="Adobe Illustrator para Diseño Gráfico (proyectos reales)"
-                authorAvatar={avatarImg4}
-                authorName="Brian Brewer"
-              />
-            </div>
-
-            <div className="col-xl-4 col-lg-6 col-md-6 mb-30">
-              <SingleCourse
-                courseImage={courseImg5}
-                thumbText="Marketing Digital"
-                title="Análisis de Datos para Negocios: Métricas y Reportes"
-                authorAvatar={avatarImg5}
-                authorName="Rodriquez"
-              />
-            </div>
-
-            <div className="col-xl-4 col-lg-6 col-md-6 mb-30">
-              <SingleCourse
-                courseImage={courseImg6}
-                thumbText="Marketing Digital"
-                title="SEO para Emprendedores: Estrategia y Contenido"
-                authorAvatar={avatarImg6}
-                authorName="Morgan"
-              />
-            </div>
+                    courseImage={c.courseImage}
+                    id={c.id}
+                    thumbText={c.thumbText}
+                    title={c.title}
+                    authorAvatar={c.authorAvatar}
+                    authorName={c.authorName}
+                    periodo={c.periodo}
+                    rating={c.rating}
+                    price={c.price}
+                    lessonCount={c.lessonCount}
+                    duration={c.duration}
+                    studentCount={c.studentCount}
+                  />
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
