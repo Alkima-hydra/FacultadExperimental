@@ -94,6 +94,8 @@ export const estudiantesApi = {
 
   deleteEstudiante: (id) =>
     api.patch(`/estudiantes/${id}`).then((res) => res.data).catch(handleError),
+  busquedaEstudiantes: (params = {}) =>
+    api.get('/busqueda/estudiantes', { params }).then((res) => res.data).catch(handleError),
 };
 
 // docentes api
@@ -115,6 +117,8 @@ export const DocentesApi = {
 
   deleteDocente: (id) =>
     api.patch(`/docentes/${id}`).then((res) => res.data).catch(handleError),
+  busquedaDocentes: (params = {}) =>
+    api.get('/busqueda/docentes', { params }).then((res) => res.data).catch(handleError),
 };
 
 export const passwordApi = {
