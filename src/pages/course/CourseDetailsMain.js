@@ -35,10 +35,9 @@ const CourseDetailsMain = () => {
 
   const materiaNombre = curso?.materia?.nombre || (curso?.materia_id_materia ? `Materia #${curso.materia_id_materia}` : 'Curso');
   const docenteNombre =
-    curso?.docente?.nombre ||
-    curso?.docente?.nombres ||
-    curso?.docente?.nombre_completo ||
+    curso?.docente?.usuario?.nombres ||
     (curso?.docente_id_docente ? `Docente #${curso.docente_id_docente}` : 'Docente');
+    
 
   const lecciones = curso?.lecciones ?? '—';
   const cupos = curso?.cupos ?? '—';

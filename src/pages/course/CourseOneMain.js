@@ -30,13 +30,10 @@ function normalizeCourse(curso, idx) {
   const c = curso || {};
   const materia = c?.materia || {};
   const docente = c?.docente || {};
+  const usuario = c?.docente?.usuario || {};
 
   const materiaNombre = materia?.nombre || (c?.materia_id_materia ? `Materia #${c.materia_id_materia}` : 'Curso');
-  const docenteNombre =
-    docente?.nombre ||
-    docente?.nombres ||
-    docente?.nombre_completo ||
-    (c?.docente_id_docente ? `Docente #${c.docente_id_docente}` : 'Docente');
+  const docenteNombre = usuario?.nombres || (c?.docente_id_docente ? `Docente #${c.docente_id_docente}` : 'Docente');
 
   return {
     courseImage: COURSE_IMAGES[idx % COURSE_IMAGES.length],
