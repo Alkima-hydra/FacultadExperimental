@@ -174,3 +174,8 @@ export const prerequisitosApi = {
   deletePrerequisito: (id) =>
     api.delete(`/materia-prereq/${id}`).then((res) => res.data).catch(handleError),
 };
+
+export const inscritosEstudianteApi = {
+  fetchInscripcionesByEstudianteId: (estudianteId) =>
+    api.get(`/inscritos/estudiante/${estudianteId}`).then((res) => res.data).catch(handleError),
+};
