@@ -137,6 +137,8 @@ export const cursosApi = {
     api.put(`/curso/${id}`, data).then((res) => res.data).catch(handleError),
   deleteCurso: (id) =>
     api.patch(`/curso/${id}`).then((res) => res.data).catch(handleError),
+  buscarCursos: (params = {}) =>
+    api.get('/busqueda/cursos', { params }).then((res) => res.data).catch(handleError),
 };
 
 // pa las materias
@@ -153,6 +155,8 @@ export const materiasApi = {
     api.put(`/materia/${id}`, data).then((res) => res.data).catch(handleError),
   deleteMateria: (id) =>
     api.patch(`/materia/${id}`).then((res) => res.data).catch(handleError),
+  buscarMaterias: (params = {}) =>
+    api.get('/busqueda/materias', { params }).then((res) => res.data).catch(handleError),
 };
 
 // pa los prerequisitos
