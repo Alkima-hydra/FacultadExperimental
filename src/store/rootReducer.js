@@ -3,13 +3,15 @@ import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
 import loginReducer from '../pages/signin/slices/loginSlice';
-//para estudiantes
-// para estudiantes
+
+// admin
 import studentsReducer from '../pages/admin/slicesStudents/StudentsSlice';
 import docentesReducer from '../pages/admin/slicesDocentes/DocentesSlice';
 import cursoReducer from '../pages/admin/slicesCursos/CursosSlice';
-// Agregar otros reducers aqui sdjalsd
-// Mantener los reducers en sus carpetas pofavo
+
+// admin estudiantes
+import perfilReducer from '../pages/adminEstudiantes/slicesPerfil/PerfilSlice';
+import carritoReducer from '../pages/adminEstudiantes/slicesCarrito/CarritoSlice';
 
 const loginPersistConfig = {
   key: 'login',
@@ -22,7 +24,8 @@ export const rootReducer = combineReducers({
   students: studentsReducer,
   docentes: docentesReducer,
   cursos: cursoReducer,
+  perfil: perfilReducer,
+  carrito: carritoReducer,
 });
-
 
 export default rootReducer;

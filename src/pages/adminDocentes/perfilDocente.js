@@ -18,7 +18,7 @@ import {
   selectToken,
   selectIsAuthenticated,
 } from "../signin/slices/loginSelectors" // ajusta si tu ruta es distinta
-
+import api from "../../lib/api";
 /* ─────────────────────────────────────────────
    Helpers UI
 ───────────────────────────────────────────── */
@@ -88,24 +88,21 @@ const DocenteProfile = () => {
       }
 
       try {
-        setLoading(true)
-        setError(null)
+  setLoading(true)
+  setError(null)
 
-        const res = await fetch(
-          `http://localhost:3000/api/usuarios/perfil/${userId}`,
-          {
-            headers: { "x-token": token },
-          }
-        )
+  const res = await api.get(`usuarios/perfil/${userId}`, {
+    headers: { "x-token": token }
+  })
 
-        const json = await res.json()
+  const json = res.data
 
-        if (!res.ok || !json?.ok) {
-          throw new Error(json?.msg || "No se pudo cargar el perfil.")
-        }
+  if (!json?.ok) {
+    throw new Error(json?.msg || "No se pudo cargar el perfil.")
+  }
 
-        const u = json.usuario || {}
-        const d = json.docente || null
+  const u = json.usuario || {}
+  const d = json.docente || null
 
         // Si este componente es SOLO para docentes, valida eso:
         if (!d) {

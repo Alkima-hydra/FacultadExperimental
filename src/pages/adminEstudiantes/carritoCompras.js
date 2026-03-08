@@ -1,566 +1,824 @@
-import React, { useState } from 'react';
-import { FiClock, FiUsers, FiFileText, FiAward, FiLogOut, FiBook, FiSearch } from 'react-icons/fi';
-import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
+import React, { useEffect } from 'react';
+import {
+  FiShoppingCart,
+  FiTrash2,
+  FiBookOpen,
+  FiClock,
+  FiUser,
+  FiCalendar,
+  FiArrowRight,
+  FiChevronLeft,
+  FiAlertCircle,
+  FiXCircle,
+  FiCreditCard,
+} from 'react-icons/fi';
+import { useDispatch, useSelector } from 'react-redux';
 import Swal from 'sweetalert2';
 
-/* ─── Mock data ─────────────────────────────────────────────── */
-const MOCK_COURSES = [
-    {
-        id: 1,
-        title: 'Estadística, Ciencia De Datos Y Análisis De Negocios',
-        category: 'Ciencia de Datos',
-        rating: 4.5,
-        price: 50,
-        lessons: 10,
-        hours: '19h 30m',
-        students: '20+',
-        teacher: 'Samantha',
-        teacherAvatar: 'https://i.pravatar.cc/40?img=1',
-        image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&q=80',
-        enrolled: '2024-03-15',
-        progress: 65,
-    },
-    {
-        id: 2,
-        title: 'Adobe Illustrator Para Diseño Gráfico (De Cero A Pro)',
-        category: 'Diseño',
-        rating: 4.5,
-        price: 50,
-        lessons: 12,
-        hours: '22h 00m',
-        students: '30+',
-        teacher: 'Charles',
-        teacherAvatar: 'https://i.pravatar.cc/40?img=3',
-        image: 'https://images.unsplash.com/photo-1542626991-cbc4e32524cc?w=500&q=80',
-        enrolled: '2024-04-01',
-        progress: 30,
-    },
-    {
-        id: 3,
-        title: 'SEO Desde Cero: Posiciona Tu Negocio En Google',
-        category: 'Marketing Digital',
-        rating: 4.0,
-        price: 50,
-        lessons: 8,
-        hours: '14h 15m',
-        students: '50+',
-        teacher: 'Morgan',
-        teacherAvatar: 'https://i.pravatar.cc/40?img=5',
-        image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=500&q=80',
-        enrolled: '2024-02-20',
-        progress: 90,
-    },
-];
+import { selectUserId } from '../signin/slices/loginSelectors';
 
-/* ─── Star rating ───────────────────────────────────────────── */
-const Stars = ({ rating }) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-        if (i <= Math.floor(rating)) stars.push(<FaStar key={i} />);
-        else if (i === Math.ceil(rating) && rating % 1 !== 0) stars.push(<FaStarHalfAlt key={i} />);
-        else stars.push(<FaRegStar key={i} />);
-    }
-    return <div className="sc-stars">{stars}</div>;
+import {
+  fetchCarritoByUsuarioId,
+  removeItemCarrito,
+  cancelarCarrito,
+} from './slicesCarrito/CarritoThunk';
+
+import {
+  selectCarrito,
+  selectCarritoLoading,
+  selectCarritoRemoving,
+  selectCarritoCanceling,
+  selectCarritoError,
+  selectCarritoSuccess,
+  clearCarritoError,
+  clearCarritoSuccess,
+} from './slicesCarrito/CarritoSlice';
+
+const swalTheme = {
+  confirmButtonColor: '#704FE6',
+  cancelButtonColor: '#4D5756',
+  customClass: { popup: 'it-cadm-swal-popup' },
+  didOpen: () => {
+    const container = document.querySelector('.swal2-container');
+    if (container) container.style.zIndex = '99999';
+  },
 };
 
-/* ─── Course Card ───────────────────────────────────────────── */
-const CourseCard = ({ course, onUnenroll, onCertificate }) => {
-    const progressColor = course.progress >= 80 ? '#22C55E' : course.progress >= 40 ? '#F59E0B' : '#6D5DFD';
+const formatMoney = (amount, currency = 'BOB') => {
+  const prefix = currency === 'BOB' ? 'Bs.' : currency;
+  return `${prefix} ${Number(amount || 0).toFixed(2)}`;
+};
 
-    return (
-        <div className="sc-card">
-            {/* Image */}
-            <div className="sc-card__img-wrap">
-                <img src={course.image} alt={course.title} className="sc-card__img" />
-                <div className="sc-card__category">{course.category}</div>
-                {course.progress === 100 && (
-                    <div className="sc-card__completed-badge">✓ Completado</div>
-                )}
-            </div>
+const buildTeacherName = (usuarioDocente) => {
+  if (!usuarioDocente) return 'Docente no disponible';
+  return (
+    usuarioDocente.nombre_completo ||
+    [
+      usuarioDocente.nombres,
+      usuarioDocente.apellido_paterno,
+      usuarioDocente.apellido_materno,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .trim() ||
+    'Docente no disponible'
+  );
+};
 
-            {/* Body */}
-            <div className="sc-card__body">
-                {/* Rating & price */}
-                <div className="sc-card__meta-top">
-                    <div className="sc-card__rating">
-                        <Stars rating={course.rating} />
-                        <span>{course.rating}</span>
-                    </div>
-                    <span className="sc-card__price">Bs {course.price}.00</span>
-                </div>
+const buildSchedule = (curso) => {
+  if (!curso) return 'Horario no disponible';
 
-                {/* Title */}
-                <h3 className="sc-card__title">{course.title}</h3>
+  const dias = curso.dias_de_clases || 'Sin días';
+  const inicio = curso.hora_inicio ? curso.hora_inicio.slice(0, 5) : '--:--';
+  const fin = curso.hora_fin ? curso.hora_fin.slice(0, 5) : '--:--';
 
-                {/* Stats */}
-                <div className="sc-card__stats">
-                    <span><FiFileText size={13} /> Lección {course.lessons}</span>
-                    <span><FiClock size={13} /> {course.hours}</span>
-                    <span><FiUsers size={13} /> Estudiantes {course.students}</span>
-                </div>
+  return `${dias} · ${inicio} - ${fin}`;
+};
 
-                {/* Progress bar */}
-                <div className="sc-card__progress-wrap">
-                    <div className="sc-card__progress-header">
-                        <span>Progreso</span>
-                        <span style={{ color: progressColor, fontWeight: 600 }}>{course.progress}%</span>
-                    </div>
-                    <div className="sc-card__progress-track">
-                        <div
-                            className="sc-card__progress-fill"
-                            style={{ width: `${course.progress}%`, background: progressColor }}
-                        />
-                    </div>
-                </div>
+const CartItem = ({ item, onRemove, isRemoving }) => {
+  const materia = item.materia || {};
+  const curso = item.curso || {};
+  const usuarioDocente = item.usuario_docente || {};
 
-                {/* Footer */}
-                <div className="sc-card__footer">
-                    <div className="sc-card__teacher">
-                        <img src={course.teacherAvatar} alt={course.teacher} />
-                        <span>{course.teacher}</span>
-                    </div>
-                    <div className="sc-card__actions">
-                        {course.progress >= 80 && (
-                            <button
-                                className="sc-btn sc-btn--cert"
-                                onClick={() => onCertificate(course)}
-                                title="Solicitar certificado"
-                            >
-                                <FiAward size={13} /> Certificado
-                            </button>
-                        )}
-                        <button
-                            className="sc-btn sc-btn--unenroll"
-                            onClick={() => onUnenroll(course)}
-                            title="Desinscribirse"
-                        >
-                            <FiLogOut size={13} /> Salir
-                        </button>
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="cartx-item">
+      <div className="cartx-item__main">
+        <div className="cartx-item__badge">
+          {materia.codigo || 'CUR'}
         </div>
-    );
+
+        <div className="cartx-item__content">
+          <div className="cartx-item__top">
+            <div>
+              <p className="cartx-item__sigla">{materia.codigo || 'Sin sigla'}</p>
+              <h3 className="cartx-item__title">{materia.nombre || 'Curso sin nombre'}</h3>
+            </div>
+
+            <div className="cartx-item__price">
+              {formatMoney(item.precio_item)}
+            </div>
+          </div>
+
+          <div className="cartx-item__meta">
+            <span>
+              <FiUser size={14} />
+              {buildTeacherName(usuarioDocente)}
+            </span>
+
+            <span>
+              <FiClock size={14} />
+              {buildSchedule(curso)}
+            </span>
+
+            <span>
+              <FiCalendar size={14} />
+              {curso.periodo || 'Sin período'}
+            </span>
+
+            <span>
+              <FiBookOpen size={14} />
+              {curso.lecciones ?? 0} lecciones
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="cartx-item__actions">
+        <button
+          className="cartx-remove-btn"
+          type="button"
+          onClick={() => onRemove(item)}
+          disabled={isRemoving}
+        >
+          <FiTrash2 size={15} />
+          <span>{isRemoving ? 'Eliminando...' : 'Quitar'}</span>
+        </button>
+      </div>
+    </div>
+  );
 };
 
-/* ─── Main Component ────────────────────────────────────────── */
-const StudentCourses = () => {
-    const [courses, setCourses] = useState(MOCK_COURSES);
-    const [search,  setSearch]  = useState('');
+const CarritoCompras = () => {
+  const dispatch = useDispatch();
 
-    const filtered = courses.filter(c =>
-        c.title.toLowerCase().includes(search.toLowerCase()) ||
-        c.category.toLowerCase().includes(search.toLowerCase())
-    );
+  const userId = useSelector(selectUserId);
 
-    const handleUnenroll = async (course) => {
-        const res = await Swal.fire({
-            title: 'Desinscribirse',
-            html: `<div style="color:#5A6676;font-size:14px;line-height:1.5;margin-top:6px">
-                     ¿Seguro que deseas salir del curso<br/>
-                     <strong style="color:#1A1F36">"${course.title}"</strong>?<br/>
-                     <span style="opacity:.8">Perderás tu progreso actual.</span>
-                   </div>`,
-            icon: 'warning',
-            width: 400,
-            showCancelButton: true,
-            confirmButtonText: 'Sí, desinscribirme',
-            cancelButtonText: 'Cancelar',
-            reverseButtons: true,
-            confirmButtonColor: '#EF4444',
-            cancelButtonColor: '#98A2B3',
-            didOpen: (popup) => {
-                popup.style.borderRadius = '16px';
-                const icon = popup.querySelector('.swal2-icon');
-                if (icon) { icon.style.transform = 'scale(0.78)'; icon.style.margin = '0 auto 6px'; }
-                const title = popup.querySelector('.swal2-title');
-                if (title) { title.style.fontSize = '18px'; title.style.fontWeight = '800'; }
-            },
-        });
-        if (res.isConfirmed) {
-            setCourses(cs => cs.filter(c => c.id !== course.id));
-            Swal.fire({
-                title: '¡Listo!',
-                text: 'Te has desinscrito del curso correctamente.',
-                icon: 'success',
-                timer: 2000,
-                showConfirmButton: false,
-                didOpen: (popup) => { popup.style.borderRadius = '16px'; },
-            });
-        }
-    };
+  const carrito = useSelector(selectCarrito);
+  const loading = useSelector(selectCarritoLoading);
+  const isRemoving = useSelector(selectCarritoRemoving);
+  const isCanceling = useSelector(selectCarritoCanceling);
+  const error = useSelector(selectCarritoError);
+  const successMessage = useSelector(selectCarritoSuccess);
 
-    const handleCertificate = async (course) => {
-        await Swal.fire({
-            title: '¡Solicitud enviada!',
-            html: `<div style="color:#5A6676;font-size:14px;line-height:1.5;margin-top:6px">
-                     Tu certificado para el curso<br/>
-                     <strong style="color:#1A1F36">"${course.title}"</strong><br/>
-                     ha sido solicitado. Lo recibirás en tu correo pronto.
-                   </div>`,
-            icon: 'success',
-            confirmButtonText: 'Entendido',
-            confirmButtonColor: '#6D5DFD',
-            didOpen: (popup) => {
-                popup.style.borderRadius = '16px';
-                const icon = popup.querySelector('.swal2-icon');
-                if (icon) { icon.style.transform = 'scale(0.78)'; icon.style.margin = '0 auto 6px'; }
-                const title = popup.querySelector('.swal2-title');
-                if (title) { title.style.fontSize = '18px'; title.style.fontWeight = '800'; }
-            },
-        });
-    };
+  useEffect(() => {
+    if (userId) {
+      dispatch(fetchCarritoByUsuarioId(userId));
+    }
+  }, [dispatch, userId]);
 
+  useEffect(() => {
+    if (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error,
+        ...swalTheme,
+        showCancelButton: false,
+      });
+      dispatch(clearCarritoError());
+    }
+  }, [error, dispatch]);
+
+  useEffect(() => {
+    if (successMessage) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Listo',
+        text: successMessage,
+        timer: 1800,
+        showConfirmButton: false,
+        ...swalTheme,
+      });
+      dispatch(clearCarritoSuccess());
+    }
+  }, [successMessage, dispatch]);
+
+  const handleRemove = async (item) => {
+    const materiaNombre = item?.materia?.nombre || 'este curso';
+
+    const confirm = await Swal.fire({
+      title: '¿Quitar del carrito?',
+      text: `Se eliminará "${materiaNombre}" del carrito.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, quitar',
+      cancelButtonText: 'Cancelar',
+      ...swalTheme,
+      confirmButtonColor: '#EF4444',
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    dispatch(removeItemCarrito(item.id_compra_curso));
+  };
+
+  const handleCancelarTodo = async () => {
+    if (!carrito?.id_compra_total) return;
+
+    const confirm = await Swal.fire({
+      title: '¿Vaciar carrito?',
+      text: 'El carrito completo se marcará como CANCELADO.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, vaciar',
+      cancelButtonText: 'Cancelar',
+      ...swalTheme,
+      confirmButtonColor: '#EF4444',
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    dispatch(cancelarCarrito(carrito.id_compra_total));
+  };
+
+  const handleContinuarComprando = async () => {
+    await Swal.fire({
+      title: 'Aún no disponible',
+      text: 'La navegación para seguir comprando todavía no fue implementada.',
+      icon: 'info',
+      confirmButtonText: 'Entendido',
+      ...swalTheme,
+      showCancelButton: false,
+    });
+  };
+
+  const handlePagarAhora = async () => {
+    await Swal.fire({
+      title: 'Pago aún no disponible',
+      text: 'La pantalla de pago todavía no fue implementada.',
+      icon: 'info',
+      confirmButtonText: 'Entendido',
+      ...swalTheme,
+      showCancelButton: false,
+    });
+  };
+
+  const items = carrito?.items || [];
+  const total = carrito?.total || 0;
+  const cantidadItems = carrito?.cantidad_items || 0;
+  const moneda = carrito?.moneda || 'BOB';
+
+  if (loading) {
     return (
-        <>
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+      <>
+        <style>{styles}</style>
+        <div className="cartx-root">
+          <div className="cartx-loading">
+            <div className="cartx-spinner" />
+            <p>Cargando carrito...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
-                .sc-root {
-                    min-height: 100%;
-                    padding: 36px 32px;
-                    background: #EDEEF5;
-                    font-family: 'DM Sans', sans-serif;
-                    box-sizing: border-box;
-                }
+  return (
+    <>
+      <style>{styles}</style>
 
-                /* Header */
-                .sc-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    flex-wrap: wrap;
-                    gap: 14px;
-                    margin-bottom: 28px;
-                }
-                .sc-header__left {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
-                .sc-header__pill {
-                    width: 8px; height: 24px;
-                    background: #6D5DFD;
-                    border-radius: 4px;
-                }
-                .sc-header__title {
-                    font-family: 'DM Serif Display', serif;
-                    font-size: 22px;
-                    color: #1A1F36;
-                    margin: 0;
-                }
-                .sc-header__count {
-                    background: #EEF0FB;
-                    color: #6D5DFD;
-                    font-size: 12px;
-                    font-weight: 700;
-                    padding: 3px 10px;
-                    border-radius: 99px;
-                }
+      <div className="cartx-root">
+        <div className="cartx-header">
+          <div className="cartx-header__left">
+            <div className="cartx-header__pill" />
+            <div>
+              <h1 className="cartx-header__title">Carrito de compras</h1>
+              <p className="cartx-header__sub">
+                Revisa tus cursos antes de continuar al pago.
+              </p>
+            </div>
+          </div>
 
-                /* Search */
-                .sc-search {
-                    position: relative;
-                    width: 240px;
-                }
-                .sc-search input {
-                    width: 100%;
-                    box-sizing: border-box;
-                    border: 1.5px solid #DDE0EF;
-                    border-radius: 10px;
-                    padding: 8px 12px 8px 34px;
-                    font-size: 13px;
-                    font-family: 'DM Sans', sans-serif;
-                    background: #fff;
-                    color: #1A1F36;
-                    outline: none;
-                    transition: border-color .15s, box-shadow .15s;
-                }
-                .sc-search input:focus {
-                    border-color: #6D5DFD;
-                    box-shadow: 0 0 0 3px rgba(109, 93, 253, 0.12);
-                }
-                .sc-search__icon {
-                    position: absolute;
-                    left: 10px; top: 50%;
-                    transform: translateY(-50%);
-                    color: #9FA8C7;
-                }
+          <div className="cartx-header__count">
+            <FiShoppingCart size={15} />
+            <span>{cantidadItems} item{cantidadItems !== 1 ? 's' : ''}</span>
+          </div>
+        </div>
 
-                /* Empty state */
-                .sc-empty {
-                    text-align: center;
-                    padding: 60px 20px;
-                    color: #9FA8C7;
-                }
-                .sc-empty svg { margin-bottom: 12px; opacity: .4; }
-                .sc-empty p { margin: 0; font-size: 15px; }
+        {!carrito || items.length === 0 ? (
+          <div className="cartx-empty">
+            <div className="cartx-empty__icon">
+              <FiShoppingCart size={42} />
+            </div>
+            <h3>Tu carrito está vacío</h3>
+            <p>No tienes cursos agregados por ahora.</p>
 
-                /* Grid */
-                .sc-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                    gap: 24px;
-                }
+            <button
+              className="cartx-btn cartx-btn--primary"
+              type="button"
+              onClick={handleContinuarComprando}
+            >
+              <FiArrowRight size={15} />
+              <span>Continuar comprando</span>
+            </button>
+          </div>
+        ) : (
+          <div className="cartx-layout">
+            <section className="cartx-list">
+              {items.map((item) => (
+                <CartItem
+                  key={item.id_compra_curso}
+                  item={item}
+                  onRemove={handleRemove}
+                  isRemoving={isRemoving}
+                />
+              ))}
+            </section>
 
-                /* Card */
-                .sc-card {
-                    background: #fff;
-                    border-radius: 16px;
-                    border: 1.5px solid #E8EAF5;
-                    overflow: hidden;
-                    transition: transform .2s, box-shadow .2s;
-                    position: relative;
-                }
-                .sc-card:hover {
-                    transform: translateY(-4px);
-                    box-shadow: 0 12px 36px rgba(109, 93, 253, 0.12);
-                }
+            <aside className="cartx-summary">
+              <div className="cartx-summary__card">
+                <h3 className="cartx-summary__title">Resumen de compra</h3>
 
-                /* Watermark */
-                .sc-card::before {
-                    content: '';
-                    position: absolute;
-                    right: -20px; bottom: 60px;
-                    width: 120px; height: 120px;
-                    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 10 L90 30 L90 70 L50 90 L10 70 L10 30 Z' fill='none' stroke='%236D5DFD' stroke-width='3' opacity='0.08'/%3E%3Cpath d='M50 25 L75 37.5 L75 62.5 L50 75 L25 62.5 L25 37.5 Z' fill='none' stroke='%236D5DFD' stroke-width='2' opacity='0.06'/%3E%3C/svg%3E") no-repeat center/contain;
-                    pointer-events: none;
-                    z-index: 0;
-                }
+                <div className="cartx-summary__rows">
+                  <div className="cartx-summary__row">
+                    <span>Items</span>
+                    <strong>{cantidadItems}</strong>
+                  </div>
 
-                .sc-card__img-wrap {
-                    position: relative;
-                    height: 190px;
-                    overflow: hidden;
-                }
-                .sc-card__img {
-                    width: 100%; height: 100%;
-                    object-fit: cover;
-                    transition: transform .4s;
-                }
-                .sc-card:hover .sc-card__img { transform: scale(1.04); }
+                  <div className="cartx-summary__row">
+                    <span>Moneda</span>
+                    <strong>{moneda}</strong>
+                  </div>
 
-                .sc-card__category {
-                    position: absolute;
-                    bottom: 12px; left: 12px;
-                    background: rgba(26, 31, 54, 0.82);
-                    backdrop-filter: blur(6px);
-                    color: #fff;
-                    font-size: 12px;
-                    font-weight: 600;
-                    padding: 5px 12px;
-                    border-radius: 6px;
-                    letter-spacing: .3px;
-                }
-                .sc-card__completed-badge {
-                    position: absolute;
-                    top: 10px; right: 10px;
-                    background: #22C55E;
-                    color: #fff;
-                    font-size: 11px;
-                    font-weight: 700;
-                    padding: 4px 10px;
-                    border-radius: 99px;
-                    letter-spacing: .3px;
-                }
-
-                .sc-card__body {
-                    padding: 16px 18px 18px;
-                    position: relative;
-                    z-index: 1;
-                }
-
-                .sc-card__meta-top {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: 8px;
-                }
-                .sc-card__rating {
-                    display: flex;
-                    align-items: center;
-                    gap: 5px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    color: #1A1F36;
-                }
-                .sc-stars {
-                    display: flex;
-                    gap: 2px;
-                    color: #F59E0B;
-                    font-size: 13px;
-                }
-                .sc-card__price {
-                    color: #6D5DFD;
-                    font-weight: 700;
-                    font-size: 14px;
-                }
-
-                .sc-card__title {
-                    font-size: 15px;
-                    font-weight: 700;
-                    color: #1A1F36;
-                    margin: 0 0 12px;
-                    line-height: 1.4;
-                    display: -webkit-box;
-                    -webkit-line-clamp: 2;
-                    -webkit-box-orient: vertical;
-                    overflow: hidden;
-                }
-
-                .sc-card__stats {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 8px;
-                    background: #F7F8FC;
-                    border-radius: 9px;
-                    padding: 9px 12px;
-                    margin-bottom: 14px;
-                }
-                .sc-card__stats span {
-                    display: flex;
-                    align-items: center;
-                    gap: 5px;
-                    font-size: 12px;
-                    color: #5A6676;
-                    font-weight: 500;
-                }
-
-                /* Progress */
-                .sc-card__progress-wrap { margin-bottom: 14px; }
-                .sc-card__progress-header {
-                    display: flex;
-                    justify-content: space-between;
-                    font-size: 11px;
-                    color: #9FA8C7;
-                    font-weight: 600;
-                    margin-bottom: 5px;
-                    text-transform: uppercase;
-                    letter-spacing: .4px;
-                }
-                .sc-card__progress-track {
-                    height: 6px;
-                    background: #EEF0FB;
-                    border-radius: 99px;
-                    overflow: hidden;
-                }
-                .sc-card__progress-fill {
-                    height: 100%;
-                    border-radius: 99px;
-                    transition: width .6s cubic-bezier(.4,0,.2,1);
-                }
-
-                /* Footer */
-                .sc-card__footer {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    gap: 8px;
-                    flex-wrap: wrap;
-                }
-                .sc-card__teacher {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    color: #1A1F36;
-                }
-                .sc-card__teacher img {
-                    width: 32px; height: 32px;
-                    border-radius: 50%;
-                    border: 2px solid #E8EAF5;
-                    object-fit: cover;
-                }
-
-                /* Action buttons */
-                .sc-card__actions {
-                    display: flex;
-                    gap: 6px;
-                }
-                .sc-btn {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 5px;
-                    padding: 7px 13px;
-                    border-radius: 8px;
-                    font-family: 'DM Sans', sans-serif;
-                    font-size: 12px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    border: none;
-                    transition: all .18s;
-                    white-space: nowrap;
-                }
-                .sc-btn--cert {
-                    background: #6D5DFD;
-                    color: #fff;
-                    box-shadow: 0 3px 10px rgba(109, 93, 253, 0.3);
-                }
-                .sc-btn--cert:hover {
-                    background: #5A4AE8;
-                    transform: translateY(-1px);
-                    box-shadow: 0 5px 14px rgba(109, 93, 253, 0.38);
-                }
-                .sc-btn--unenroll {
-                    background: transparent;
-                    color: #EF4444;
-                    border: 1.5px solid #FCA5A5;
-                }
-                .sc-btn--unenroll:hover {
-                    background: #FEF2F2;
-                    border-color: #EF4444;
-                }
-
-                /* Responsive */
-                @media (max-width: 600px) {
-                    .sc-root { padding: 20px 14px; }
-                    .sc-grid { grid-template-columns: 1fr; }
-                    .sc-search { width: 100%; }
-                    .sc-header { flex-direction: column; align-items: flex-start; }
-                }
-            `}</style>
-
-            <div className="sc-root">
-                {/* Header */}
-                <div className="sc-header">
-                    <div className="sc-header__left">
-                        <div className="sc-header__pill" />
-                        <h1 className="sc-header__title">Mis Cursos</h1>
-                        <span className="sc-header__count">{courses.length} inscritos</span>
-                    </div>
-                    <div className="sc-search">
-                        <FiSearch size={14} className="sc-search__icon" />
-                        <input
-                            type="text"
-                            placeholder="Buscar curso..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                    </div>
+                  <div className="cartx-summary__row">
+                    <span>Estado</span>
+                    <strong>{carrito.estado || 'PENDIENTE'}</strong>
+                  </div>
                 </div>
 
-                {/* Grid */}
-                {filtered.length === 0 ? (
-                    <div className="sc-empty">
-                        <FiBook size={48} />
-                        <p>{search ? 'No se encontraron cursos con ese criterio.' : 'No estás inscrito en ningún curso.'}</p>
-                    </div>
-                ) : (
-                    <div className="sc-grid">
-                        {filtered.map(course => (
-                            <CourseCard
-                                key={course.id}
-                                course={course}
-                                onUnenroll={handleUnenroll}
-                                onCertificate={handleCertificate}
-                            />
-                        ))}
-                    </div>
-                )}
-            </div>
-        </>
-    );
+                <div className="cartx-summary__divider" />
+
+                <div className="cartx-summary__total">
+                  <span>Total</span>
+                  <strong>{formatMoney(total, moneda)}</strong>
+                </div>
+
+                <div className="cartx-summary__actions">
+                  <button
+                    className="cartx-btn cartx-btn--ghost"
+                    type="button"
+                    onClick={handleContinuarComprando}
+                  >
+                    <FiChevronLeft size={15} />
+                    <span>Continuar comprando</span>
+                  </button>
+
+                  <button
+                    className="cartx-btn cartx-btn--danger"
+                    type="button"
+                    onClick={handleCancelarTodo}
+                    disabled={isCanceling}
+                  >
+                    <FiXCircle size={15} />
+                    <span>{isCanceling ? 'Vaciando...' : 'Vaciar carrito'}</span>
+                  </button>
+
+                  <button
+                    className="cartx-btn cartx-btn--primary"
+                    type="button"
+                    onClick={handlePagarAhora}
+                  >
+                    <FiCreditCard size={15} />
+                    <span>Pagar ahora</span>
+                  </button>
+                </div>
+
+                <div className="cartx-summary__note">
+                  <FiAlertCircle size={14} />
+                  <span>Verifica tus cursos antes de continuar al proceso de pago.</span>
+                </div>
+              </div>
+            </aside>
+          </div>
+        )}
+      </div>
+    </>
+  );
 };
 
-export default StudentCourses;
+const styles = `
+  .cartx-root{
+    min-height:100%;
+    padding:32px;
+    background:#f6f7fb;
+    box-sizing:border-box;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+
+  .cartx-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:20px;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+  }
+
+  .cartx-header__left{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+  }
+
+  .cartx-header__pill{
+    width:8px;
+    height:48px;
+    border-radius:8px;
+    background:linear-gradient(180deg,#704fe6 0%, #4b5fd6 100%);
+    flex-shrink:0;
+    margin-top:2px;
+  }
+
+  .cartx-header__title{
+    margin:0;
+    font-size:32px;
+    line-height:1.08;
+    font-weight:500;
+    color:#1a1f36;
+    letter-spacing:-0.3px;
+  }
+
+  .cartx-header__sub{
+    margin:8px 0 0;
+    color:#68708b;
+    font-size:14px;
+    line-height:1.6;
+  }
+
+  .cartx-header__count{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    border-radius:999px;
+    background:#ffffff;
+    border:1px solid #e6e9f2;
+    color:#4d5673;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .cartx-layout{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) 340px;
+    gap:24px;
+    align-items:start;
+  }
+
+  .cartx-list{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .cartx-item{
+    background:#fff;
+    border:1px solid #eceef5;
+    border-radius:22px;
+    box-shadow:0 10px 30px rgba(40,52,109,.05);
+    padding:20px;
+    display:flex;
+    justify-content:space-between;
+    gap:18px;
+    align-items:flex-start;
+  }
+
+  .cartx-item__main{
+    display:flex;
+    gap:16px;
+    min-width:0;
+    flex:1;
+  }
+
+  .cartx-item__badge{
+    width:66px;
+    height:66px;
+    border-radius:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(180deg,#f2f4fb 0%, #e8ecfb 100%);
+    color:#5a55d6;
+    font-weight:800;
+    font-size:13px;
+    letter-spacing:.3px;
+    border:1px solid #e3e7f6;
+    flex-shrink:0;
+  }
+
+  .cartx-item__content{
+    min-width:0;
+    flex:1;
+  }
+
+  .cartx-item__top{
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    align-items:flex-start;
+    margin-bottom:10px;
+  }
+
+  .cartx-item__sigla{
+    margin:0 0 4px;
+    color:#7f88a7;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.6px;
+    text-transform:uppercase;
+  }
+
+  .cartx-item__title{
+    margin:0;
+    color:#1a1f36;
+    font-size:18px;
+    line-height:1.35;
+    font-weight:700;
+  }
+
+  .cartx-item__price{
+    color:#6a50e7;
+    font-weight:800;
+    font-size:18px;
+    white-space:nowrap;
+  }
+
+  .cartx-item__meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+
+  .cartx-item__meta span{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:8px 10px;
+    border-radius:12px;
+    background:#f8f9fd;
+    border:1px solid #edf0f7;
+    color:#5f6781;
+    font-size:12px;
+    font-weight:600;
+  }
+
+  .cartx-item__actions{
+    flex-shrink:0;
+  }
+
+  .cartx-remove-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    border:none;
+    cursor:pointer;
+    border-radius:12px;
+    padding:10px 14px;
+    font-size:12px;
+    font-weight:700;
+    background:#fff1f1;
+    color:#d14343;
+    border:1px solid #ffd5d5;
+    transition:all .16s ease;
+  }
+
+  .cartx-remove-btn:hover{
+    background:#ffe7e7;
+  }
+
+  .cartx-remove-btn:disabled{
+    opacity:.7;
+    cursor:not-allowed;
+  }
+
+  .cartx-summary__card{
+    background:#fff;
+    border:1px solid #eceef5;
+    border-radius:22px;
+    box-shadow:0 10px 30px rgba(40,52,109,.05);
+    padding:22px;
+    position:sticky;
+    top:20px;
+  }
+
+  .cartx-summary__title{
+    margin:0 0 18px;
+    color:#1a1f36;
+    font-size:20px;
+    font-weight:800;
+  }
+
+  .cartx-summary__rows{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .cartx-summary__row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    color:#66708c;
+    font-size:14px;
+  }
+
+  .cartx-summary__row strong{
+    color:#1a1f36;
+  }
+
+  .cartx-summary__divider{
+    height:1px;
+    background:#edf0f7;
+    margin:18px 0;
+  }
+
+  .cartx-summary__total{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:20px;
+  }
+
+  .cartx-summary__total span{
+    color:#4f5874;
+    font-size:14px;
+    font-weight:700;
+  }
+
+  .cartx-summary__total strong{
+    color:#6a50e7;
+    font-size:24px;
+    font-weight:800;
+  }
+
+  .cartx-summary__actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .cartx-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    border:none;
+    cursor:pointer;
+    border-radius:14px;
+    padding:12px 16px;
+    font-size:13px;
+    font-weight:800;
+    transition:all .18s ease;
+    min-height:46px;
+    width:100%;
+  }
+
+  .cartx-btn--primary{
+    background:#704fe6;
+    color:#fff;
+    box-shadow:0 8px 20px rgba(112,79,230,.22);
+  }
+
+  .cartx-btn--primary:hover{
+    background:#6242da;
+    transform:translateY(-1px);
+  }
+
+  .cartx-btn--ghost{
+    background:#fff;
+    color:#55607d;
+    border:1px solid #e4e8f1;
+  }
+
+  .cartx-btn--ghost:hover{
+    background:#f8f9fd;
+  }
+
+  .cartx-btn--danger{
+    background:#fff1f1;
+    color:#d14343;
+    border:1px solid #ffd5d5;
+  }
+
+  .cartx-btn--danger:hover{
+    background:#ffe7e7;
+  }
+
+  .cartx-btn:disabled{
+    opacity:.7;
+    cursor:not-allowed;
+  }
+
+  .cartx-summary__note{
+    margin-top:16px;
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+    color:#7a839d;
+    font-size:12px;
+    line-height:1.5;
+    padding:12px 13px;
+    border-radius:14px;
+    background:#f8f9fd;
+    border:1px solid #edf0f7;
+  }
+
+  .cartx-empty{
+    background:#fff;
+    border:1px solid #eceef5;
+    border-radius:24px;
+    box-shadow:0 10px 30px rgba(40,52,109,.05);
+    padding:48px 24px;
+    text-align:center;
+  }
+
+  .cartx-empty__icon{
+    width:82px;
+    height:82px;
+    border-radius:24px;
+    margin:0 auto 16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(180deg,#f2f4fb 0%, #e8ecfb 100%);
+    color:#7c86aa;
+  }
+
+  .cartx-empty h3{
+    margin:0 0 8px;
+    color:#1a1f36;
+    font-size:22px;
+    font-weight:800;
+  }
+
+  .cartx-empty p{
+    margin:0 0 20px;
+    color:#6f7894;
+    font-size:14px;
+    line-height:1.6;
+  }
+
+  .cartx-loading{
+    min-height:68vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:#5f6781;
+    font-weight:700;
+    gap:14px;
+  }
+
+  .cartx-spinner{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:4px solid #e8eafb;
+    border-top-color:#704fe6;
+    animation:cartx-spin .8s linear infinite;
+  }
+
+  @keyframes cartx-spin{
+    to{ transform:rotate(360deg); }
+  }
+
+  @media (max-width: 1100px){
+    .cartx-layout{
+      grid-template-columns:1fr;
+    }
+
+    .cartx-summary__card{
+      position:static;
+    }
+  }
+
+  @media (max-width: 760px){
+    .cartx-root{
+      padding:18px 12px;
+    }
+
+    .cartx-header__title{
+      font-size:28px;
+    }
+
+    .cartx-item{
+      flex-direction:column;
+    }
+
+    .cartx-item__main{
+      width:100%;
+    }
+
+    .cartx-item__top{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+
+    .cartx-item__actions{
+      width:100%;
+    }
+
+    .cartx-remove-btn{
+      width:100%;
+      justify-content:center;
+    }
+
+    .cartx-summary__card{
+      padding:18px 16px;
+      border-radius:20px;
+    }
+  }
+`;
+
+export default CarritoCompras;

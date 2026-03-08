@@ -194,3 +194,17 @@ export const notasDocenteApi = {
   registrarNota: (cursoId, data) =>
     api.post(`/materia-notas/docente/curso/${cursoId}/registrar`, data).then((res) => res.data).catch(handleError),
 };
+export const carritoApi = {
+  fetchCarritoByUsuarioId: (userId) =>
+    api.get(`/carrito/usuario/${userId}`).then((res) => res.data).catch(handleError),
+
+  removeItemCarrito: (idCompraCurso) =>
+    api.delete(`/carrito/item/${idCompraCurso}`).then((res) => res.data).catch(handleError),
+
+  cancelarCarrito: (idCompraTotal) =>
+    api.patch(`/carrito/cancelar/${idCompraTotal}`).then((res) => res.data).catch(handleError),
+};
+export default api;
+
+
+
