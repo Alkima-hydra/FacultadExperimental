@@ -249,7 +249,7 @@ const DocenteNotas = () => {
                 .dn-header__left { display: flex; align-items: center; gap: 10px; }
                 .dn-header__pill { width: 8px; height: 24px; background: #6D5DFD; border-radius: 4px; }
                 .dn-header__title {
-                    font-family: 'DM Serif Display', serif;
+                  
                     font-size: 22px; color: #1A1F36; margin: 0;
                 }
 

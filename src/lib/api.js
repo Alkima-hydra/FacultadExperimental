@@ -189,7 +189,7 @@ export const inscritosEstudianteApi = {
 
 // para las notas de las materias, para docente, ver notas y registrar notas
 export const notasDocenteApi = {
-  fetchNotasByDocenteId: (cursoId) =>
+  fetchNotasByCursoId: (cursoId) =>
     api.get(`/materia-notas/docente/curso/${cursoId}`).then((res) => res.data).catch(handleError),
   registrarNota: (cursoId, data) =>
     api.post(`/materia-notas/docente/curso/${cursoId}/registrar`, data).then((res) => res.data).catch(handleError),
