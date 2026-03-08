@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchCursosByDocenteId, eliminarCurso, fetchCursosWithInscritosByDocenteId } from "./CursosThunk";
+import { fetchAllCursosByDocenteId, eliminarCurso, fetchCursosWithInscritosByDocenteId } from "./CursosThunk";
 
 const initialState = {
     cursos: [],
@@ -26,17 +26,17 @@ const CursosSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            .addCase(fetchCursosByDocenteId.pending, (state) => {
+            .addCase(fetchAllCursosByDocenteId.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchCursosByDocenteId.fulfilled, (state, action) => {
+            .addCase(fetchAllCursosByDocenteId.fulfilled, (state, action) => {
                 state.loading = false;
                 state.cursos = action.payload.cursos || [];
                 state.totalItemsCursos = action.payload.totalItems || 0;
                 state.totalPagesCursos = action.payload.totalPages || 1;
             })
-            .addCase(fetchCursosByDocenteId.rejected, (state, action) => {
+            .addCase(fetchAllCursosByDocenteId.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload || 'Error al cargar los cursos';
             })

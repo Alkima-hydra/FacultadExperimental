@@ -127,8 +127,17 @@ const mapCursoToCard = (curso) => {
         price: precio,
         lessons: Number(curso?.lessons ?? curso?.lecciones ?? 0),
         // para las horas, mapearlas solo para que se muestren horas y minutos, no segundos, y si no hay horas mostrar "Sin horario"
-        hora_inicio: curso?.hora_inicio || curso?.hora_inicio_clase || curso?.hora_inicio_curso || 'Sin horario',
-        hora_fin: curso?.hora_fin || 'Sin horario',
+        hora_inicio: curso?.hora_inicio
+            ? curso.hora_inicio.slice(0,5)
+            : (curso?.hora_inicio_clase
+                ? curso.hora_inicio_clase.slice(0,5)
+                : (curso?.hora_inicio_curso
+                    ? curso.hora_inicio_curso.slice(0,5)
+                    : 'Sin horario')),
+
+        hora_fin: curso?.hora_fin
+            ? curso.hora_fin.slice(0,5)
+            : 'Sin horario',
         students: estudiantes,
         image: curso?.image || 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&q=80',
         diasDeclase: curso?.diasDeclase || curso?.dias_de_clases || curso?.fecha_inicio || curso?.fechaInicio,

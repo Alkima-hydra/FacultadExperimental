@@ -6,8 +6,8 @@ import {
 import Swal from 'sweetalert2';
 
 // para consumo
-import { fetchCursosByDocenteId } from './slicesCursos/CursosThunk';
-import { fetchNotasByCursoId, registrarNota } from './slicesNotas/NotasThunk';
+import { fetchAllCursosByDocenteId } from './slicesCursos/CursosThunk';
+import { fetchNotasByCursoId, registrarNota, actualizarNotasDeUnCurso } from './slicesNotas/NotasThunk';
 import { selectCursosState } from './slicesCursos/CursosSlices';
 import { selectNotasState } from './slicesNotas/NotasSlices';
 import { useDispatch, useSelector } from 'react-redux';
@@ -61,6 +61,7 @@ const mapCursoFromApi = (curso) => ({
     id: curso?.id_curso ?? curso?.id,
     title: curso?.materia?.nombre || curso?.nombre_materia || curso?.title || 'Curso sin nombre',
     category: curso?.categoria || curso?.materia?.categoria || 'Materia',
+    status: curso?.estado || 'Activo',
     raw: curso,
 });
 
@@ -174,9 +175,9 @@ const NotaBar = ({ nota }) => {
 };
 
 /* ─── Student Row ───────────────────────────────────────────── */
-const StudentRow = ({ student, draft, onChange, onSave, saving }) => {
-    const grade      = getGrade(student.nota);
-    const isDirty    = draft !== '' && Number(draft) !== student.nota;
+const StudentRow = ({ student, draft, onChange, onSave, saving, editable }) => {
+    const grade = getGrade(student.nota);
+    const isDirty = draft !== '' && Number(draft) !== student.nota;
     const inputValid = draft === '' || (Number(draft) >= 0 && Number(draft) <= 100);
 
     return (
@@ -186,6 +187,7 @@ const StudentRow = ({ student, draft, onChange, onSave, saving }) => {
                     <span className="dn-student-name">{student.name}</span>
                 </div>
             </td>
+
             <td className="dn-td dn-td--current">
                 {student.nota !== null
                     ? <span className="dn-nota-display">{student.nota}<span className="dn-nota-max">/100</span></span>
@@ -193,38 +195,48 @@ const StudentRow = ({ student, draft, onChange, onSave, saving }) => {
                 }
                 <NotaBar nota={student.nota} />
             </td>
+
             <td className="dn-td dn-td--badge">
                 <span className="dn-grade-badge" style={{ color: grade.color, background: grade.bg }}>
                     {student.nota !== null
-                        ? (grade.label === 'Reprobado' ? <FiAlertCircle size={11} /> : <FiCheckCircle size={11} />)
+                        ? (grade.label === 'Reprobado'
+                            ? <FiAlertCircle size={11} />
+                            : <FiCheckCircle size={11} />)
                         : null
                     }
                     {grade.label}
                 </span>
             </td>
-            <td className="dn-td dn-td--input">
-                <div className="dn-input-wrap">
-                    <input
-                        className={`dn-input${!inputValid ? ' dn-input--error' : ''}`}
-                        type="number"
-                        min="0" max="100"
-                        placeholder={student.nota !== null ? `${student.nota}` : 'Ej: 85'}
-                        value={draft}
-                        onChange={e => onChange(e.target.value)}
-                    />
-                    {!inputValid && <span className="dn-input-hint">0 – 100</span>}
-                </div>
-            </td>
-            <td className="dn-td dn-td--action">
-                <button
-                    className={`dn-save-btn${isDirty && inputValid ? ' dn-save-btn--active' : ''}`}
-                    disabled={!isDirty || !inputValid || saving}
-                    onClick={() => onSave(student.id, Number(draft))}
-                >
-                    <FiSave size={13} />
-                    {saving ? 'Guardando…' : 'Guardar'}
-                </button>
-            </td>
+
+            {editable && (
+                <>
+                    <td className="dn-td dn-td--input">
+                        <div className="dn-input-wrap">
+                            <input
+                                className={`dn-input${!inputValid ? ' dn-input--error' : ''}`}
+                                type="number"
+                                min="0"
+                                max="100"
+                                placeholder={student.nota !== null ? `${student.nota}` : 'Ej: 85'}
+                                value={draft}
+                                onChange={e => onChange(e.target.value)}
+                            />
+                            {!inputValid && <span className="dn-input-hint">0 – 100</span>}
+                        </div>
+                    </td>
+
+                    <td className="dn-td dn-td--action">
+                        <button
+                            className={`dn-save-btn${isDirty && inputValid ? ' dn-save-btn--active' : ''}`}
+                            disabled={!isDirty || !inputValid || saving}
+                            onClick={() => onSave(student.id, Number(draft))}
+                        >
+                            <FiSave size={13} />
+                            {saving ? 'Guardando…' : 'Guardar'}
+                        </button>
+                    </td>
+                </>
+            )}
         </tr>
     );
 };
@@ -269,15 +281,11 @@ const DocenteNotas = () => {
                 setLoadingCursos(true);
                 setErrorCursos('');
 
-                const action = await dispatch(fetchCursosByDocenteId(docenteId));
+                const action = await dispatch(fetchAllCursosByDocenteId(docenteId));
                 const payload = unwrapThunkPayload(action);
                 const cursosDesdeThunk = getCursosArray(payload);
                 const cursosDesdeState = getCursosArray(cursosState);
                 const cursosFinales = cursosDesdeThunk.length > 0 ? cursosDesdeThunk : cursosDesdeState;
-
-                console.log('payload cursos thunk:', payload);
-                console.log('cursosState selector:', cursosState);
-                console.log('cursosFinales:', cursosFinales);
 
                 setCoursesData(cursosFinales);
 
@@ -372,46 +380,60 @@ const DocenteNotas = () => {
         )
         : null;
 
-    const aprobados = course.students.filter(s => s.nota !== null && s.nota >= 51).length;
-    const reprobados = course.students.filter(s => s.nota !== null && s.nota < 51).length;
+    const aprobados = course.students.filter(s => s.nota !== null && s.nota > 51).length;
+    const reprobados = course.students.filter(s => s.nota !== null && s.nota <= 51).length;
 
     const handleChange = (studentId, val) => {
         setDrafts(d => ({ ...d, [studentId]: val }));
     };
 
-    const guardarNotaThunk = async (idMatricula, notaFinal) => {
-        const payloadRegistro = {
+    //funcion más general para manejar ambos casos de registrar nueva nota o actualizar nota existente, dependiendo si el curso ya tiene notas o no
+
+    const guardarOActualizarNotaThunk = async (idMatricula, notaFinal) => {
+        const payload = {
             cursoId: Number(selectedId),
             data: {
                 notas: [
-                {
-                    id_matricula: Number(idMatricula),
-                    nota_final: Number(notaFinal),
-                },
-            ],
-            }
+                    {
+                        id_matricula: Number(idMatricula),
+                        nota_final: Number(notaFinal),
+                    },
+                ],
+            },
         };
 
-        console.log('payload registrarNota:', payloadRegistro);
+        const cursoYaTieneNotas = course.students.some(s => s.nota !== null);
 
-        const action = await dispatch(registrarNota(payloadRegistro));
+        console.log('payload guardar/actualizar nota:', payload);
+        console.log('cursoYaTieneNotas:', cursoYaTieneNotas);
+
+        const action = cursoYaTieneNotas
+            ? await dispatch(actualizarNotasDeUnCurso(payload))
+            : await dispatch(registrarNota(payload));
 
         if (action?.meta?.requestStatus === 'rejected') {
-            throw new Error(action?.payload?.msg || action?.error?.message || 'No se pudo guardar la nota');
+            throw new Error(
+                action?.payload?.msg ||
+                action?.error?.message ||
+                'No se pudo guardar la nota'
+            );
         }
 
         return action;
     };
+    
 
     const handleSave = async (studentId, nota) => {
         const student = course.students.find(s => s.id === studentId);
         setSaving(studentId);
 
         try {
-            await guardarNotaThunk(studentId, nota);
+            await guardarOActualizarNotaThunk(studentId, nota);
+
             const refreshAction = await dispatch(fetchNotasByCursoId(selectedId));
             const refreshPayload = unwrapThunkPayload(refreshAction);
             const notasActualizadas = getNotasArray(refreshPayload);
+
             if (notasActualizadas.length > 0) {
                 setNotesData(notasActualizadas);
             }
@@ -455,9 +477,9 @@ const DocenteNotas = () => {
         const res = await Swal.fire({
             title: 'Guardar todas las notas',
             html: `<div style="color:#5A6676;font-size:14px;line-height:1.5;margin-top:6px">
-                     ¿Guardar las <strong style="color:#1A1F36">${pending.length} notas pendientes</strong>
-                     para el curso<br/><strong style="color:#1A1F36">"${course.title}"</strong>?
-                   </div>`,
+                    ¿Guardar las <strong style="color:#1A1F36">${pending.length} notas pendientes</strong>
+                    para el curso<br/><strong style="color:#1A1F36">"${course.title}"</strong>?
+                </div>`,
             icon: 'question',
             width: 420,
             showCancelButton: true,
@@ -483,8 +505,8 @@ const DocenteNotas = () => {
 
         if (!res.isConfirmed) return;
 
-       try {
-            const payloadRegistro = {
+        try {
+            const payload = {
                 cursoId: Number(selectedId),
                 data: {
                     notas: pending.map(([id, val]) => ({
@@ -494,12 +516,21 @@ const DocenteNotas = () => {
                 },
             };
 
-            console.log('payload registrarNota multiple:', payloadRegistro);
+            const cursoYaTieneNotas = course.students.some(s => s.nota !== null);
 
-            const action = await dispatch(registrarNota(payloadRegistro));
+            console.log('payload guardar/actualizar múltiples:', payload);
+            console.log('cursoYaTieneNotas:', cursoYaTieneNotas);
+
+            const action = cursoYaTieneNotas
+                ? await dispatch(actualizarNotasDeUnCurso(payload))
+                : await dispatch(registrarNota(payload));
 
             if (action?.meta?.requestStatus === 'rejected') {
-                throw new Error(action?.payload?.msg || action?.error?.message || 'No se pudieron guardar las notas');
+                throw new Error(
+                    action?.payload?.msg ||
+                    action?.error?.message ||
+                    'No se pudieron guardar las notas'
+                );
             }
 
             const refreshAction = await dispatch(fetchNotasByCursoId(selectedId));
@@ -525,7 +556,7 @@ const DocenteNotas = () => {
             Swal.fire({
                 icon: 'error',
                 title: 'No se pudieron guardar las notas',
-                text: error?.message || 'Revisa el thunk o el endpoint de registro de notas.',
+                text: error?.message || 'Revisa el thunk o el endpoint de actualización de notas.',
                 confirmButtonColor: '#6D5DFD',
             });
         }
@@ -929,14 +960,14 @@ const DocenteNotas = () => {
                                 <th>Estudiante</th>
                                 <th>Nota actual</th>
                                 <th>Estado</th>
-                                <th>Nueva nota</th>
-                                <th>Acción</th>
+                                {course.status === true && <th>Nueva nota</th>}
+                                {course.status === true && <th>Acción</th>}
                             </tr>
                         </thead>
                         <tbody>
                             {filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5}>
+                                    <td colSpan={course.status === true ? 5 : 3}>
                                         <div className="dn-empty">
                                             <FiUser size={40} style={{ opacity: .3 }} />
                                             <p>No se encontraron estudiantes.</p>
@@ -944,14 +975,15 @@ const DocenteNotas = () => {
                                     </td>
                                 </tr>
                             ) : filtered.map(student => (
-                                <StudentRow
-                                    key={student.id}
-                                    student={student}
-                                    draft={drafts[student.id] ?? ''}
-                                    onChange={val => handleChange(student.id, val)}
-                                    onSave={handleSave}
-                                    saving={saving === student.id}
-                                />
+                            <StudentRow
+                                key={student.id}
+                                student={student}
+                                draft={drafts[student.id] ?? ''}
+                                onChange={val => handleChange(student.id, val)}
+                                onSave={handleSave}
+                                saving={saving === student.id}
+                                editable={course.status === true}
+                            />
                             ))}
                         </tbody>
                     </table>

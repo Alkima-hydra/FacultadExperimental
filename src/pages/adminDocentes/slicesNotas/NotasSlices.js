@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchNotasByCursoId, registrarNota } from "./NotasThunk";
+import { fetchNotasByCursoId, registrarNota, actualizarNotasDeUnCurso } from "./NotasThunk";
 
 const initialState = {
     notas: [],
@@ -8,6 +8,7 @@ const initialState = {
     selectIsLoadingNotas: false,
     errorNotas: null,
     error: null,
+    notasActualizadas: false,
 };
 
 const NotasSlice = createSlice({
@@ -42,11 +43,23 @@ const NotasSlice = createSlice({
                 state.error = null;
             })
             .addCase(registrarNota.fulfilled, (state, action) => {
-                // Aquí podrías agregar la nota recién registrada a     la lista de notas si lo deseas, o simplemente recargar las notas del curso
+                state.notas.push(action.payload); // Agrega la nueva nota al estado
             })
             .addCase(registrarNota.rejected, (state, action) => {
                 state.error = action.payload || 'Error al registrar la nota';
             })
+            .addCase(actualizarNotasDeUnCurso.pending, (state) => {
+                state.error = null;
+                state.notasActualizadas = false;
+            })
+            .addCase(actualizarNotasDeUnCurso.fulfilled, (state, action) => {
+                state.notasActualizadas = true;
+                // Aquí podrías actualizar la lista de notas con las nuevas notas si lo deseas, o simplemente recargar las notas del curso
+            })
+            .addCase(actualizarNotasDeUnCurso.rejected, (state, action) => {
+                state.error = action.payload || 'Error al actualizar las notas';
+                state.notasActualizadas = false;
+            });
     },
 });
 
@@ -55,5 +68,10 @@ export const { clearNotasState } = NotasSlice.actions;
 export const selectNotasState = (state) => state.Notas;
 export const loadingNotas = (state) => state.Notas.loading;
 export const errorNotas = (state) => state.Notas.error;
+export const notasList = (state) => state.Notas.notas;
+export const totalItemsNotas = (state) => state.Notas.totalItemsNotas;
+export const totalPagesNotas = (state) => state.Notas.totalPagesNotas;
+export const notasActualizadas = (state) => state.Notas.notasActualizadas;
+
 
 export default NotasSlice.reducer;

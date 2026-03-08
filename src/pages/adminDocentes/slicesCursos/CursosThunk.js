@@ -1,11 +1,11 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { cursosApi } from '../../../lib/api';
 
-export const fetchCursosByDocenteId = createAsyncThunk(
-    'Cursos/fetchCursosByDocenteId',
+export const fetchAllCursosByDocenteId = createAsyncThunk(
+    'Cursos/fetchAllCursosByDocenteId',
     async (docenteId, { rejectWithValue }) => {
         try {
-            const response = await cursosApi.fetchCursosByDocenteId(docenteId);
+            const response = await cursosApi.fetchAllCursosByDocenteId(docenteId);
             return response;
         }
         catch (error) {
