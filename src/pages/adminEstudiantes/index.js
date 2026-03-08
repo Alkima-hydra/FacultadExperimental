@@ -1,14 +1,12 @@
+import React from 'react';
+import EstudianteWrapper from './estudianteWrapper';
 
-import AdminWrapper from './estudianteWrapper';
-
-const Estudiante = () => {
+const AdminEstudiantes = () => {
   return (
     <>
-     
-
-      <AdminWrapper />
-
-      
+      <EstudianteWrapper />
     </>
   );
-}; export default Estudiante;
+};
+
+export default AdminEstudiantes;

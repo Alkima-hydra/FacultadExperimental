@@ -1,771 +1,1184 @@
-import React, { useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   FiEdit2,
   FiSave,
   FiX,
-  FiCamera,
   FiUser,
   FiMail,
-  FiPhone,
   FiMapPin,
   FiBook,
   FiCalendar,
   FiHash,
   FiShield,
-} from "react-icons/fi"
-import { useSelector } from "react-redux"
-import { selectUserId, selectToken, selectIsAuthenticated } from "../signin/slices/loginSelectors" // ajusta la ruta según tu proyecto
+  FiLock,
+  FiCheckCircle,
+  FiCircle,
+  FiChevronDown,
+  FiChevronUp,
+} from 'react-icons/fi';
+import { useDispatch, useSelector } from 'react-redux';
+import Swal from 'sweetalert2';
 
-/* ─────────────────────────────────────────────
-   Helpers UI
-───────────────────────────────────────────── */
-const Field = ({
-  icon: Icon,
-  label,
-  value,
-  editing,
-  name,
-  onChange,
-  type = "text",
-  disabled = false,
-}) => (
-  <div className="sp-field">
-    <div className="sp-field__label">
+import {
+  selectUserId,
+  selectIsAuthenticated,
+} from '../signin/slices/loginSelectors';
+
+import {
+  fetchPerfil,
+  updatePerfilEditable,
+  changePasswordPerfil,
+} from './slicesPerfil/PerfilThunk';
+
+import {
+  selectPerfil,
+  selectPerfilLoading,
+  selectPerfilError,
+  selectPerfilSuccess,
+  selectEditForm,
+  selectPerfilSavingProfile,
+  selectPasswordForm,
+  selectPerfilChangingPassword,
+  setEditField,
+  resetEditForm,
+  updatePasswordField,
+  resetPasswordForm,
+  clearPerfilError,
+  clearPerfilSuccess,
+} from './slicesPerfil/PerfilSlice';
+
+const swalTheme = {
+  confirmButtonColor: '#704FE6',
+  cancelButtonColor: '#4D5756',
+  customClass: { popup: 'it-cadm-swal-popup' },
+  didOpen: () => {
+    const container = document.querySelector('.swal2-container');
+    if (container) container.style.zIndex = '99999';
+  },
+};
+
+const toastConfig = {
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2400,
+  timerProgressBar: true,
+  ...swalTheme,
+};
+
+const ReadOnlyField = ({ icon: Icon, label, value, muted = false, onBlocked }) => (
+  <button
+    type="button"
+    className={`it-sp-field it-sp-field--readonly${muted ? ' is-muted' : ''}`}
+    onClick={() => onBlocked(label)}
+  >
+    <div className="it-sp-field__label">
       <Icon size={13} />
       <span>{label}</span>
     </div>
+    <p className="it-sp-field__value">{value || '—'}</p>
+  </button>
+);
 
-    {editing ? (
-      <input
-        className="sp-field__input"
-        type={type}
-        name={name}
-        value={value ?? ""}
-        onChange={onChange}
-        autoComplete="off"
-        disabled={disabled}
-      />
-    ) : (
-      <p className="sp-field__value">{value || "—"}</p>
-    )}
+const EditableField = ({
+  icon: Icon,
+  label,
+  value,
+  name,
+  onChange,
+  type = 'text',
+  placeholder = '',
+}) => (
+  <div className="it-sp-field it-sp-field--editable">
+    <div className="it-sp-field__label">
+      <Icon size={13} />
+      <span>{label}</span>
+      <small>editable</small>
+    </div>
+    <input
+      className={`it-sp-field__input${type === 'date' ? ' it-sp-field__input--date' : ''}`}
+      type={type}
+      name={name}
+      value={value ?? ''}
+      onChange={onChange}
+      placeholder={placeholder}
+      autoComplete="off"
+    />
   </div>
-)
+);
 
-const Pill = ({ children }) => <span className="sp-pill">{children}</span>
+const CheckItem = ({ ok, text }) => (
+  <div className={`it-sp-check-item${ok ? ' is-ok' : ''}`}>
+    {ok ? <FiCheckCircle size={15} /> : <FiCircle size={15} />}
+    <span>{text}</span>
+  </div>
+);
 
 const StudentProfile = () => {
-  const fileRef = useRef(null)
+  const dispatch = useDispatch();
 
-  // auth
-  const userId = useSelector(selectUserId)
-  const token = useSelector(selectToken)
-  const isAuthed = useSelector(selectIsAuthenticated)
+  const userId = useSelector(selectUserId);
+  const isAuthed = useSelector(selectIsAuthenticated);
 
-  // data state
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const data = useSelector(selectPerfil);
+  const loading = useSelector(selectPerfilLoading);
+  const reduxError = useSelector(selectPerfilError);
+  const successMessage = useSelector(selectPerfilSuccess);
 
-  const [data, setData] = useState(null) // datos “guardados”
-  const [draft, setDraft] = useState(null) // datos “editando”
-  const [editing, setEditing] = useState(false)
+  const editForm = useSelector(selectEditForm);
+  const isSavingProfile = useSelector(selectPerfilSavingProfile);
 
-  // avatar (solo UI por ahora)
-  const [preview, setPreview] = useState(null)
+  const passwordForm = useSelector(selectPasswordForm);
+  const isChangingPassword = useSelector(selectPerfilChangingPassword);
 
-  // fetch perfil
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [localPasswordError, setLocalPasswordError] = useState('');
+
   useEffect(() => {
-    let mounted = true
+    if (isAuthed && userId) {
+      dispatch(fetchPerfil({ userId }));
+    }
+  }, [dispatch, isAuthed, userId]);
 
-    async function fetchPerfil() {
-      if (!isAuthed || !userId || !token) {
-        if (mounted) {
-          setLoading(false)
-          setError("No hay sesión activa.")
-        }
-        return
-      }
+  useEffect(() => {
+    if (reduxError) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: reduxError,
+        ...toastConfig,
+      });
+      dispatch(clearPerfilError());
+    }
+  }, [reduxError, dispatch]);
 
-      try {
-        setLoading(true)
-        setError(null)
-        
+  useEffect(() => {
+    if (successMessage) {
+      Swal.fire({
+        icon: 'success',
+        title: successMessage,
+        ...toastConfig,
+      });
+      dispatch(clearPerfilSuccess());
+    }
+  }, [successMessage, dispatch]);
 
-        const res = await fetch(
-          `http://localhost:3000/api/usuarios/perfil/${userId}`,
-          {
-           headers: {
-    "x-token": token,
-  },
-          }
-        )
+  const nombreCompleto = useMemo(() => {
+    if (!data) return '—';
+    return (
+      [data.nombres, data.apellido_paterno, data.apellido_materno]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || '—'
+    );
+  }, [data]);
 
-        const json = await res.json()
+  const passwordChecks = useMemo(() => {
+    const pwd = passwordForm.newPassword || '';
+    return {
+      minLen: pwd.length >= 8,
+      hasUpper: /[A-Z]/.test(pwd),
+      hasLower: /[a-z]/.test(pwd),
+      hasNumber: /\d/.test(pwd),
+      matches:
+        pwd.length > 0 &&
+        passwordForm.confirmPassword.length > 0 &&
+        pwd === passwordForm.confirmPassword,
+    };
+  }, [passwordForm]);
 
-        if (!res.ok || !json?.ok) {
-          throw new Error(json?.msg || "No se pudo cargar el perfil.")
-        }
+  const handleBlockedField = (label) => {
+    Swal.fire({
+      title: 'Campo no editable',
+      text: `"${label}" no se puede editar aquí. Contacte a soporte.`,
+      icon: 'info',
+      confirmButtonText: 'Entendido',
+      ...swalTheme,
+      showCancelButton: false,
+    });
+  };
 
-        // normalizamos a un shape simple para el UI
-        const u = json.usuario || {}
-        const e = json.estudiante || null
-        const d = json.docente || null
-        const tipo = json.tipo || (e ? "ESTUDIANTE" : d ? "DOCENTE" : "USUARIO")
+  const handleStartEdit = () => {
+    dispatch(resetEditForm());
+    setEditingProfile(true);
+  };
 
-        const fullName = [u.nombres, u.apellido_paterno, u.apellido_materno]
-          .filter(Boolean)
-          .join(" ")
+  const handleCancelEdit = () => {
+    dispatch(resetEditForm());
+    setEditingProfile(false);
+  };
 
-        const normalized = {
-          // base
-          id_persona: u.id_persona ?? "",
-          nombres: u.nombres ?? "",
-          apellido_paterno: u.apellido_paterno ?? "",
-          apellido_materno: u.apellido_materno ?? "",
-          nombreCompleto: fullName || u.nombres || "—",
+  const handleSaveProfile = async () => {
+    if (!data?.id_estudiante) return;
 
-          mail: u.mail ?? "",
-          ci: u.ci ?? "",
-          genero: u.genero ?? "",
-          fecha_nacimiento: u.fecha_nacimiento ?? "",
-          estado_usuario: u.estado ?? true,
-          admin: u.admin ?? false,
+    const result = await dispatch(
+      updatePerfilEditable({
+        idEstudiante: data.id_estudiante,
+        direccion: editForm.direccion,
+        fecha_nacimiento: editForm.fecha_nacimiento,
+      })
+    );
 
-          // estudiante
-          id_estudiante: e?.id_estudiante ?? "",
-          carrera: e?.carrera ?? "",
-          semestre_ingreso: e?.semestre_ingreso ?? "",
-          direccion: e?.direccion ?? "",
-          estado_estudiante: e?.estado ?? null,
+    if (updatePerfilEditable.fulfilled.match(result)) {
+      setEditingProfile(false);
+    }
+  };
 
-          // docente
-          id_docente: d?.id_docente ?? "",
-          titulo_docente: d?.titulo ?? "",
-          tipo_docente: d?.tipo_docente ?? "",
-          estado_docente: d?.estado ?? null,
+  const validatePassword = () => {
+    if (!passwordForm.currentPassword.trim()) {
+      return 'Debes ingresar tu contraseña actual.';
+    }
+    if (!passwordForm.newPassword.trim()) {
+      return 'Debes ingresar una nueva contraseña.';
+    }
+    if (passwordForm.newPassword.length < 8) {
+      return 'La nueva contraseña debe tener al menos 8 caracteres.';
+    }
+    if (!/[A-Z]/.test(passwordForm.newPassword)) {
+      return 'La nueva contraseña debe incluir al menos una mayúscula.';
+    }
+    if (!/[a-z]/.test(passwordForm.newPassword)) {
+      return 'La nueva contraseña debe incluir al menos una minúscula.';
+    }
+    if (!/\d/.test(passwordForm.newPassword)) {
+      return 'La nueva contraseña debe incluir al menos un número.';
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      return 'La confirmación no coincide con la nueva contraseña.';
+    }
+    return '';
+  };
 
-          tipo,
-          avatar: null, // si luego guardas url en BD, aquí se mapea
-        }
+  const handleSavePassword = async () => {
+    setLocalPasswordError('');
 
-        if (mounted) {
-          setData(normalized)
-          setDraft(normalized)
-          setLoading(false)
-        }
-      } catch (err) {
-        if (mounted) {
-          setLoading(false)
-          setError(err?.message || "Error al cargar el perfil.")
-        }
-      }
+    const validationError = validatePassword();
+    if (validationError) {
+      setLocalPasswordError(validationError);
+      Swal.fire({
+        title: 'Revisa la contraseña',
+        text: validationError,
+        icon: 'warning',
+        confirmButtonText: 'Entendido',
+        ...swalTheme,
+        showCancelButton: false,
+      });
+      return;
     }
 
-    fetchPerfil()
-    return () => {
-      mounted = false
+    const confirm = await Swal.fire({
+      title: '¿Cambiar contraseña?',
+      text: 'Se actualizará tu contraseña de acceso.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cambiar',
+      cancelButtonText: 'Cancelar',
+      ...swalTheme,
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    const result = await dispatch(
+      changePasswordPerfil({
+        idEstudiante: data?.id_estudiante,
+        newPassword: passwordForm.newPassword,
+      })
+    );
+
+    if (changePasswordPerfil.fulfilled.match(result)) {
+      setLocalPasswordError('');
+      setPasswordOpen(false);
     }
-  }, [isAuthed, userId, token])
+  };
 
-  const roleLabel = useMemo(() => {
-    if (!data) return "Usuario"
-    if (data.tipo === "ESTUDIANTE") return "Estudiante"
-    if (data.tipo === "DOCENTE") return "Docente"
-    if (data.admin) return "Administrador"
-    return "Usuario"
-  }, [data])
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setDraft((d) => ({ ...d, [name]: value }))
-  }
-
-  const startEdit = () => {
-    if (!data) return
-    setDraft(data)
-    setEditing(true)
-  }
-
-  const cancel = () => {
-    setEditing(false)
-    setPreview(null)
-    setDraft(data)
-  }
-
-  // Guardar (por ahora solo UI; si quieres, luego lo conectamos a PUT /usuarios/:id y PUT /estudiantes/:id)
-  const save = () => {
-    setData((prev) => ({
-      ...draft,
-      avatar: preview ?? prev?.avatar ?? null,
-    }))
-    setEditing(false)
-    setPreview(null)
-  }
-
-  const handleAvatar = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const url = URL.createObjectURL(file)
-    setPreview(url)
-  }
-
-  const avatarSrc = editing
-    ? preview ?? draft?.avatar ?? data?.avatar
-    : data?.avatar
-
-  // estados UI
   if (loading) {
     return (
-      <div style={{ padding: 24, fontFamily: "DM Sans, sans-serif" }}>
-        Cargando perfil...
-      </div>
-    )
+      <>
+        <style>{styles}</style>
+        <div className="it-sp-root">
+          <div className="it-sp-loading-wrap">
+            <div className="it-sp-loading-card">
+              <div className="it-sp-spinner" />
+              <p>Cargando perfil...</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
   }
 
-  if (error) {
+  if (!data) {
     return (
-      <div style={{ padding: 24, fontFamily: "DM Sans, sans-serif" }}>
-        {error}
-      </div>
-    )
+      <>
+        <style>{styles}</style>
+        <div className="it-sp-root">
+          <div className="it-sp-feedback-wrap">
+            <div className="it-sp-feedback-card">
+              <div className="it-sp-feedback-card__icon">
+                <FiUser size={22} />
+              </div>
+              <h3>Sin datos</h3>
+              <p>No hay información de perfil para mostrar.</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
   }
-
-  if (!data || !draft) {
-    return (
-      <div style={{ padding: 24, fontFamily: "DM Sans, sans-serif" }}>
-        No hay datos para mostrar.
-      </div>
-    )
-  }
-
-  // flags
-  const isStudent = data.tipo === "ESTUDIANTE"
-  const isTeacher = data.tipo === "DOCENTE"
 
   return (
     <>
-      <style>{`
+      <style>{styles}</style>
 
-        .sp-root{
-          min-height:100%;
-          padding:36px 32px;
-          background:#EDEEF5;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-          box-sizing:border-box;
-        }
-        .sp-header{
-          display:flex;
-          align-items:center;
-          gap:10px;
-          margin-bottom:18px;
-        }
-        .sp-header__pill{
-          width:8px;height:24px;
-          background:#4B5FD6;
-          border-radius:4px;
-        }
-        .sp-header__title{
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size:32px;
-  line-height:1.1;
-  letter-spacing:-0.2px;
-  color:#1A1F36;
-  margin:0;
-  font-weight:400;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-}
+      <div className="it-sp-root">
+        <div className="it-sp-header">
+          <div className="it-sp-header__left">
+            <div className="it-sp-header__accent" />
+            <div>
 
-        .sp-subbar{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:12px;
-          margin-bottom:18px;
-          max-width:980px;
-        }
-        .sp-meta{
-          display:flex;
-          gap:10px;
-          flex-wrap:wrap;
-        }
-        .sp-pill{
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          padding:6px 10px;
-          border-radius:999px;
-          background:#F3F4FB;
-          border:1px solid #E5E8F6;
-          color:#33406A;
-          font-size:12px;
-          font-weight:600;
-        }
-        .sp-pill b{
-          font-weight:700;
-          color:#1A1F36;
-        }
-
-        .sp-card{
-          background:#fff;
-          border-radius:18px;
-          padding:34px 38px;
-          box-shadow:0 4px 32px rgba(74,95,210,.07);
-          display:grid;
-          grid-template-columns:240px 1fr;
-          gap:48px;
-          max-width:980px;
-          animation:sp-fade-in .35s ease;
-        }
-        @keyframes sp-fade-in{
-          from{opacity:0;transform:translateY(10px)}
-          to{opacity:1;transform:translateY(0)}
-        }
-
-        .sp-left{
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          gap:14px;
-        }
-
-        .sp-avatar-wrap{
-          position:relative;
-          width:168px;height:168px;
-          border-radius:18px;
-          background:#EEF0F8;
-          overflow:hidden;
-          flex-shrink:0;
-          border:2px solid #E4E6F0;
-        }
-        .sp-avatar-wrap img{width:100%;height:100%;object-fit:cover}
-        .sp-avatar-placeholder{
-          width:100%;height:100%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          color:#9FA8C7;
-        }
-        .sp-avatar-overlay{
-          position:absolute;inset:0;
-          background:rgba(27,35,80,.45);
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-          gap:4px;
-          opacity:0;
-          transition:opacity .2s;
-          cursor:pointer;
-          color:#fff;
-          font-size:11px;
-          font-weight:600;
-          letter-spacing:.4px;
-        }
-        .sp-avatar-wrap:hover .sp-avatar-overlay{opacity:1}
-
-.sp-name{
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-weight: 600;
-  font-size: 24px;
-  letter-spacing: -0.3px;
-  line-height: 1.2;
-  color: #1A1F36;
-  text-align: center;
-  margin-top: 10px;
-}
-        .sp-badge{
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          background:#EEF0FB;
-          color:#4B5FD6;
-          font-size:11px;
-          font-weight:700;
-          padding:5px 12px;
-          border-radius:999px;
-          letter-spacing:.3px;
-        }
-
-        .sp-right{
-          display:flex;
-          flex-direction:column;
-          gap:8px;
-        }
-
-        .sp-section-title{
-          font-size:11px;
-          font-weight:700;
-          color:#9FA8C7;
-          letter-spacing:.8px;
-          text-transform:uppercase;
-          margin:0 0 10px;
-        }
-
-        .sp-fields-grid{
-          display:grid;
-          grid-template-columns:1fr 1fr;
-          gap:18px 32px;
-        }
-
-        .sp-field__label{
-          display:flex;
-          align-items:center;
-          gap:6px;
-          color:#9FA8C7;
-          font-size:11px;
-          font-weight:700;
-          letter-spacing:.5px;
-          text-transform:uppercase;
-          margin-bottom:6px;
-        }
-        .sp-field__value{
-          margin:0;
-          font-size:14px;
-          color:#1A1F36;
-          font-weight:600;
-        }
-        .sp-field__input{
-          width:100%;
-          box-sizing:border-box;
-          border:1.5px solid #DDE0EF;
-          border-radius:9px;
-          padding:8px 12px;
-          font-size:14px;
-          font-family:'DM Sans',sans-serif;
-          color:#1A1F36;
-          background:#F7F8FC;
-          outline:none;
-          transition:border-color .15s, box-shadow .15s, background .15s;
-        }
-        .sp-field__input:focus{
-          border-color:#4B5FD6;
-          box-shadow:0 0 0 3px rgba(75,95,214,.12);
-          background:#fff;
-        }
-        .sp-field__input:disabled{
-          opacity:.7;
-          cursor:not-allowed;
-        }
-
-        .sp-divider{
-          width:100%;
-          height:1px;
-          background:#F0F1F8;
-          margin:18px 0;
-        }
-
-        .sp-actions{
-          display:flex;
-          gap:10px;
-          margin-top:2px;
-          flex-wrap:wrap;
-        }
-        .sp-btn{
-          display:inline-flex;
-          align-items:center;
-          gap:7px;
-          padding:10px 18px;
-          border-radius:10px;
-          font-family:'DM Sans',sans-serif;
-          font-size:13px;
-          font-weight:700;
-          cursor:pointer;
-          transition:all .18s;
-          border:none;
-          user-select:none;
-        }
-        .sp-btn--primary{
-          background:#4B5FD6;
-          color:#fff;
-          box-shadow:0 3px 12px rgba(75,95,214,.3);
-        }
-        .sp-btn--primary:hover{
-          background:#3A4EC2;
-          transform:translateY(-1px);
-          box-shadow:0 5px 16px rgba(75,95,214,.38);
-        }
-        .sp-btn--outline{
-          background:transparent;
-          color:#4B5FD6;
-          border:1.5px solid #CBD0EC;
-        }
-        .sp-btn--outline:hover{background:#F0F1FB}
-        .sp-btn--ghost{
-          background:transparent;
-          color:#9FA8C7;
-          border:1.5px solid #E4E6F0;
-        }
-        .sp-btn--ghost:hover{background:#F7F8FC}
-
-        .sp-note{
-          font-size:12px;
-          color:#7B86AD;
-          margin:4px 0 0;
-          line-height:1.4;
-        }
-
-        @media (max-width: 760px){
-          .sp-root{padding:20px 16px}
-          .sp-subbar{max-width:100%}
-          .sp-card{
-            grid-template-columns:1fr;
-            gap:26px;
-            padding:22px 18px;
-          }
-          .sp-fields-grid{grid-template-columns:1fr}
-        }
-      `}</style>
-
-      <div className="sp-root">
-        <div className="sp-header">
-          <div className="sp-header__pill" />
-          <h1 className="sp-header__title">Mi Perfil</h1>
-        </div>
-
-        <div className="sp-subbar">
-          <div className="sp-meta">
-            <Pill>
-              <FiHash size={14} /> <b>ID:</b> {data.id_persona}
-            </Pill>
-            <Pill>
-              <FiShield size={14} /> <b>Tipo:</b> {roleLabel}
-            </Pill>
-            <Pill>
-              <b>Estado:</b> {data.estado_usuario ? "Activo" : "Inactivo"}
-            </Pill>
+              <p className="it-sp-header__sub">
+                Revisa tu información personal. Solo puedes editar tu dirección y tu fecha de nacimiento.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="sp-card">
-          {/* LEFT */}
-          <div className="sp-left">
-            <div className="sp-avatar-wrap">
-              {avatarSrc ? (
-                <img src={avatarSrc} alt="avatar" />
-              ) : (
-                <div className="sp-avatar-placeholder">
-                  <FiUser size={56} />
+        <div className="it-sp-layout">
+          <aside className="it-sp-sidebar">
+            <div className="it-sp-profile-card">
+              <div className="it-sp-profile-card__avatar">
+                <FiUser size={42} />
+              </div>
+
+              <h3 className="it-sp-profile-card__name">{nombreCompleto}</h3>
+              <span className="it-sp-role-badge">Estudiante</span>
+
+              <div className="it-sp-profile-card__info-list">
+                <div className="it-sp-mini-info">
+                  <FiMail size={15} />
+                  <div>
+                    <span>Correo</span>
+                    <strong>{data.mail || '—'}</strong>
+                  </div>
                 </div>
-              )}
 
-              {editing && (
-                <div
-                  className="sp-avatar-overlay"
-                  onClick={() => fileRef.current?.click()}
-                >
-                  <FiCamera size={20} />
-                  <span>Cambiar foto</span>
+                <div className="it-sp-mini-info">
+                  <FiMapPin size={15} />
+                  <div>
+                    <span>Dirección actual</span>
+                    <strong>{data.direccion || '—'}</strong>
+                  </div>
                 </div>
-              )}
+
+                <div className="it-sp-mini-info">
+                  <FiShield size={15} />
+                  <div>
+                    <span>Estado</span>
+                    <strong>{data.estado_usuario ? 'Activo' : 'Inactivo'}</strong>
+                  </div>
+                </div>
+              </div>
             </div>
+          </aside>
 
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={handleAvatar}
-            />
+          <section className="it-sp-main">
+            <div className="it-sp-content-card">
+              <div className="it-sp-section">
+                <div className="it-sp-section__header">
+                  <span className="it-sp-section__title">Información personal</span>
+                </div>
 
-            <h2 className="sp-name">
-              {editing ? draft.nombreCompleto : data.nombreCompleto}
-            </h2>
+                <div className="it-sp-fields-grid">
+                  <ReadOnlyField icon={FiUser} label="Nombres" value={data.nombres} onBlocked={handleBlockedField} />
+                  <ReadOnlyField icon={FiUser} label="Apellido paterno" value={data.apellido_paterno} onBlocked={handleBlockedField} />
+                  <ReadOnlyField icon={FiUser} label="Apellido materno" value={data.apellido_materno} onBlocked={handleBlockedField} />
+                  <ReadOnlyField icon={FiMail} label="Correo electrónico" value={data.mail} onBlocked={handleBlockedField} />
+                  <ReadOnlyField icon={FiHash} label="CI" value={data.ci} onBlocked={handleBlockedField} />
+                  <ReadOnlyField icon={FiUser} label="Género" value={data.genero} onBlocked={handleBlockedField} />
+                </div>
+              </div>
 
-            <span className="sp-badge">
-              <FiBook size={12} />
-              {roleLabel}
-            </span>
+              <div className="it-sp-divider" />
 
-            <p className="sp-note">
-              Aquí se muestran datos del usuario y, si corresponde, del perfil de
-              estudiante o docente.
-            </p>
-          </div>
+              <div className="it-sp-section">
+                <div className="it-sp-section__header">
+                  <span className="it-sp-section__title">Perfil de estudiante</span>
+                </div>
 
-          {/* RIGHT */}
-          <div className="sp-right">
-            <p className="sp-section-title">Información personal</p>
-
-            <div className="sp-fields-grid">
-              <Field
-                icon={FiUser}
-                label="Nombres"
-                name="nombres"
-                value={editing ? draft.nombres : data.nombres}
-                editing={editing}
-                onChange={handleChange}
-              />
-              <Field
-                icon={FiUser}
-                label="Apellido paterno"
-                name="apellido_paterno"
-                value={editing ? draft.apellido_paterno : data.apellido_paterno}
-                editing={editing}
-                onChange={handleChange}
-              />
-              <Field
-                icon={FiUser}
-                label="Apellido materno"
-                name="apellido_materno"
-                value={editing ? draft.apellido_materno : data.apellido_materno}
-                editing={editing}
-                onChange={handleChange}
-              />
-              <Field
-                icon={FiMail}
-                label="Correo electrónico"
-                name="mail"
-                value={editing ? draft.mail : data.mail}
-                editing={editing}
-                onChange={handleChange}
-                type="email"
-              />
-              <Field
-                icon={FiHash}
-                label="CI"
-                name="ci"
-                value={editing ? draft.ci : data.ci}
-                editing={editing}
-                onChange={handleChange}
-                disabled
-              />
-              <Field
-                icon={FiUser}
-                label="Género"
-                name="genero"
-                value={editing ? draft.genero : data.genero}
-                editing={editing}
-                onChange={handleChange}
-              />
-              <Field
-                icon={FiCalendar}
-                label="Fecha de nacimiento"
-                name="fecha_nacimiento"
-                value={editing ? draft.fecha_nacimiento : data.fecha_nacimiento}
-                editing={editing}
-                onChange={handleChange}
-                type="date"
-              />
-              <Field
-                icon={FiShield}
-                label="Admin"
-                name="admin"
-                value={(data.admin ? "Sí" : "No")}
-                editing={false}
-              />
-            </div>
-
-            {(isStudent || isTeacher) && <div className="sp-divider" />}
-
-            {isStudent && (
-              <>
-                <p className="sp-section-title">Perfil de estudiante</p>
-                <div className="sp-fields-grid">
-                  <Field
-                    icon={FiBook}
-                    label="Carrera"
-                    name="carrera"
-                    value={editing ? draft.carrera : data.carrera}
-                    editing={editing}
-                    onChange={handleChange}
-                  />
-                  <Field
-                    icon={FiCalendar}
-                    label="Semestre de ingreso"
-                    name="semestre_ingreso"
-                    value={editing ? draft.semestre_ingreso : data.semestre_ingreso}
-                    editing={editing}
-                    onChange={handleChange}
-                  />
-                  <Field
-                    icon={FiMapPin}
-                    label="Dirección"
-                    name="direccion"
-                    value={editing ? draft.direccion : data.direccion}
-                    editing={editing}
-                    onChange={handleChange}
-                  />
-                  <Field
+                <div className="it-sp-fields-grid">
+                  <ReadOnlyField icon={FiBook} label="Carrera" value={data.carrera} onBlocked={handleBlockedField} />
+                  <ReadOnlyField icon={FiCalendar} label="Semestre de ingreso" value={data.semestre_ingreso} onBlocked={handleBlockedField} />
+                  <ReadOnlyField
                     icon={FiShield}
                     label="Estado estudiante"
-                    name="estado_estudiante"
-                    value={data.estado_estudiante ? "Activo" : "Inactivo"}
-                    editing={false}
+                    value={data.estado_estudiante ? 'Activo' : 'Inactivo'}
+                    onBlocked={handleBlockedField}
                   />
                 </div>
-              </>
-            )}
+              </div>
 
-            {isTeacher && (
-              <>
-                <p className="sp-section-title">Perfil de docente</p>
-                <div className="sp-fields-grid">
-                  <Field
-                    icon={FiBook}
-                    label="Título"
-                    name="titulo_docente"
-                    value={editing ? draft.titulo_docente : data.titulo_docente}
-                    editing={editing}
-                    onChange={handleChange}
-                  />
-                  <Field
-                    icon={FiUser}
-                    label="Tipo de docente"
-                    name="tipo_docente"
-                    value={editing ? draft.tipo_docente : data.tipo_docente}
-                    editing={editing}
-                    onChange={handleChange}
-                  />
-                  <Field
-                    icon={FiShield}
-                    label="Estado docente"
-                    name="estado_docente"
-                    value={data.estado_docente ? "Activo" : "Inactivo"}
-                    editing={false}
-                  />
-                  <Field
-                    icon={FiHash}
-                    label="ID docente"
-                    name="id_docente"
-                    value={String(data.id_docente || "")}
-                    editing={false}
-                  />
+              <div className="it-sp-divider" />
+
+              <div className="it-sp-section">
+                <div className="it-sp-section__header it-sp-section__header--actions">
+                  <div>
+                    <span className="it-sp-section__title">Datos que sí puedes editar</span>
+                  </div>
+
+                  {!editingProfile ? (
+                    <button
+                      className="it-sp-btn it-sp-btn--outline"
+                      type="button"
+                      onClick={handleStartEdit}
+                    >
+                      <FiEdit2 />
+                      <span>Editar datos</span>
+                    </button>
+                  ) : (
+                    <div className="it-sp-inline-actions">
+                      <button
+                        className="it-sp-btn it-sp-btn--ghost"
+                        type="button"
+                        onClick={handleCancelEdit}
+                        disabled={isSavingProfile}
+                      >
+                        <FiX />
+                        <span>Cancelar</span>
+                      </button>
+
+                      <button
+                        className="it-sp-btn it-sp-btn--primary"
+                        type="button"
+                        onClick={handleSaveProfile}
+                        disabled={isSavingProfile}
+                      >
+                        <FiSave />
+                        <span>{isSavingProfile ? 'Guardando...' : 'Guardar cambios'}</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </>
-            )}
 
-            <div className="sp-divider" />
+                <div className="it-sp-fields-grid">
+                  {editingProfile ? (
+                    <>
+                      <EditableField
+                        icon={FiMapPin}
+                        label="Dirección"
+                        name="direccion"
+                        value={editForm.direccion}
+                        onChange={(e) =>
+                          dispatch(setEditField({ name: 'direccion', value: e.target.value }))
+                        }
+                        placeholder="Ingresa tu dirección"
+                      />
 
-            <div className="sp-actions">
-              {editing ? (
-                <>
-                  <button className="sp-btn sp-btn--primary" type="button" onClick={save}>
-                    <FiSave size={14} /> Guardar cambios
+                      <EditableField
+                        icon={FiCalendar}
+                        label="Fecha de nacimiento"
+                        name="fecha_nacimiento"
+                        type="date"
+                        value={editForm.fecha_nacimiento}
+                        onChange={(e) =>
+                          dispatch(setEditField({ name: 'fecha_nacimiento', value: e.target.value }))
+                        }
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <div className="it-sp-field it-sp-field--editable-preview">
+                        <div className="it-sp-field__label">
+                          <FiMapPin size={13} />
+                          <span>Dirección</span>
+                        </div>
+                        <p className="it-sp-field__value it-sp-field__value--boxed is-editable">
+                          {data.direccion || '—'}
+                        </p>
+                      </div>
+
+                      <div className="it-sp-field it-sp-field--editable-preview">
+                        <div className="it-sp-field__label">
+                          <FiCalendar size={13} />
+                          <span>Fecha de nacimiento</span>
+                        </div>
+                        <p className="it-sp-field__value it-sp-field__value--boxed is-editable">
+                          {data.fecha_nacimiento || '—'}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="it-sp-divider" />
+
+              <div className="it-sp-section">
+                <div className="it-sp-section__header it-sp-section__header--actions">
+                  <span className="it-sp-section__title">Seguridad</span>
+
+                  <button
+                    className="it-sp-btn it-sp-btn--outline"
+                    type="button"
+                    onClick={() => {
+                      setPasswordOpen((prev) => !prev);
+                      setLocalPasswordError('');
+                      dispatch(resetPasswordForm());
+                    }}
+                  >
+                    <FiLock />
+                    <span>{passwordOpen ? 'Ocultar cambio de contraseña' : 'Cambiar contraseña'}</span>
+                    {passwordOpen ? <FiChevronUp /> : <FiChevronDown />}
                   </button>
-                  <button className="sp-btn sp-btn--ghost" type="button" onClick={cancel}>
-                    <FiX size={14} /> Cancelar
-                  </button>
-                </>
-              ) : (
-                <button className="sp-btn sp-btn--outline" type="button" onClick={startEdit}>
-                  <FiEdit2 size={14} /> Editar perfil
-                </button>
-              )}
+                </div>
+
+                {passwordOpen && (
+                  <div className="it-sp-password-box">
+                    <div className="it-sp-password-grid">
+                      <EditableField
+                        icon={FiLock}
+                        label="Contraseña actual"
+                        name="currentPassword"
+                        type="password"
+                        value={passwordForm.currentPassword}
+                        onChange={(e) =>
+                          dispatch(
+                            updatePasswordField({
+                              name: 'currentPassword',
+                              value: e.target.value,
+                            })
+                          )
+                        }
+                        placeholder="Ingresa tu contraseña actual"
+                      />
+
+                      <EditableField
+                        icon={FiLock}
+                        label="Nueva contraseña"
+                        name="newPassword"
+                        type="password"
+                        value={passwordForm.newPassword}
+                        onChange={(e) =>
+                          dispatch(
+                            updatePasswordField({
+                              name: 'newPassword',
+                              value: e.target.value,
+                            })
+                          )
+                        }
+                        placeholder="Ingresa tu nueva contraseña"
+                      />
+
+                      <EditableField
+                        icon={FiLock}
+                        label="Confirmar nueva contraseña"
+                        name="confirmPassword"
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) =>
+                          dispatch(
+                            updatePasswordField({
+                              name: 'confirmPassword',
+                              value: e.target.value,
+                            })
+                          )
+                        }
+                        placeholder="Confirma la nueva contraseña"
+                      />
+                    </div>
+
+                    <div className="it-sp-password-rules">
+                      <p>La nueva contraseña debe cumplir con lo siguiente:</p>
+
+                      <div className="it-sp-checks-grid">
+                        <CheckItem ok={passwordChecks.minLen} text="Mínimo 8 caracteres" />
+                        <CheckItem ok={passwordChecks.hasUpper} text="Al menos 1 mayúscula" />
+                        <CheckItem ok={passwordChecks.hasLower} text="Al menos 1 minúscula" />
+                        <CheckItem ok={passwordChecks.hasNumber} text="Al menos 1 número" />
+                        <CheckItem ok={passwordChecks.matches} text="La confirmación coincide" />
+                      </div>
+                    </div>
+
+                    <div className="it-sp-password-actions">
+                      <button
+                        className="it-sp-btn it-sp-btn--ghost"
+                        type="button"
+                        onClick={() => {
+                          dispatch(resetPasswordForm());
+                          setLocalPasswordError('');
+                        }}
+                        disabled={isChangingPassword}
+                      >
+                        <FiX />
+                        <span>Limpiar</span>
+                      </button>
+
+                      <button
+                        className="it-sp-btn it-sp-btn--primary"
+                        type="button"
+                        onClick={handleSavePassword}
+                        disabled={isChangingPassword}
+                      >
+                        <FiSave />
+                        <span>{isChangingPassword ? 'Actualizando...' : 'Guardar contraseña'}</span>
+                      </button>
+                    </div>
+
+                    {localPasswordError && (
+                      <p className="it-sp-inline-error">{localPasswordError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-
-            {editing && (
-              <p className="sp-note">
-                Nota: por ahora “Guardar” solo actualiza la vista. Si quieres, lo conectamos a tu
-                backend con:
-                <br />
-                PUT /api/usuarios/:id y PUT /api/estudiantes/:id (o docentes).
-              </p>
-            )}
-          </div>
+          </section>
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default StudentProfile
+const styles = `
+  .it-sp-root{
+    min-height:100%;
+    padding:32px;
+    background:#f6f7fb;
+    box-sizing:border-box;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+
+  .it-sp-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:20px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+  }
+
+  .it-sp-header__left{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+  }
+
+  .it-sp-header__accent{
+    width:8px;
+    height:48px;
+    border-radius:8px;
+    background:linear-gradient(180deg,#704fe6 0%, #4b5fd6 100%);
+    flex-shrink:0;
+    margin-top:2px;
+  }
+
+  .it-sp-header__title{
+    margin:0;
+    font-size:32px;
+    line-height:1.08;
+    font-weight:500;
+    color:#1a1f36;
+    letter-spacing:-0.3px;
+  }
+
+  .it-sp-header__sub{
+    margin:8px 0 0;
+    color:#68708b;
+    font-size:14px;
+    line-height:1.6;
+    max-width:720px;
+  }
+
+  .it-sp-layout{
+    display:grid;
+    grid-template-columns:320px minmax(0, 1fr);
+    gap:24px;
+    align-items:start;
+  }
+
+  .it-sp-sidebar,
+  .it-sp-main{
+    min-width:0;
+  }
+
+  .it-sp-profile-card,
+  .it-sp-content-card{
+    background:#fff;
+    border:1px solid #eceef5;
+    border-radius:24px;
+    box-shadow:0 10px 30px rgba(40,52,109,.05);
+  }
+
+  .it-sp-profile-card{
+    padding:24px 22px;
+    position:sticky;
+    top:20px;
+  }
+
+  .it-sp-profile-card__avatar{
+    width:92px;
+    height:92px;
+    border-radius:22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 16px;
+    background:linear-gradient(180deg,#f2f4fb 0%, #e7ebf8 100%);
+    border:2px solid #e8ebf4;
+    color:#8590b5;
+  }
+
+  .it-sp-profile-card__name{
+    margin:0;
+    color:#1a1f36;
+    font-size:24px;
+    line-height:1.2;
+    font-weight:700;
+    letter-spacing:-0.2px;
+    text-align:center;
+  }
+
+  .it-sp-role-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin:12px auto 0;
+    background:#eef0fb;
+    color:#4b5fd6;
+    font-size:11px;
+    font-weight:800;
+    padding:7px 12px;
+    border-radius:999px;
+    letter-spacing:.3px;
+  }
+
+  .it-sp-profile-card__info-list{
+    margin-top:22px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .it-sp-mini-info{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    padding:12px 13px;
+    border-radius:14px;
+    background:#f8f9fd;
+    border:1px solid #edf0f7;
+    color:#6e7691;
+  }
+
+  .it-sp-mini-info > div{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    min-width:0;
+  }
+
+  .it-sp-mini-info span{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    color:#96a0be;
+  }
+
+  .it-sp-mini-info strong{
+    font-size:13px;
+    line-height:1.45;
+    color:#1f2640;
+    word-break:break-word;
+  }
+
+  .it-sp-content-card{
+    padding:26px 28px;
+  }
+
+  .it-sp-section{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .it-sp-section__header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .it-sp-section__header--actions{
+    align-items:center;
+  }
+
+  .it-sp-section__title{
+    font-size:12px;
+    font-weight:800;
+    color:#95a0be;
+    letter-spacing:.8px;
+    text-transform:uppercase;
+  }
+
+  .it-sp-fields-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:18px 22px;
+  }
+
+  .it-sp-password-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:18px 22px;
+  }
+
+  .it-sp-field{
+    min-width:0;
+    text-align:left;
+    background:none;
+    border:none;
+    padding:0;
+  }
+
+  .it-sp-field__label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-bottom:7px;
+    color:#97a1be;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+    flex-wrap:wrap;
+  }
+
+  .it-sp-field__label small{
+    margin-left:auto;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.3px;
+    padding:3px 7px;
+    border-radius:999px;
+    text-transform:none;
+  }
+
+  .it-sp-field--editable .it-sp-field__label small,
+  .it-sp-field--editable-preview .it-sp-field__label small{
+    background:#eef8f1;
+    color:#2f7a4f;
+    border:1px solid #d9efdf;
+  }
+
+  .it-sp-field--readonly{
+    cursor:pointer;
+  }
+
+  .it-sp-field--readonly .it-sp-field__value{
+    padding:13px 14px;
+    background:#f4f5f9;
+    border:1px solid #e2e6ef;
+    border-radius:12px;
+    color:#5f667f;
+  }
+
+  .it-sp-field--readonly.is-muted .it-sp-field__value{
+    background:#eef1f6;
+  }
+
+  .it-sp-field--readonly:hover .it-sp-field__value{
+    background:#ebeff6;
+  }
+
+  .it-sp-field__value{
+    margin:0;
+    min-height:20px;
+    color:#1a1f36;
+    font-size:14px;
+    font-weight:600;
+    line-height:1.5;
+    word-break:break-word;
+  }
+
+  .it-sp-field__value--boxed{
+    padding:13px 14px;
+    border-radius:12px;
+    border:1px solid #dfe4f0;
+    background:#f8f9fd;
+  }
+
+  .it-sp-field__value--boxed.is-editable{
+    background:#f5fbf7;
+    border-color:#dcefe1;
+    color:#235a3b;
+  }
+
+  .it-sp-field__input{
+    width:100%;
+    box-sizing:border-box;
+    border:1px solid #cfe4d7;
+    border-radius:14px;
+    background:#fbfffc;
+    color:#1a1f36;
+    font-size:14px;
+    font-weight:500;
+    padding:12px 14px;
+    outline:none;
+    transition:all .16s ease;
+    box-shadow:0 0 0 0 rgba(112,79,230,0);
+  }
+
+  .it-sp-field__input:focus{
+    border-color:#704fe6;
+    background:#fff;
+    box-shadow:0 0 0 4px rgba(112,79,230,.10);
+  }
+
+  .it-sp-field__input--date{
+    appearance:none;
+    -webkit-appearance:none;
+    min-height:48px;
+  }
+
+  .it-sp-field__input[type="date"]::-webkit-calendar-picker-indicator{
+    opacity:.9;
+    cursor:pointer;
+    padding:4px;
+  }
+
+  .it-sp-divider{
+    width:100%;
+    height:1px;
+    background:#eef1f7;
+    margin:22px 0;
+  }
+
+  .it-sp-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border:none;
+    cursor:pointer;
+    border-radius:12px;
+    padding:11px 18px;
+    font-size:13px;
+    font-weight:700;
+    transition:all .18s ease;
+    min-height:44px;
+  }
+
+  .it-sp-btn--primary{
+    background:#704fe6;
+    color:#fff;
+    box-shadow:0 8px 20px rgba(112,79,230,.22);
+  }
+
+  .it-sp-btn--primary:hover{
+    background:#6242da;
+    transform:translateY(-1px);
+  }
+
+  .it-sp-btn--outline{
+    background:#fff;
+    color:#4d5756;
+    border:1px solid #e4e7f1;
+  }
+
+  .it-sp-btn--outline:hover{
+    background:#f9faff;
+  }
+
+  .it-sp-btn--ghost{
+    background:#fff;
+    color:#7d839d;
+    border:1px solid #e6e8f2;
+  }
+
+  .it-sp-btn--ghost:hover{
+    background:#f7f8fc;
+  }
+
+  .it-sp-btn:disabled{
+    opacity:.7;
+    cursor:not-allowed;
+    transform:none;
+  }
+
+  .it-sp-inline-actions,
+  .it-sp-password-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .it-sp-password-box{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    padding:18px;
+    border:1px solid #eceef5;
+    border-radius:18px;
+    background:#fcfcff;
+  }
+
+  .it-sp-password-rules{
+    padding:14px 16px;
+    border-radius:14px;
+    background:#f8f9fd;
+    border:1px solid #edf0f7;
+  }
+
+  .it-sp-password-rules p{
+    margin:0 0 10px;
+    color:#4a536f;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .it-sp-checks-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px 14px;
+  }
+
+  .it-sp-check-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:#7b839c;
+    font-size:13px;
+    font-weight:600;
+  }
+
+  .it-sp-check-item.is-ok{
+    color:#25804a;
+  }
+
+  .it-sp-inline-error{
+    margin:0;
+    color:#b63a3a;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .it-sp-loading-wrap,
+  .it-sp-feedback-wrap{
+    min-height:68vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .it-sp-loading-card,
+  .it-sp-feedback-card{
+    width:min(460px, 100%);
+    background:#fff;
+    border:1px solid #eceef5;
+    border-radius:24px;
+    padding:32px 26px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(40,52,109,.05);
+  }
+
+  .it-sp-feedback-card__icon{
+    width:52px;
+    height:52px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 14px;
+    background:#f4f6fc;
+    color:#5c6788;
+  }
+
+  .it-sp-feedback-card h3{
+    margin:0 0 8px;
+    color:#1a1f36;
+    font-size:20px;
+    font-weight:700;
+  }
+
+  .it-sp-feedback-card p{
+    margin:0;
+    color:#6f7790;
+    font-size:14px;
+    line-height:1.6;
+  }
+
+  .it-sp-spinner{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:4px solid #e8eafb;
+    border-top-color:#704fe6;
+    margin:0 auto 14px;
+    animation:it-sp-spin .8s linear infinite;
+  }
+
+  .it-sp-loading-card p{
+    margin:0;
+    color:#59627f;
+    font-weight:700;
+    font-size:15px;
+  }
+
+  @keyframes it-sp-spin{
+    to{ transform:rotate(360deg); }
+  }
+
+  @media (max-width: 1100px){
+    .it-sp-layout{
+      grid-template-columns:1fr;
+    }
+
+    .it-sp-profile-card{
+      position:static;
+    }
+  }
+
+  @media (max-width: 760px){
+    .it-sp-root{
+      padding:18px 12px;
+    }
+
+    .it-sp-header__title{
+      font-size:28px;
+    }
+
+    .it-sp-content-card,
+    .it-sp-profile-card{
+      padding:18px 16px;
+      border-radius:20px;
+    }
+
+    .it-sp-fields-grid,
+    .it-sp-password-grid,
+    .it-sp-checks-grid{
+      grid-template-columns:1fr;
+      gap:16px;
+    }
+
+    .it-sp-section__header,
+    .it-sp-section__header--actions{
+      align-items:stretch;
+      flex-direction:column;
+    }
+
+    .it-sp-inline-actions,
+    .it-sp-password-actions{
+      width:100%;
+      flex-direction:column;
+    }
+
+    .it-sp-inline-actions .it-sp-btn,
+    .it-sp-password-actions .it-sp-btn,
+    .it-sp-section__header .it-sp-btn{
+      width:100%;
+      justify-content:center;
+    }
+  }
+`;
+
+export default StudentProfile;

@@ -183,3 +183,14 @@ export const inscritosEstudianteApi = {
   fetchInscripcionesByEstudianteId: (estudianteId) =>
     api.get(`/inscritos/estudiante/${estudianteId}`).then((res) => res.data).catch(handleError),
 };
+export const carritoApi = {
+  fetchCarritoByUsuarioId: (userId) =>
+    api.get(`/carrito/usuario/${userId}`).then((res) => res.data).catch(handleError),
+
+  removeItemCarrito: (idCompraCurso) =>
+    api.delete(`/carrito/item/${idCompraCurso}`).then((res) => res.data).catch(handleError),
+
+  cancelarCarrito: (idCompraTotal) =>
+    api.patch(`/carrito/cancelar/${idCompraTotal}`).then((res) => res.data).catch(handleError),
+};
+export default api;
