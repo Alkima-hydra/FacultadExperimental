@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FiClock, FiUsers, FiFileText, FiSearch, FiCheckCircle, FiBook, FiBarChart2, FiCalendar, FiStar } from 'react-icons/fi';
 import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
 import Swal from 'sweetalert2';
+
+// para consumo
+import { fetchCursosByDocenteId } from './slicesCursos/CursosThunk';
+import { selectCursosState,loadingCursos, errorCursos } from './slicesCursos/CursosSlices';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  selectUserId,
+  selectToken,
+  selectIsAuthenticated,
+} from "../signin/slices/loginSelectors";
 
 /* ─── Mock data ─────────────────────────────────────────────── */
 const MOCK_COURSES = [
@@ -55,21 +65,94 @@ const MOCK_COURSES = [
     },
 ];
 
-/* ─── Helpers ───────────────────────────────────────────────── */
-const Stars = ({ rating }) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-        if (i <= Math.floor(rating)) stars.push(<FaStar key={i} />);
-        else if (i === Math.ceil(rating) && rating % 1 !== 0) stars.push(<FaStarHalfAlt key={i} />);
-        else stars.push(<FaRegStar key={i} />);
+//prueba de primer consumo 
+const getAuthFromLocalStorage = () => {
+    const possibleKeys = [
+        'auth',
+        'user',
+        'usuario',
+        'login',
+        'authUser',
+        'userData',
+        'persist:root',
+    ];
+
+    for (const key of possibleKeys) {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+
+        try {
+            const parsed = JSON.parse(raw);
+
+            if (parsed?.id && parsed?.token) {
+                return parsed;
+            }
+
+            if (key === 'persist:root') {
+                const loginRaw = parsed?.login;
+                if (loginRaw) {
+                    const loginParsed = JSON.parse(loginRaw);
+                    if (loginParsed?.id && loginParsed?.token) {
+                        return loginParsed;
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn(`No se pudo leer la key ${key} del localStorage`, error);
+        }
     }
-    return <div className="dc-stars">{stars}</div>;
+
+    return null;
 };
+
+const mapCursoToCard = (curso) => {
+    const estudiantes =
+        curso?.students ??
+        curso?.estudiantes ??
+        curso?.total_estudiantes ??
+        curso?.cantidad_estudiantes ??
+        curso?.inscritos?.length ??
+        0;
+
+    const precio = Number(curso?.precio ?? 0);
+
+    return {
+        id: curso?.id_curso ?? curso?.id,
+        title: curso?.materia?.nombre || curso?.nombre_materia || curso?.title || 'Curso sin nombre',
+        category: curso?.categoria || curso?.materia?.categoria || 'Materia',
+        rating: Number(curso?.rating ?? 5),
+        price: precio,
+        lessons: Number(curso?.lessons ?? curso?.lecciones ?? 0),
+        hora_inicio: curso?.hora_inicio || curso?.hours || curso?.duracion || 'Sin horario',
+        hora_fin: curso?.hora_fin || 'Sin horario',
+        students: estudiantes,
+        image: curso?.image || 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&q=80',
+        diasDeclase: curso?.diasDeclase || curso?.dias_de_clases || curso?.fecha_inicio || curso?.fechaInicio,
+        status: curso?.status || curso?.estado || 'active',
+        completedStudents: Number(curso?.completedStudents ?? curso?.completados ?? 0),
+        income: Number(curso?.income ?? (precio * estudiantes)),
+        periodo: curso?.periodo || 'Sin periodo',
+        raw: curso,
+    };
+};
+
 
 const fmt = (dateStr) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
 };
+
+{loadingCursos && (
+    <div style={{ marginBottom: '16px', padding: '12px 14px', background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: '10px', color: '#4338CA', fontSize: '13px', fontWeight: 600 }}>
+        Cargando cursos del docente...
+    </div>
+)}
+
+{!loadingCursos && errorCursos && (
+    <div style={{ marginBottom: '16px', padding: '12px 14px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '10px', color: '#B91C1C', fontSize: '13px', fontWeight: 600 }}>
+        {errorCursos}
+    </div>
+)}
 
 /* ─── Summary stat card ─────────────────────────────────────── */
 const StatCard = ({ icon: Icon, label, value, accent }) => (
@@ -92,6 +175,11 @@ const CourseCard = ({ course, onFinish }) => {
             {/* Image */}
             <div className="dc-card__img-wrap">
                 <img src={course.image} alt={course.title} className="dc-card__img" />
+                <h3 className="dc-card__title">{course.title}</h3>
+                <p style={{ margin: '0 0 10px', fontSize: '12px', color: '#6B7280', fontWeight: 600 }}>
+                    Periodo: {course.periodo}
+                </p>
+
                 <div className="dc-card__category">{course.category}</div>
                 <div className={`dc-card__status-badge dc-card__status-badge--${course.status}`}>
                     {isFinished ? '✓ Finalizado' : '● En curso'}
@@ -103,8 +191,7 @@ const CourseCard = ({ course, onFinish }) => {
                 {/* Rating + price */}
                 <div className="dc-card__meta-top">
                     <div className="dc-card__rating">
-                        <Stars rating={course.rating} />
-                        <span>{course.rating}</span>
+                        <span>{course.periodo}</span>
                     </div>
                     <span className="dc-card__price">Bs {course.price}.00</span>
                 </div>
@@ -114,29 +201,26 @@ const CourseCard = ({ course, onFinish }) => {
                 {/* Stats row */}
                 <div className="dc-card__stats">
                     <span><FiFileText size={12} /> {course.lessons} lecciones</span>
-                    <span><FiClock size={12} /> {course.hours}</span>
+                    <span><FiClock size={12} /> {course.hora_inicio} - {course.hora_fin}</span>
                     <span><FiUsers size={12} /> {course.students} estudiantes</span>
                 </div>
 
                 {/* Dates */}
                 <div className="dc-card__dates">
                     <div className="dc-card__date-item">
-                        <FiCalendar size={12} />
-                        <span className="dc-card__date-label">Inicio:</span>
-                        <span>{fmt(course.startDate)}</span>
+                        
+                        <span className="dc-card__date-label">Días de clase:</span>
+                        
                     </div>
                     <div className="dc-card__date-sep">→</div>
-                    <div className="dc-card__date-item">
-                        <FiCalendar size={12} />
-                        <span className="dc-card__date-label">Fin:</span>
-                        <span>{fmt(course.endDate)}</span>
-                    </div>
+                    <span>{course.diasDeclase}</span>
+                    
                 </div>
 
                 {/* Completion progress */}
                 <div className="dc-card__progress-wrap">
                     <div className="dc-card__progress-header">
-                        <span>Estudiantes que completaron</span>
+                        <span>Notas promedio del curso</span>
                         <span style={{ fontWeight: 700, color: isFinished ? '#22C55E' : '#6D5DFD' }}>
                             {course.completedStudents}/{course.students}
                         </span>
@@ -150,14 +234,7 @@ const CourseCard = ({ course, onFinish }) => {
                             }}
                         />
                     </div>
-                    <div className="dc-card__progress-pct">{pct}% completado</div>
-                </div>
-
-                {/* Income */}
-                <div className="dc-card__income">
-                    <FiBarChart2 size={13} />
-                    <span>Ingresos generados:</span>
-                    <strong>Bs {course.income.toLocaleString()}.00</strong>
+                    
                 </div>
 
                 {/* Footer action */}
@@ -179,13 +256,72 @@ const CourseCard = ({ course, onFinish }) => {
 
 /* ─── Main ──────────────────────────────────────────────────── */
 const DocenteCourses = () => {
-    const [courses, setCourses] = useState(MOCK_COURSES);
+    const dispatch = useDispatch();
+    const cursosState = useSelector(selectCursosState);
+    const userIdFromStore = useSelector(selectUserId);
+    const tokenFromStore = useSelector(selectToken);
+    const isAuthenticated = useSelector(selectIsAuthenticated);
+
+    const [courses, setCourses] = useState([]);
     const [search,  setSearch]  = useState('');
     const [filter,  setFilter]  = useState('all'); // all | active | finished
+    const [loadingCursos, setLoadingCursos] = useState(false);
+    const [errorCursos, setErrorCursos] = useState('');
+
+    const localAuth = useMemo(() => getAuthFromLocalStorage(), []);
+    const docenteId = userIdFromStore || localAuth?.id;
+    console.log('Docente ID:', docenteId);
+    const token = tokenFromStore || localAuth?.token;
+
+    useEffect(() => {
+        const cargarCursos = async () => {
+            if (!docenteId) {
+                setCourses(MOCK_COURSES);
+                setErrorCursos('No se encontró el id del docente en la sesión.');
+                return;
+            }
+
+            try {
+                setLoadingCursos(true);
+                setErrorCursos('');
+
+                const action = await dispatch(fetchCursosByDocenteId(docenteId));
+                const payload = action?.payload;
+
+                const cursosApi = Array.isArray(payload)
+                    ? payload
+                    : Array.isArray(payload?.cursos)
+                        ? payload.cursos
+                        : Array.isArray(payload?.data)
+                            ? payload.data
+                            : Array.isArray(cursosState?.cursos)
+                                ? cursosState.cursos
+                                : Array.isArray(cursosState)
+                                    ? cursosState
+                                    : [];
+
+                if (cursosApi.length > 0) {
+                    setCourses(cursosApi.map(mapCursoToCard));
+                } else {
+                    setCourses([]);
+                }
+            } catch (error) {
+                console.error('Error al cargar cursos del docente:', error);
+                setErrorCursos('No se pudieron cargar los cursos del docente.');
+                setCourses(MOCK_COURSES);
+            } finally {
+                setLoadingCursos(false);
+            }
+        };
+
+        cargarCursos();
+    }, [dispatch, docenteId]);
 
     const totalStudents = courses.reduce((a, c) => a + c.students, 0);
     const totalIncome   = courses.reduce((a, c) => a + c.income, 0);
-    const avgRating     = (courses.reduce((a, c) => a + c.rating, 0) / courses.length).toFixed(1);
+    const avgRating     = courses.length
+        ? (courses.reduce((a, c) => a + c.rating, 0) / courses.length).toFixed(1)
+        : '0.0';
     const activeCourses = courses.filter(c => c.status === 'active').length;
 
     const filtered = courses.filter(c => {
@@ -194,6 +330,8 @@ const DocenteCourses = () => {
         const matchFilter = filter === 'all' || c.status === filter;
         return matchSearch && matchFilter;
     });
+
+    //para consumir el endpoint de cursos por docente
 
     const handleFinish = async (course) => {
         const res = await Swal.fire({
@@ -261,7 +399,7 @@ const DocenteCourses = () => {
                 .dc-header__left { display: flex; align-items: center; gap: 10px; }
                 .dc-header__pill { width: 8px; height: 24px; background: #6D5DFD; border-radius: 4px; }
                 .dc-header__title {
-                    font-family: 'DM Serif Display', serif;
+                 
                     font-size: 22px; color: #1A1F36; margin: 0;
                 }
 
