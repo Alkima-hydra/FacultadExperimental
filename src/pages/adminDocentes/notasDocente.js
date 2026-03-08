@@ -1,9 +1,118 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     FiSearch, FiChevronDown, FiSave, FiUser,
     FiCheckCircle, FiAlertCircle, FiAward, FiBook, FiEdit3
 } from 'react-icons/fi';
 import Swal from 'sweetalert2';
+
+// para consumo
+import { fetchCursosByDocenteId } from './slicesCursos/CursosThunk';
+import { fetchNotasByCursoId, registrarNota } from './slicesNotas/NotasThunk';
+import { selectCursosState } from './slicesCursos/CursosSlices';
+import { selectNotasState } from './slicesNotas/NotasSlices';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  selectUserId,
+  selectToken,
+  selectIsAuthenticated,
+} from "../signin/slices/loginSelectors";
+
+//consumo 
+const getAuthFromLocalStorage = () => {
+    const possibleKeys = [
+        'auth',
+        'user',
+        'usuario',
+        'login',
+        'authUser',
+        'userData',
+        'persist:root',
+    ];
+
+    for (const key of possibleKeys) {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+
+        try {
+            const parsed = JSON.parse(raw);
+
+            if (parsed?.id && parsed?.token) {
+                return parsed;
+            }
+
+            if (key === 'persist:root') {
+                const loginRaw = parsed?.login;
+                if (loginRaw) {
+                    const loginParsed = JSON.parse(loginRaw);
+                    if (loginParsed?.id && loginParsed?.token) {
+                        return loginParsed;
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn(`No se pudo leer la key ${key} del localStorage`, error);
+        }
+    }
+
+    return null;
+};
+
+const mapCursoFromApi = (curso) => ({
+    id: curso?.id_curso ?? curso?.id,
+    title: curso?.materia?.nombre || curso?.nombre_materia || curso?.title || 'Curso sin nombre',
+    category: curso?.categoria || curso?.materia?.categoria || 'Materia',
+    raw: curso,
+});
+
+const mapNotaToStudent = (item) => {
+    const estudiante = item?.estudiante || item?.usuario || item?.raw?.estudiante || {};
+    const nombreCompleto = [
+        estudiante?.nombres,
+        estudiante?.apellido_paterno,
+        estudiante?.apellido_materno,
+    ].filter(Boolean).join(' ');
+
+    return {
+        id: item?.id_matricula ?? item?.inscritos_id_matricula ?? item?.id,
+        name: nombreCompleto || item?.name || 'Estudiante sin nombre',
+        avatar: `https://i.pravatar.cc/40?u=${estudiante?.mail || item?.id_matricula || item?.id || Math.random()}`,
+        nota: item?.nota_final ?? item?.nota ?? null,
+        aprobado: item?.aprobado ?? null,
+        raw: item,
+    };
+};
+
+const getCursosArray = (state) => {
+    if (Array.isArray(state)) return state;
+    if (Array.isArray(state?.cursos)) return state.cursos;
+    if (Array.isArray(state?.data)) return state.data;
+    if (Array.isArray(state?.items)) return state.items;
+    if (Array.isArray(state?.payload)) return state.payload;
+    if (Array.isArray(state?.rows)) return state.rows;
+    if (Array.isArray(state?.data?.cursos)) return state.data.cursos;
+    if (Array.isArray(state?.payload?.cursos)) return state.payload.cursos;
+    return [];
+};
+
+const getNotasArray = (state) => {
+    if (Array.isArray(state)) return state;
+    if (Array.isArray(state?.notasPorEstudiante)) return state.notasPorEstudiante;
+    if (Array.isArray(state?.estudiantes)) return state.estudiantes;
+    if (Array.isArray(state?.notas)) return state.notas;
+    if (Array.isArray(state?.data)) return state.data;
+    if (Array.isArray(state?.payload)) return state.payload;
+    if (Array.isArray(state?.data?.estudiantes)) return state.data.estudiantes;
+    if (Array.isArray(state?.payload?.estudiantes)) return state.payload.estudiantes;
+    if (Array.isArray(state?.data?.notasPorEstudiante)) return state.data.notasPorEstudiante;
+    if (Array.isArray(state?.payload?.notasPorEstudiante)) return state.payload.notasPorEstudiante;
+    return [];
+};
+
+const unwrapThunkPayload = (value) => {
+    if (!value) return null;
+    if (value.payload) return value.payload;
+    return value;
+};
 
 /* ─── Mock data ─────────────────────────────────────────────── */
 const COURSES = [
@@ -74,7 +183,6 @@ const StudentRow = ({ student, draft, onChange, onSave, saving }) => {
         <tr className="dn-row">
             <td className="dn-td dn-td--student">
                 <div className="dn-student-info">
-                    <img src={student.avatar} alt={student.name} className="dn-avatar" />
                     <span className="dn-student-name">{student.name}</span>
                 </div>
             </td>
@@ -123,57 +231,225 @@ const StudentRow = ({ student, draft, onChange, onSave, saving }) => {
 
 /* ─── Main ──────────────────────────────────────────────────── */
 const DocenteNotas = () => {
-    const [courses,    setCourses]    = useState(COURSES);
-    const [selectedId, setSelectedId] = useState(COURSES[0].id);
-    const [drafts,     setDrafts]     = useState({});   // { studentId: '85' }
-    const [saving,     setSaving]     = useState(null); // studentId being saved
-    const [search,     setSearch]     = useState('');
-    const [ddOpen,     setDdOpen]     = useState(false);
+    const dispatch = useDispatch();
+    const cursosState = useSelector(selectCursosState);
+    const notasState = useSelector(selectNotasState);
+    const userIdFromStore = useSelector(selectUserId);
+    const tokenFromStore = useSelector(selectToken);
+    const isAuthenticated = useSelector(selectIsAuthenticated);
 
-    const course   = courses.find(c => c.id === selectedId);
+    const localAuth = useMemo(() => getAuthFromLocalStorage(), []);
+    const docenteId = userIdFromStore || localAuth?.id;
+    const token = tokenFromStore || localAuth?.token;
+
+    const [selectedId, setSelectedId] = useState(null);
+    const [drafts, setDrafts] = useState({});
+    const [saving, setSaving] = useState(null);
+    const [search, setSearch] = useState('');
+    const [ddOpen, setDdOpen] = useState(false);
+    const [coursesData, setCoursesData] = useState([]);
+    const [notesData, setNotesData] = useState([]);
+    const [loadingCursos, setLoadingCursos] = useState(false);
+    const [errorCursos, setErrorCursos] = useState('');
+    const [loadingNotas, setLoadingNotas] = useState(false);
+    const [errorNotas, setErrorNotas] = useState('');
+
+    const cursosApi = coursesData.length > 0 ? coursesData : getCursosArray(cursosState);
+    const courses = cursosApi.map(mapCursoFromApi);
+
+    useEffect(() => {
+        const cargarCursos = async () => {
+            if (!docenteId) {
+                setCoursesData([]);
+                setErrorCursos('No se encontró el docente en la sesión.');
+                return;
+            }
+
+            try {
+                setLoadingCursos(true);
+                setErrorCursos('');
+
+                const action = await dispatch(fetchCursosByDocenteId(docenteId));
+                const payload = unwrapThunkPayload(action);
+                const cursosDesdeThunk = getCursosArray(payload);
+                const cursosDesdeState = getCursosArray(cursosState);
+                const cursosFinales = cursosDesdeThunk.length > 0 ? cursosDesdeThunk : cursosDesdeState;
+
+                console.log('payload cursos thunk:', payload);
+                console.log('cursosState selector:', cursosState);
+                console.log('cursosFinales:', cursosFinales);
+
+                setCoursesData(cursosFinales);
+
+                if (cursosFinales.length === 0) {
+                    setErrorCursos('La API respondió, pero no se encontraron cursos para mostrar en el selector.');
+                }
+            } catch (error) {
+                console.error('Error al cargar cursos del docente:', error);
+                setCoursesData([]);
+                setErrorCursos('No se pudieron cargar los cursos del docente.');
+            } finally {
+                setLoadingCursos(false);
+            }
+        };
+
+        cargarCursos();
+    }, [dispatch, docenteId]);
+
+    useEffect(() => {
+        if (courses.length > 0) {
+            if (!selectedId || !courses.some(c => c.id === selectedId)) {
+                setSelectedId(courses[0].id);
+            }
+        } else {
+            setSelectedId(null);
+        }
+    }, [courses, selectedId]);
+
+    useEffect(() => {
+        const cargarNotas = async () => {
+            if (!selectedId) {
+                setNotesData([]);
+                return;
+            }
+
+            try {
+                setLoadingNotas(true);
+                setErrorNotas('');
+
+                const action = await dispatch(fetchNotasByCursoId(selectedId));
+                const payload = unwrapThunkPayload(action);
+                const notasDesdeThunk = getNotasArray(payload);
+                const notasDesdeState = getNotasArray(notasState);
+                const notasFinales = notasDesdeThunk.length > 0 ? notasDesdeThunk : notasDesdeState;
+
+                console.log('payload notas thunk:', payload);
+                console.log('notasState selector:', notasState);
+                console.log('notasFinales:', notasFinales);
+
+                setNotesData(notasFinales);
+
+                if (notasFinales.length === 0) {
+                    setErrorNotas('La API respondió, pero no se encontraron estudiantes para este curso.');
+                }
+            } catch (error) {
+                console.error('Error al cargar notas:', error);
+                setNotesData([]);
+                setErrorNotas('No se pudieron cargar las notas del curso.');
+            } finally {
+                setLoadingNotas(false);
+            }
+        };
+
+        cargarNotas();
+    }, [dispatch, selectedId]);
+
+    const notasApi = notesData.length > 0 ? notesData : getNotasArray(notasState);
+    const students = notasApi.map(mapNotaToStudent);
+
+    const course = (() => {
+        const found = courses.find(c => c.id === selectedId) || {
+            id: null,
+            title: 'Sin curso',
+            category: 'Materia',
+        };
+
+        return {
+            ...found,
+            students,
+        };
+    })();
+
     const filtered = course.students.filter(s =>
         s.name.toLowerCase().includes(search.toLowerCase())
     );
 
     const calificados = course.students.filter(s => s.nota !== null).length;
-    const promedio    = course.students.filter(s => s.nota !== null).length
-        ? Math.round(course.students.filter(s => s.nota !== null).reduce((a, s) => a + s.nota, 0) /
-          course.students.filter(s => s.nota !== null).length)
+    const promedio = course.students.filter(s => s.nota !== null).length
+        ? Math.round(
+            course.students.filter(s => s.nota !== null).reduce((a, s) => a + s.nota, 0) /
+            course.students.filter(s => s.nota !== null).length
+        )
         : null;
+
+    const aprobados = course.students.filter(s => s.nota !== null && s.nota >= 51).length;
+    const reprobados = course.students.filter(s => s.nota !== null && s.nota < 51).length;
 
     const handleChange = (studentId, val) => {
         setDrafts(d => ({ ...d, [studentId]: val }));
+    };
+
+    const guardarNotaThunk = async (idMatricula, notaFinal) => {
+        const payloadRegistro = {
+            cursoId: Number(selectedId),
+            data: {
+                notas: [
+                {
+                    id_matricula: Number(idMatricula),
+                    nota_final: Number(notaFinal),
+                },
+            ],
+            }
+        };
+
+        console.log('payload registrarNota:', payloadRegistro);
+
+        const action = await dispatch(registrarNota(payloadRegistro));
+
+        if (action?.meta?.requestStatus === 'rejected') {
+            throw new Error(action?.payload?.msg || action?.error?.message || 'No se pudo guardar la nota');
+        }
+
+        return action;
     };
 
     const handleSave = async (studentId, nota) => {
         const student = course.students.find(s => s.id === studentId);
         setSaving(studentId);
 
-        // Simulate async save
-        await new Promise(r => setTimeout(r, 500));
+        try {
+            await guardarNotaThunk(studentId, nota);
+            const refreshAction = await dispatch(fetchNotasByCursoId(selectedId));
+            const refreshPayload = unwrapThunkPayload(refreshAction);
+            const notasActualizadas = getNotasArray(refreshPayload);
+            if (notasActualizadas.length > 0) {
+                setNotesData(notasActualizadas);
+            }
 
-        setCourses(cs => cs.map(c =>
-            c.id === selectedId
-                ? { ...c, students: c.students.map(s => s.id === studentId ? { ...s, nota } : s) }
-                : c
-        ));
-        setDrafts(d => { const n = { ...d }; delete n[studentId]; return n; });
-        setSaving(null);
+            setDrafts(d => {
+                const n = { ...d };
+                delete n[studentId];
+                return n;
+            });
 
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: `Nota de ${student.name} guardada`,
-            showConfirmButton: false,
-            timer: 2200,
-            timerProgressBar: true,
-            didOpen: t => { t.style.borderRadius = '12px'; },
-        });
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: `Nota de ${student?.name || 'estudiante'} guardada`,
+                showConfirmButton: false,
+                timer: 2200,
+                timerProgressBar: true,
+                didOpen: t => { t.style.borderRadius = '12px'; },
+            });
+        } catch (error) {
+            console.error('Error al guardar nota:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'No se pudo guardar la nota',
+                text: error?.message || 'Ocurrió un error al registrar la nota.',
+                confirmButtonColor: '#6D5DFD',
+            });
+        } finally {
+            setSaving(null);
+        }
     };
 
     const handleSaveAll = async () => {
-        const pending = Object.entries(drafts).filter(([id, val]) => val !== '' && Number(val) >= 0 && Number(val) <= 100);
+        const pending = Object.entries(drafts).filter(([id, val]) =>
+            val !== '' && Number(val) >= 0 && Number(val) <= 100
+        );
+
         if (!pending.length) return;
 
         const res = await Swal.fire({
@@ -193,39 +469,69 @@ const DocenteNotas = () => {
             didOpen: popup => {
                 popup.style.borderRadius = '16px';
                 const icon = popup.querySelector('.swal2-icon');
-                if (icon) { icon.style.transform = 'scale(0.78)'; icon.style.margin = '0 auto 6px'; }
+                if (icon) {
+                    icon.style.transform = 'scale(0.78)';
+                    icon.style.margin = '0 auto 6px';
+                }
                 const title = popup.querySelector('.swal2-title');
-                if (title) { title.style.fontSize = '18px'; title.style.fontWeight = '800'; }
+                if (title) {
+                    title.style.fontSize = '18px';
+                    title.style.fontWeight = '800';
+                }
             },
         });
 
         if (!res.isConfirmed) return;
 
-        setCourses(cs => cs.map(c =>
-            c.id !== selectedId ? c : {
-                ...c,
-                students: c.students.map(s => {
-                    const val = drafts[s.id];
-                    if (val === undefined || val === '') return s;
-                    const n = Number(val);
-                    return (n >= 0 && n <= 100) ? { ...s, nota: n } : s;
-                }),
-            }
-        ));
-        setDrafts({});
+       try {
+            const payloadRegistro = {
+                cursoId: Number(selectedId),
+                data: {
+                    notas: pending.map(([id, val]) => ({
+                        id_matricula: Number(id),
+                        nota_final: Number(val),
+                    })),
+                },
+            };
 
-        Swal.fire({
-            title: '¡Notas guardadas!',
-            text: `${pending.length} notas actualizadas correctamente.`,
-            icon: 'success',
-            timer: 2000,
-            showConfirmButton: false,
-            didOpen: p => { p.style.borderRadius = '16px'; },
-        });
+            console.log('payload registrarNota multiple:', payloadRegistro);
+
+            const action = await dispatch(registrarNota(payloadRegistro));
+
+            if (action?.meta?.requestStatus === 'rejected') {
+                throw new Error(action?.payload?.msg || action?.error?.message || 'No se pudieron guardar las notas');
+            }
+
+            const refreshAction = await dispatch(fetchNotasByCursoId(selectedId));
+            const refreshPayload = unwrapThunkPayload(refreshAction);
+            const notasActualizadas = getNotasArray(refreshPayload);
+
+            if (notasActualizadas.length > 0) {
+                setNotesData(notasActualizadas);
+            }
+
+            setDrafts({});
+
+            Swal.fire({
+                title: '¡Notas guardadas!',
+                text: `${pending.length} notas actualizadas correctamente.`,
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false,
+                didOpen: p => { p.style.borderRadius = '16px'; },
+            });
+        } catch (error) {
+            console.error('Error al guardar todas las notas:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'No se pudieron guardar las notas',
+                text: error?.message || 'Revisa el thunk o el endpoint de registro de notas.',
+                confirmButtonColor: '#6D5DFD',
+            });
+        }
     };
 
     const pendingCount = Object.values(drafts).filter(v => v !== '').length;
-
     return (
         <>
             <style>{`
@@ -249,7 +555,7 @@ const DocenteNotas = () => {
                 .dn-header__left { display: flex; align-items: center; gap: 10px; }
                 .dn-header__pill { width: 8px; height: 24px; background: #6D5DFD; border-radius: 4px; }
                 .dn-header__title {
-                    font-family: 'DM Serif Display', serif;
+                  
                     font-size: 22px; color: #1A1F36; margin: 0;
                 }
 
@@ -479,6 +785,23 @@ const DocenteNotas = () => {
             `}</style>
 
             <div className="dn-root" onClick={() => ddOpen && setDdOpen(false)}>
+                {loadingCursos && (
+                <div style={{ marginBottom: '16px', padding: '12px 14px', background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: '10px', color: '#4338CA', fontSize: '13px', fontWeight: 600 }}>
+                    Cargando materias del docente...
+                </div>
+                )}
+
+                {!!errorCursos && (
+                    <div style={{ marginBottom: '16px', padding: '12px 14px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '10px', color: '#B91C1C', fontSize: '13px', fontWeight: 600 }}>
+                        {typeof errorCursos === 'string' ? errorCursos : 'No se pudieron cargar los cursos del docente.'}
+                    </div>
+                )}
+
+                {!!errorNotas && !loadingNotas && (
+                    <div style={{ marginBottom: '16px', padding: '12px 14px', background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: '10px', color: '#C2410C', fontSize: '13px', fontWeight: 600 }}>
+                        {typeof errorNotas === 'string' ? errorNotas : 'No se pudieron cargar las notas del curso.'}
+                    </div>
+                )}
 
                 {/* ── Page header ── */}
                 <div className="dn-header">
@@ -500,7 +823,7 @@ const DocenteNotas = () => {
                                 <FiBook size={16} className="dn-dropdown__icon" />
                                 <div className="dn-dropdown__text">
                                     <span className="dn-dropdown__cat">{course.category}</span>
-                                    <span className="dn-dropdown__name">{course.title}</span>
+                                    <span className="dn-dropdown__name">{course.title || 'Seleccione un curso'}</span>
                                 </div>
                             </div>
                             <FiChevronDown size={16} className="dn-dropdown__chevron" />
@@ -508,7 +831,20 @@ const DocenteNotas = () => {
 
                         {ddOpen && (
                             <div className="dn-dropdown__menu">
-                                {COURSES.map(c => (
+                                {courses.length === 0 ? (
+                                    <button
+                                        type="button"
+                                        className="dn-dropdown__option"
+                                        disabled
+                                        style={{ cursor: 'default', opacity: 0.7 }}
+                                    >
+                                        <FiBook size={14} style={{ color: '#9FA8C7', flexShrink: 0 }} />
+                                        <div>
+                                            <span className="dn-dropdown__opt-cat">Sin datos</span>
+                                            <span className="dn-dropdown__opt-name">No hay cursos cargados para este docente</span>
+                                        </div>
+                                    </button>
+                                ) : courses.map(c => (
                                     <button
                                         key={c.id}
                                         className={`dn-dropdown__option${c.id === selectedId ? ' selected' : ''}`}
@@ -547,14 +883,14 @@ const DocenteNotas = () => {
                         <FiCheckCircle size={14} className="dn-chip__icon" />
                         <span className="dn-chip__label">Aprobados</span>
                         <span className="dn-chip__value" style={{ color: '#16A34A' }}>
-                            {course.students.filter(s => s.nota !== null && s.nota >= 60).length}
+                            {aprobados}
                         </span>
                     </div>
                     <div className="dn-chip">
                         <FiAlertCircle size={14} className="dn-chip__icon" />
                         <span className="dn-chip__label">Reprobados</span>
                         <span className="dn-chip__value" style={{ color: '#DC2626' }}>
-                            {course.students.filter(s => s.nota !== null && s.nota < 60).length}
+                            {reprobados}
                         </span>
                     </div>
                 </div>
@@ -582,6 +918,11 @@ const DocenteNotas = () => {
 
                 {/* ── Table ── */}
                 <div className="dn-table-wrap">
+                    {loadingNotas && (
+                        <div style={{ padding: '14px 18px', borderBottom: '1px solid #E8EAF5', background: '#F8FAFC', color: '#475569', fontSize: '13px', fontWeight: 600 }}>
+                            Cargando notas del curso...
+                        </div>
+                    )}
                     <table className="dn-table">
                         <thead className="dn-thead">
                             <tr>
