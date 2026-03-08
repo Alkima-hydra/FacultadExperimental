@@ -143,6 +143,9 @@ export const cursosApi = {
     api.patch(`/curso/${id}`).then((res) => res.data).catch(handleError),
   buscarCursos: (params = {}) =>
     api.get('/busqueda/cursos', { params }).then((res) => res.data).catch(handleError),
+  // para obtener los cursos de un docente específico
+  fetchCursosByDocenteId: (docenteId) =>
+    api.get(`/curso/docente/${docenteId}`).then((res) => res.data).catch(handleError),
 };
 
 // pa las materias
@@ -182,4 +185,12 @@ export const prerequisitosApi = {
 export const inscritosEstudianteApi = {
   fetchInscripcionesByEstudianteId: (estudianteId) =>
     api.get(`/inscritos/estudiante/${estudianteId}`).then((res) => res.data).catch(handleError),
+};
+
+// para las notas de las materias, para docente, ver notas y registrar notas
+export const notasDocenteApi = {
+  fetchNotasByDocenteId: (cursoId) =>
+    api.get(`/materia-notas/docente/curso/${cursoId}`).then((res) => res.data).catch(handleError),
+  registrarNota: (cursoId, data) =>
+    api.post(`/materia-notas/docente/curso/${cursoId}/registrar`, data).then((res) => res.data).catch(handleError),
 };
