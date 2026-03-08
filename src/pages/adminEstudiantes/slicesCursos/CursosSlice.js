@@ -1,89 +1,237 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { fetchInscripcionesByEstudianteId } from './CursosThunk';
+import {
+  fetchInscripcionesByEstudianteId,
+  fetchInscritoByMatriculaId,
+} from './CursosThunk';
 
 const initialState = {
-  // ── Inscripciones / Inscritos (matrículas)
-  Inscritos: [],
+  estudiante: null,
+  inscritos: [],
+  inscritosFiltrados: [],
+  meta: null,
 
-  // Datos del estudiante (si el backend lo devuelve)
-  Estudiante: null,
-
-  // Meta paginación (si viene en la respuesta)
-  page: 1,
-  limit: 10,
-  total: 0,
-  totalPages: 1,
-
-  // Loading / error
   isLoadingInscritos: false,
+  isLoadingDetalle: false,
   error: null,
+
+  filtroEstado: 'todos',
+  // todos | activos | concluidos | aprobados | reprobados | pendientes
+
+  searchTerm: '',
+
+  inscritoSeleccionado: null,
+  modalDetalleOpen: false,
 };
 
-const CursoSlice = createSlice({
-  name: 'Inscritos',
+const normalizarTexto = (txt = '') =>
+  String(txt)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+const aplicarFiltros = (state) => {
+  let lista = Array.isArray(state.inscritos) ? [...state.inscritos] : [];
+
+  switch (state.filtroEstado) {
+    case 'activos':
+      lista = lista.filter((item) => item?.curso?.estado === true);
+      break;
+
+    case 'concluidos':
+      lista = lista.filter((item) => item?.curso?.estado === false);
+      break;
+
+    case 'aprobados':
+      lista = lista.filter((item) => item?.materia_notas?.aprobado === true);
+      break;
+
+    case 'reprobados':
+      lista = lista.filter((item) => item?.materia_notas?.aprobado === false);
+      break;
+
+    case 'pendientes':
+      lista = lista.filter((item) => !item?.materia_notas);
+      break;
+
+    case 'todos':
+    default:
+      break;
+  }
+
+  const q = normalizarTexto(state.searchTerm);
+
+  if (q) {
+    lista = lista.filter((item) => {
+      const materia = item?.curso?.materia || {};
+      const docenteUsuario = item?.curso?.docente?.usuario || {};
+
+      const nombreMateria = normalizarTexto(materia?.nombre);
+      const siglaMateria = normalizarTexto(materia?.codigo);
+      const nombreDocente = normalizarTexto(
+        `${docenteUsuario?.nombres || ''} ${docenteUsuario?.apellido_paterno || ''} ${docenteUsuario?.apellido_materno || ''}`
+      );
+
+      return (
+        nombreMateria.includes(q) ||
+        siglaMateria.includes(q) ||
+        nombreDocente.includes(q)
+      );
+    });
+  }
+
+  state.inscritosFiltrados = lista;
+};
+
+const cursosSlice = createSlice({
+  name: 'cursosEstudiante',
   initialState,
   reducers: {
-    clearError(state) {
+    clearError: (state) => {
       state.error = null;
     },
-    clearInscritos(state) {
-      state.Inscritos = [];
-      state.Estudiante = null;
-      state.page = 1;
-      state.limit = 10;
-      state.total = 0;
-      state.totalPages = 1;
-      state.error = null;
+
+    setFiltroEstado: (state, action) => {
+      state.filtroEstado = action.payload;
+      aplicarFiltros(state);
+    },
+
+    setSearchTerm: (state, action) => {
+      state.searchTerm = action.payload;
+      aplicarFiltros(state);
+    },
+
+    clearSearchTerm: (state) => {
+      state.searchTerm = '';
+      aplicarFiltros(state);
+    },
+
+    setInscritoSeleccionado: (state, action) => {
+      state.inscritoSeleccionado = action.payload;
+      state.modalDetalleOpen = true;
+    },
+
+    clearInscritoSeleccionado: (state) => {
+      state.inscritoSeleccionado = null;
+      state.modalDetalleOpen = false;
+    },
+
+    openDetalleModal: (state) => {
+      state.modalDetalleOpen = true;
+    },
+
+    closeDetalleModal: (state) => {
+      state.modalDetalleOpen = false;
     },
   },
+
   extraReducers: (builder) => {
     builder
-      .addCase(fetchInscripcionesByEstudianteId.pending, (s) => {
-        s.isLoadingInscritos = true;
-        s.error = null;
+      .addCase(fetchInscripcionesByEstudianteId.pending, (state) => {
+        state.isLoadingInscritos = true;
+        state.error = null;
       })
-      .addCase(fetchInscripcionesByEstudianteId.fulfilled, (s, a) => {
-        s.isLoadingInscritos = false;
-        const p = a.payload;
-
-        // Estructura esperada:
-        // { ok, estudiante, meta: { page, limit, total, totalPages }, inscritos: [...] }
-        s.Inscritos = Array.isArray(p?.inscritos)
-          ? p.inscritos
-          : Array.isArray(p?.Inscritos)
-            ? p.Inscritos
-            : [];
-
-        s.Estudiante = p?.estudiante ?? null;
-
-        const m = p?.meta || {};
-        s.page = Number(m?.page ?? p?.page ?? 1);
-        s.limit = Number(m?.limit ?? p?.limit ?? 10);
-        s.total = Number(m?.total ?? p?.totalItems ?? s.Inscritos.length ?? 0);
-        s.totalPages = Number(m?.totalPages ?? p?.totalPages ?? 1);
+      .addCase(fetchInscripcionesByEstudianteId.fulfilled, (state, action) => {
+        state.isLoadingInscritos = false;
+        state.estudiante = action.payload?.estudiante || null;
+        state.inscritos = action.payload?.inscritos || [];
+        state.meta = action.payload?.meta || null;
+        aplicarFiltros(state);
       })
-      .addCase(fetchInscripcionesByEstudianteId.rejected, (s, a) => {
-        s.isLoadingInscritos = false;
-        s.error = a.payload?.message || a.error?.message || 'Error al cargar inscritos';
+      .addCase(fetchInscripcionesByEstudianteId.rejected, (state, action) => {
+        state.isLoadingInscritos = false;
+        state.error = action.payload || 'Error al cargar los cursos inscritos';
+      })
+
+      .addCase(fetchInscritoByMatriculaId.pending, (state) => {
+        state.isLoadingDetalle = true;
+        state.error = null;
+      })
+      .addCase(fetchInscritoByMatriculaId.fulfilled, (state, action) => {
+        state.isLoadingDetalle = false;
+        state.inscritoSeleccionado = action.payload?.inscrito || null;
+        state.modalDetalleOpen = true;
+      })
+      .addCase(fetchInscritoByMatriculaId.rejected, (state, action) => {
+        state.isLoadingDetalle = false;
+        state.error = action.payload || 'Error al cargar el detalle del curso';
       });
   },
 });
 
-export const { clearError, clearInscritos } = CursoSlice.actions;
+export const {
+  clearError,
+  setFiltroEstado,
+  setSearchTerm,
+  clearSearchTerm,
+  setInscritoSeleccionado,
+  clearInscritoSeleccionado,
+  openDetalleModal,
+  closeDetalleModal,
+} = cursosSlice.actions;
 
-// Selectors (mantengo el slice colgado en state.cursos)
-export const selectInscritos = (s) => s?.cursos?.Inscritos || [];
-export const selectEstudianteInscritos = (s) => s?.cursos?.Estudiante ?? null;
+// Selectors base
+export const selectEstudianteCursos = (state) =>
+  state.cursosEstudiante?.estudiante || null;
 
-export const selectInscritosMeta = (s) => ({
-  page: s?.cursos?.page ?? 1,
-  limit: s?.cursos?.limit ?? 10,
-  total: s?.cursos?.total ?? 0,
-  totalPages: s?.cursos?.totalPages ?? 1,
-});
+export const selectInscritos = (state) =>
+  state.cursosEstudiante?.inscritos || [];
 
-export const selectIsLoadingInscritos = (s) => Boolean(s?.cursos?.isLoadingInscritos);
-export const selectError = (s) => s?.cursos?.error ?? null;
+export const selectInscritosFiltrados = (state) =>
+  state.cursosEstudiante?.inscritosFiltrados || [];
 
-export const CursoReducer = CursoSlice.reducer;
-export default CursoSlice.reducer;
+export const selectMetaInscritos = (state) =>
+  state.cursosEstudiante?.meta || null;
+
+export const selectIsLoadingInscritos = (state) =>
+  state.cursosEstudiante?.isLoadingInscritos || false;
+
+export const selectIsLoadingDetalle = (state) =>
+  state.cursosEstudiante?.isLoadingDetalle || false;
+
+export const selectError = (state) =>
+  state.cursosEstudiante?.error || null;
+
+// Selectors de filtros
+export const selectFiltroEstado = (state) =>
+  state.cursosEstudiante?.filtroEstado || 'todos';
+
+export const selectSearchTermCursos = (state) =>
+  state.cursosEstudiante?.searchTerm || '';
+
+// Selectors de detalle / modal
+export const selectInscritoSeleccionado = (state) =>
+  state.cursosEstudiante?.inscritoSeleccionado || null;
+
+export const selectModalDetalleOpen = (state) =>
+  state.cursosEstudiante?.modalDetalleOpen || false;
+
+// Contadores útiles
+export const selectCantidadInscritos = (state) =>
+  state.cursosEstudiante?.inscritos?.length || 0;
+
+export const selectCantidadActivos = (state) =>
+  (state.cursosEstudiante?.inscritos || []).filter(
+    (item) => item?.curso?.estado === true
+  ).length;
+
+export const selectCantidadConcluidos = (state) =>
+  (state.cursosEstudiante?.inscritos || []).filter(
+    (item) => item?.curso?.estado === false
+  ).length;
+
+export const selectCantidadAprobados = (state) =>
+  (state.cursosEstudiante?.inscritos || []).filter(
+    (item) => item?.materia_notas?.aprobado === true
+  ).length;
+
+export const selectCantidadReprobados = (state) =>
+  (state.cursosEstudiante?.inscritos || []).filter(
+    (item) => item?.materia_notas?.aprobado === false
+  ).length;
+
+export const selectCantidadPendientesNota = (state) =>
+  (state.cursosEstudiante?.inscritos || []).filter(
+    (item) => !item?.materia_notas
+  ).length;
+
+export default cursosSlice.reducer;

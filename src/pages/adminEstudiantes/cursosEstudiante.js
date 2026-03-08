@@ -1,243 +1,390 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { FiClock, FiUsers, FiFileText, FiAward, FiLogOut, FiBook, FiSearch } from 'react-icons/fi';
-import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
+import React, { useEffect, useMemo } from 'react';
+import {
+  FiClock,
+  FiUsers,
+  FiFileText,
+  FiAward,
+  FiBook,
+  FiSearch,
+  FiEye,
+  FiX,
+  FiInfo,
+  FiCalendar,
+  FiUser,
+} from 'react-icons/fi';
 import Swal from 'sweetalert2';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchInscripcionesByEstudianteId } from './slicesCursos/CursosThunk';
 import {
-  selectInscritos,
+  fetchInscripcionesByEstudianteId,
+  fetchInscritoByMatriculaId,
+} from './slicesCursos/CursosThunk';
+
+import {
+  selectInscritosFiltrados,
   selectIsLoadingInscritos,
+  selectIsLoadingDetalle,
   selectError,
+  selectFiltroEstado,
+  selectSearchTermCursos,
+  selectInscritoSeleccionado,
+  selectModalDetalleOpen,
+  selectCantidadInscritos,
+  selectCantidadActivos,
+  selectCantidadConcluidos,
+  selectCantidadAprobados,
+  selectCantidadReprobados,
+  selectCantidadPendientesNota,
+  setFiltroEstado,
+  setSearchTerm,
   clearError,
+  closeDetalleModal,
 } from './slicesCursos/CursosSlice';
 
 /* ─── Helpers ─────────────────────────────────────────────── */
 function fmtDate(iso) {
-  if (!iso) return '';
+  if (!iso) return '—';
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.toISOString().slice(0, 10);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('es-BO', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
 }
 
-function normalizeCourseFromInscrito(i) {
-  const c = i?.curso || {};
-  const materia = c?.materia || {};
+function fmtHour(h) {
+  if (!h) return '—';
+  return String(h).slice(0, 5);
+}
 
-  const horas = c?.horas_academicas ? `${c.horas_academicas}h` : '';
-  const teacher = c?.docente_id_docente ? `Docente #${c.docente_id_docente}` : 'Docente';
+function getTeacherName(docente) {
+  const u = docente?.usuario;
+  if (!u) return 'Docente no asignado';
+  return [u.nombres, u.apellido_paterno, u.apellido_materno].filter(Boolean).join(' ');
+}
+
+function getEstadoCursoData(estado) {
+  if (estado === false) {
+    return {
+      label: 'Concluido',
+      bg: '#F3F4F6',
+      color: '#374151',
+    };
+  }
 
   return {
-    id: i?.id_matricula,
-    cursoId: c?.id_curso,
-    title: materia?.nombre || `Curso #${c?.id_curso ?? ''}`,
-    category: c?.periodo || 'Periodo',
-    rating: null,
-    price: Number(c?.precio ?? 0),
-    lessons: Number(c?.lecciones ?? 0),
-    hours: horas,
-    students: c?.cupos != null ? String(c.cupos) : '',
-    teacher,
-    teacherAvatar: `https://i.pravatar.cc/40?u=docente-${c?.docente_id_docente ?? 'x'}`,
-    image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80',
-    enrolled: fmtDate(i?.creado_en),
-    progress: 0,
-    estado: i?.estado,
-    dias: c?.dias_de_clases,
-    horaInicio: c?.hora_inicio,
-    horaFin: c?.hora_fin,
+    label: 'Activo',
+    bg: '#EEF2FF',
+    color: '#4338CA',
   };
 }
 
-/* ─── Star rating ───────────────────────────────────────────── */
-const Stars = ({ rating }) => {
-  if (rating == null) return null;
-  const stars = [];
-  for (let i = 1; i <= 5; i++) {
-    if (i <= Math.floor(rating)) stars.push(<FaStar key={i} />);
-    else if (i === Math.ceil(rating) && rating % 1 !== 0) stars.push(<FaStarHalfAlt key={i} />);
-    else stars.push(<FaRegStar key={i} />);
-  }
-  return <div className="sc-stars">{stars}</div>;
-};
+function getEstadoNota(inscrito) {
+  const nota = inscrito?.materia_notas;
 
-/* ─── Course Card ───────────────────────────────────────────── */
-const CourseCard = ({ course, onUnenroll, onCertificate }) => {
-  const progressColor = course.progress >= 80 ? '#22C55E' : course.progress >= 40 ? '#F59E0B' : '#6D5DFD';
+  if (!nota) {
+    return {
+      label: 'Pendiente',
+      color: '#6B7280',
+      bg: '#F3F4F6',
+      text: 'Aún el profesor no registró tu nota.',
+    };
+  }
+
+  if (nota?.aprobado === true) {
+    return {
+      label: 'Aprobado',
+      color: '#166534',
+      bg: '#DCFCE7',
+      text: `Nota final: ${nota?.nota_final ?? '—'}`,
+    };
+  }
+
+  if (nota?.aprobado === false) {
+    return {
+      label: 'Reprobado',
+      color: '#991B1B',
+      bg: '#FEE2E2',
+      text: `Nota final: ${nota?.nota_final ?? '—'}`,
+    };
+  }
+
+  return {
+    label: 'Pendiente',
+    color: '#6B7280',
+    bg: '#F3F4F6',
+    text: 'Aún el profesor no registró tu nota.',
+  };
+}
+
+function getCourseImage(index) {
+  const images = [
+    'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=900&q=80',
+    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=900&q=80',
+    'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=900&q=80',
+    'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=900&q=80',
+  ];
+  return images[index % images.length];
+}
+
+/* ─── Modal ─────────────────────────────────────────────── */
+const CourseDetailModal = ({ open, onClose, inscrito, isLoading }) => {
+  if (!open) return null;
+
+  const curso = inscrito?.curso || {};
+  const materia = curso?.materia || {};
+  const docente = curso?.docente || {};
+  const nota = inscrito?.materia_notas || null;
+
+  const estadoNota = getEstadoNota(inscrito);
+  const estadoCurso = getEstadoCursoData(curso?.estado);
 
   return (
-    <div className="sc-card">
-      {/* Image */}
-      <div className="sc-card__img-wrap">
-        <img src={course.image} alt={course.title} className="sc-card__img" />
-        <div className="sc-card__category">{course.category}</div>
-        {course.progress === 100 && (
-          <div className="sc-card__completed-badge">✓ Completado</div>
+    <div className="scm-backdrop" onClick={onClose}>
+      <div className="scm-modal" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="scm-close" onClick={onClose}>
+          <FiX size={18} />
+        </button>
+
+        {isLoading ? (
+          <div className="scm-loading">Cargando detalle del curso...</div>
+        ) : !inscrito ? (
+          <div className="scm-loading">No se pudo cargar la información.</div>
+        ) : (
+          <>
+            <div className="scm-header">
+              <div className="scm-badge">{materia?.codigo || 'SIGLA'}</div>
+
+              <div className="scm-title-wrap">
+                <h2 className="scm-title">{materia?.nombre || 'Curso'}</h2>
+                <div className="scm-subline">
+                  <span>{curso?.periodo || 'Periodo no disponible'}</span>
+                  <span
+                    className="scm-pill"
+                    style={{ background: estadoCurso.bg, color: estadoCurso.color }}
+                  >
+                    {estadoCurso.label}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="scm-top-grid">
+              <div className="scm-box">
+                <h3>Nota final</h3>
+                <div
+                  className="scm-pill"
+                  style={{ background: estadoNota.bg, color: estadoNota.color }}
+                >
+                  {estadoNota.label}
+                </div>
+                <p>{estadoNota.text}</p>
+                {nota?.nota_final != null ? (
+                  <div className="scm-grade">{nota.nota_final}</div>
+                ) : null}
+              </div>
+
+              <div className="scm-box">
+                <h3>Información rápida</h3>
+                <div className="scm-list">
+                  <div><span>Sigla</span><strong>{materia?.codigo || '—'}</strong></div>
+                  <div><span>Periodo</span><strong>{curso?.periodo || '—'}</strong></div>
+                  <div><span>Inscrito</span><strong>{fmtDate(inscrito?.creado_en)}</strong></div>
+                  <div><span>Horario</span><strong>{fmtHour(curso?.hora_inicio)} - {fmtHour(curso?.hora_fin)}</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="scm-grid">
+              <div className="scm-box">
+                <h3>Docente</h3>
+                <div className="scm-list">
+                  <div><span>Nombre</span><strong>{getTeacherName(docente)}</strong></div>
+                  <div><span>Título</span><strong>{docente?.titulo || '—'}</strong></div>
+                  <div><span>Tipo</span><strong>{docente?.tipo_docente || '—'}</strong></div>
+                  <div><span>Correo</span><strong>{docente?.usuario?.mail || '—'}</strong></div>
+                </div>
+              </div>
+
+              <div className="scm-box">
+                <h3>Curso</h3>
+                <div className="scm-list">
+                  <div><span>Lecciones</span><strong>{curso?.lecciones ?? '—'}</strong></div>
+                  <div><span>Horas académicas</span><strong>{curso?.horas_academicas ?? '—'}</strong></div>
+                  <div><span>Cupos</span><strong>{curso?.cupos ?? '—'}</strong></div>
+                  <div><span>Días</span><strong>{curso?.dias_de_clases || '—'}</strong></div>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
+    </div>
+  );
+};
 
-      {/* Body */}
-      <div className="sc-card__body">
-        {/* Rating & price */}
-        <div className="sc-card__meta-top">
-          {course.rating != null ? (
-            <div className="sc-card__rating">
-              <Stars rating={course.rating} />
-              <span>{course.rating}</span>
-            </div>
-          ) : (
-            <div />
-          )}
-          <span className="sc-card__price">Bs {Number(course.price || 0).toFixed(2)}</span>
+/* ─── Card ─────────────────────────────────────────────── */
+const CourseCard = ({ inscrito, onView, onCertificate, index }) => {
+  const curso = inscrito?.curso || {};
+  const materia = curso?.materia || {};
+  const docente = curso?.docente || {};
+  const estadoCurso = getEstadoCursoData(curso?.estado);
+  const estadoNota = getEstadoNota(inscrito);
+  const showCertificate = curso?.estado === false;
+  const image = getCourseImage(index);
+
+  return (
+    <div className="scc-card">
+      <div className="scc-image-wrap">
+        <img src={image} alt={materia?.nombre || 'Curso'} className="scc-image" />
+        <div className="scc-overlay-code">{materia?.codigo || 'SIGLA'}</div>
+        <div
+          className="scc-overlay-state"
+          style={{ background: estadoCurso.bg, color: estadoCurso.color }}
+        >
+          {estadoCurso.label}
+        </div>
+      </div>
+
+      <div className="scc-body">
+        <div className="scc-topline">
+          <span className="scc-period">{curso?.periodo || 'Periodo'}</span>
         </div>
 
-        {/* Title */}
-        <h3 className="sc-card__title">{course.title}</h3>
-        <div className="sc-card__sub">
-          <span><strong>Inscrito:</strong> {course.enrolled || '—'}</span>
-          <span style={{ marginLeft: 10 }}>
-            {course.dias ? <><strong>Días:</strong> {course.dias}</> : null}
-            {(course.horaInicio && course.horaFin) ? <><strong> · </strong>{course.horaInicio} - {course.horaFin}</> : null}
+        <h3 className="scc-title">{materia?.nombre || 'Curso sin nombre'}</h3>
+
+        <div className="scc-teacher">
+          <FiUser size={13} />
+          <span>{getTeacherName(docente)}</span>
+        </div>
+
+        <div className="scc-stats">
+          <span><FiFileText size={13} /> {curso?.lecciones ?? 0} lecciones</span>
+          <span><FiClock size={13} /> {curso?.horas_academicas ?? '—'} h</span>
+          <span><FiUsers size={13} /> {curso?.cupos ?? '—'} cupos</span>
+        </div>
+
+        <div className="scc-subinfo">
+          <div><FiCalendar size={13} /> {curso?.dias_de_clases || 'Sin días'}</div>
+          <div><FiClock size={13} /> {fmtHour(curso?.hora_inicio)} - {fmtHour(curso?.hora_fin)}</div>
+          <div><strong>Inscrito:</strong> {fmtDate(inscrito?.creado_en)}</div>
+        </div>
+
+        <div className="scc-note-box">
+          <span
+            className="scc-note-badge"
+            style={{ background: estadoNota.bg, color: estadoNota.color }}
+          >
+            {estadoNota.label}
           </span>
+          <p>{estadoNota.text}</p>
         </div>
 
-        {/* Stats */}
-        <div className="sc-card__stats">
-          <span><FiFileText size={13} /> Lecciones: {course.lessons || 0}</span>
-          <span><FiClock size={13} /> {course.hours || '—'}</span>
-          <span><FiUsers size={13} /> Cupos: {course.students || '—'}</span>
-        </div>
+        <div className="scc-actions">
+          <button className="scc-btn scc-btn--info" type="button" onClick={() => onView(inscrito)}>
+            <FiEye size={14} />
+            Ver info
+          </button>
 
-        {/* Progress bar */}
-        <div className="sc-card__progress-wrap">
-          <div className="sc-card__progress-header">
-            <span>Progreso</span>
-            <span style={{ color: progressColor, fontWeight: 600 }}>{course.progress}%</span>
-          </div>
-          <div className="sc-card__progress-track">
-            <div
-              className="sc-card__progress-fill"
-              style={{ width: `${course.progress}%`, background: progressColor }}
-            />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="sc-card__footer">
-          <div className="sc-card__teacher">
-            <img src={course.teacherAvatar} alt={course.teacher} />
-            <span>{course.teacher}</span>
-          </div>
-          <div className="sc-card__actions">
-            {course.progress >= 80 && (
-              <button
-                className="sc-btn sc-btn--cert"
-                onClick={() => onCertificate(course)}
-                title="Solicitar certificado"
-              >
-                <FiAward size={13} /> Certificado
-              </button>
-            )}
+          {showCertificate && (
             <button
-              className="sc-btn sc-btn--unenroll"
-              onClick={() => onUnenroll(course)}
-              title="Desinscribirse"
+              className="scc-btn scc-btn--cert"
+              type="button"
+              onClick={() => onCertificate(inscrito)}
             >
-              <FiLogOut size={13} /> Salir
+              <FiAward size={14} />
+              Certificado
             </button>
-          </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-/* ─── Main Component ────────────────────────────────────────── */
+/* ─── Main ─────────────────────────────────────────────── */
 const StudentCourses = () => {
   const dispatch = useDispatch();
 
-  const inscritos = useSelector(selectInscritos);
+  const inscritos = useSelector(selectInscritosFiltrados);
   const isLoading = useSelector(selectIsLoadingInscritos);
+  const isLoadingDetalle = useSelector(selectIsLoadingDetalle);
   const error = useSelector(selectError);
 
-  const [search, setSearch] = useState('');
+  const filtroEstado = useSelector(selectFiltroEstado);
+  const searchTerm = useSelector(selectSearchTermCursos);
 
-  // TODO: reemplaza por el id real del estudiante (token/store/params)
-  const estudianteId = 1;
+  const modalOpen = useSelector(selectModalDetalleOpen);
+  const inscritoSeleccionado = useSelector(selectInscritoSeleccionado);
+
+  const total = useSelector(selectCantidadInscritos);
+  const totalActivos = useSelector(selectCantidadActivos);
+  const totalConcluidos = useSelector(selectCantidadConcluidos);
+  const totalAprobados = useSelector(selectCantidadAprobados);
+  const totalReprobados = useSelector(selectCantidadReprobados);
+  const totalPendientes = useSelector(selectCantidadPendientesNota);
+
+  const userId = useSelector((state) => state.login?.user?.id || null);
+
+  const estudianteId = useSelector(
+    (state) =>
+      state.perfil?.perfil?.id_estudiante ||
+      state.login?.user?.id_estudiante ||
+      null
+  );
 
   useEffect(() => {
+    if (!estudianteId) return;
+
     dispatch(clearError());
-    dispatch(fetchInscripcionesByEstudianteId({ id_estudiante: estudianteId, page: 1, limit: 50 }));
+    dispatch(
+      fetchInscripcionesByEstudianteId({
+        id_estudiante: estudianteId,
+        page: 1,
+        limit: 50,
+      })
+    );
   }, [dispatch, estudianteId]);
 
-  const courses = useMemo(() => {
-    const list = Array.isArray(inscritos) ? inscritos : [];
-    return list.map(normalizeCourseFromInscrito);
-  }, [inscritos]);
+  const resumenFiltros = useMemo(
+    () => [
+      { key: 'todos', label: 'Todos', count: total },
+      { key: 'activos', label: 'Activos', count: totalActivos },
+      { key: 'concluidos', label: 'Concluidos', count: totalConcluidos },
+      { key: 'aprobados', label: 'Aprobados', count: totalAprobados },
+      { key: 'reprobados', label: 'Reprobados', count: totalReprobados },
+      { key: 'pendientes', label: 'Pendientes', count: totalPendientes },
+    ],
+    [total, totalActivos, totalConcluidos, totalAprobados, totalReprobados, totalPendientes]
+  );
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return courses.filter(c =>
-      (c.title || '').toLowerCase().includes(q) ||
-      (c.category || '').toLowerCase().includes(q)
-    );
-  }, [courses, search]);
-
-  const handleUnenroll = async (course) => {
-    const res = await Swal.fire({
-      title: 'Desinscribirse',
-      html: `<div style="color:#5A6676;font-size:14px;line-height:1.5;margin-top:6px">
-              ¿Seguro que deseas salir del curso<br/>
-              <strong style="color:#1A1F36">"${course.title}"</strong>?<br/>
-              <span style="opacity:.8">Perderás tu progreso actual.</span>
-            </div>`,
-      icon: 'warning',
-      width: 400,
-      showCancelButton: true,
-      confirmButtonText: 'Sí, desinscribirme',
-      cancelButtonText: 'Cancelar',
-      reverseButtons: true,
-      confirmButtonColor: '#EF4444',
-      cancelButtonColor: '#98A2B3',
-      didOpen: (popup) => {
-        popup.style.borderRadius = '16px';
-        const icon = popup.querySelector('.swal2-icon');
-        if (icon) { icon.style.transform = 'scale(0.78)'; icon.style.margin = '0 auto 6px'; }
-        const title = popup.querySelector('.swal2-title');
-        if (title) { title.style.fontSize = '18px'; title.style.fontWeight = '800'; }
-      },
-    });
-
-    if (res.isConfirmed) {
-      // TODO: llamar a tu API para desinscribir y luego volver a cargar inscritos
-      Swal.fire({
-        title: '¡Listo!',
-        text: 'Te has desinscrito del curso correctamente.',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false,
-        didOpen: (popup) => { popup.style.borderRadius = '16px'; },
-      });
+  const handleOpenDetail = (inscrito) => {
+    if (inscrito?.id_matricula) {
+      dispatch(fetchInscritoByMatriculaId(inscrito.id_matricula));
     }
   };
 
-  const handleCertificate = async (course) => {
+  const handleCloseModal = () => {
+    dispatch(closeDetalleModal());
+  };
+
+  const handleCertificate = async (inscrito) => {
+    const materia = inscrito?.curso?.materia?.nombre || 'este curso';
+
     await Swal.fire({
-      title: '¡Solicitud enviada!',
-      html: `<div style="color:#5A6676;font-size:14px;line-height:1.5;margin-top:6px">
-              Tu certificado para el curso<br/>
-              <strong style="color:#1A1F36">"${course.title}"</strong><br/>
-              ha sido solicitado. Lo recibirás en tu correo pronto.
-            </div>`,
+      title: 'Certificado',
+      html: `
+        <div style="margin-top:6px; color:#5A6676; font-size:14px; line-height:1.5">
+          El curso <strong style="color:#1A1F36">"${materia}"</strong> está concluido.<br/>
+          Aquí luego podremos generar o descargar el certificado.
+        </div>
+      `,
       icon: 'success',
       confirmButtonText: 'Entendido',
       confirmButtonColor: '#6D5DFD',
       didOpen: (popup) => {
         popup.style.borderRadius = '16px';
-        const icon = popup.querySelector('.swal2-icon');
-        if (icon) { icon.style.transform = 'scale(0.78)'; icon.style.margin = '0 auto 6px'; }
-        const title = popup.querySelector('.swal2-title');
-        if (title) { title.style.fontSize = '18px'; title.style.fontWeight = '800'; }
       },
     });
   };
@@ -245,342 +392,630 @@ const StudentCourses = () => {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&display=swap');
-
-        .sc-root {
+        .sc-page {
           min-height: 100%;
-          padding: 36px 32px;
-          background: #EDEEF5;
-          font-family: 'DM Sans', sans-serif;
+          padding: 28px 24px;
+          background: #edeef5;
           box-sizing: border-box;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
         }
 
-        .sc-error {
-          background: #FEF2F2;
-          border: 1.5px solid #FCA5A5;
-          color: #991B1B;
-          padding: 10px 12px;
-          border-radius: 12px;
-          margin-bottom: 14px;
-          font-size: 13px;
-          font-weight: 600;
-        }
-
-        /* Header */
         .sc-header {
           display: flex;
-          align-items: center;
           justify-content: space-between;
-          flex-wrap: wrap;
+          align-items: center;
           gap: 14px;
-          margin-bottom: 28px;
+          flex-wrap: wrap;
+          margin-bottom: 20px;
         }
-        .sc-header__left {
+
+        .sc-header-left {
           display: flex;
           align-items: center;
           gap: 10px;
         }
-        .sc-header__pill {
-          width: 8px; height: 24px;
-          background: #6D5DFD;
+
+        .sc-header-pill {
+          width: 8px;
+          height: 24px;
           border-radius: 4px;
-        }
-        .sc-header__title {
-          font-family: 'DM Serif Display', serif;
-          font-size: 22px;
-          color: #1A1F36;
-          margin: 0;
-        }
-        .sc-header__count {
-          background: #EEF0FB;
-          color: #6D5DFD;
-          font-size: 12px;
-          font-weight: 700;
-          padding: 3px 10px;
-          border-radius: 99px;
+          background: #6d5dfd;
         }
 
-        /* Search */
-        .sc-search { position: relative; width: 240px; }
+        .sc-title {
+          margin: 0;
+          font-size: 24px;
+          font-weight: 900;
+          color: #1a1f36;
+        }
+
+        .sc-count {
+          background: #eef2ff;
+          color: #4338ca;
+          font-size: 12px;
+          font-weight: 800;
+          padding: 6px 10px;
+          border-radius: 999px;
+        }
+
+        .sc-toolbar {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 14px;
+          flex-wrap: wrap;
+          margin-bottom: 22px;
+        }
+
+        .sc-filters {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .sc-filter {
+          border: 1px solid #e5e7eb;
+          background: #fff;
+          color: #374151;
+          border-radius: 999px;
+          padding: 8px 12px;
+          font-size: 13px;
+          font-weight: 800;
+          cursor: pointer;
+          transition: all .15s ease;
+        }
+
+        .sc-filter:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(0,0,0,.05);
+        }
+
+        .sc-filter.active {
+          background: #6d5dfd;
+          border-color: #6d5dfd;
+          color: #fff;
+        }
+
+        .sc-search {
+          position: relative;
+          width: 300px;
+          max-width: 100%;
+        }
+
         .sc-search input {
           width: 100%;
           box-sizing: border-box;
-          border: 1.5px solid #DDE0EF;
-          border-radius: 10px;
-          padding: 8px 12px 8px 34px;
-          font-size: 13px;
-          font-family: 'DM Sans', sans-serif;
+          border: 1.5px solid #dde0ef;
+          border-radius: 12px;
+          padding: 10px 12px 10px 38px;
+          font-size: 14px;
           background: #fff;
-          color: #1A1F36;
+          color: #1a1f36;
           outline: none;
-          transition: border-color .15s, box-shadow .15s;
         }
+
         .sc-search input:focus {
-          border-color: #6D5DFD;
+          border-color: #6d5dfd;
           box-shadow: 0 0 0 3px rgba(109, 93, 253, 0.12);
         }
-        .sc-search__icon {
+
+        .sc-search-icon {
           position: absolute;
-          left: 10px; top: 50%;
+          left: 12px;
+          top: 50%;
           transform: translateY(-50%);
-          color: #9FA8C7;
+          color: #98a2b3;
         }
 
-        /* Empty state */
-        .sc-empty { text-align: center; padding: 60px 20px; color: #9FA8C7; }
-        .sc-empty svg { margin-bottom: 12px; opacity: .4; }
-        .sc-empty p { margin: 0; font-size: 15px; }
+        .sc-error {
+          background: #fef2f2;
+          color: #991b1b;
+          border: 1px solid #fecaca;
+          border-radius: 12px;
+          padding: 12px 14px;
+          margin-bottom: 18px;
+          font-size: 14px;
+          font-weight: 700;
+        }
 
-        /* Grid */
+        .sc-empty {
+          background: #fff;
+          border-radius: 18px;
+          padding: 46px 24px;
+          text-align: center;
+          color: #6b7280;
+          border: 1px solid #e5e7eb;
+        }
+
+        .sc-empty svg {
+          opacity: .55;
+          margin-bottom: 12px;
+        }
+
+        .sc-empty p {
+          margin: 0;
+          font-size: 15px;
+          font-weight: 600;
+        }
+
         .sc-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 24px;
+          grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
+          gap: 20px;
         }
 
-        /* Card */
-        .sc-card {
+        .scc-card {
           background: #fff;
-          border-radius: 16px;
-          border: 1.5px solid #E8EAF5;
+          border-radius: 18px;
           overflow: hidden;
-          transition: transform .2s, box-shadow .2s;
-          position: relative;
+          border: 1px solid #e8eaf5;
+          box-shadow: 0 8px 24px rgba(16,24,40,.05);
+          transition: transform .18s ease, box-shadow .18s ease;
+          max-width: 360px;
         }
-        .sc-card:hover {
+
+        .scc-card:hover {
           transform: translateY(-4px);
-          box-shadow: 0 12px 36px rgba(109, 93, 253, 0.12);
+          box-shadow: 0 14px 34px rgba(16,24,40,.09);
         }
 
-        /* Watermark */
-        .sc-card::before {
-          content: '';
-          position: absolute;
-          right: -20px; bottom: 60px;
-          width: 120px; height: 120px;
-          background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 10 L90 30 L90 70 L50 90 L10 70 L10 30 Z' fill='none' stroke='%236D5DFD' stroke-width='3' opacity='0.08'/%3E%3Cpath d='M50 25 L75 37.5 L75 62.5 L50 75 L25 62.5 L25 37.5 Z' fill='none' stroke='%236D5DFD' stroke-width='2' opacity='0.06'/%3E%3C/svg%3E") no-repeat center/contain;
-          pointer-events: none;
-          z-index: 0;
+        .scc-image-wrap {
+          position: relative;
+          height: 165px;
+          overflow: hidden;
         }
 
-        .sc-card__img-wrap { position: relative; height: 190px; overflow: hidden; }
-        .sc-card__img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
-        .sc-card:hover .sc-card__img { transform: scale(1.04); }
+        .scc-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          transition: transform .35s ease;
+        }
 
-        .sc-card__category {
+        .scc-card:hover .scc-image {
+          transform: scale(1.04);
+        }
+
+        .scc-overlay-code {
           position: absolute;
-          bottom: 12px; left: 12px;
-          background: rgba(26, 31, 54, 0.82);
-          backdrop-filter: blur(6px);
+          left: 12px;
+          bottom: 12px;
+          background: rgba(17, 24, 39, 0.78);
           color: #fff;
           font-size: 12px;
-          font-weight: 600;
-          padding: 5px 12px;
-          border-radius: 6px;
-          letter-spacing: .3px;
+          font-weight: 800;
+          padding: 6px 10px;
+          border-radius: 999px;
+          backdrop-filter: blur(6px);
         }
-        .sc-card__completed-badge {
+
+        .scc-overlay-state {
           position: absolute;
-          top: 10px; right: 10px;
-          background: #22C55E;
-          color: #fff;
-          font-size: 11px;
-          font-weight: 700;
-          padding: 4px 10px;
-          border-radius: 99px;
-          letter-spacing: .3px;
+          top: 12px;
+          right: 12px;
+          font-size: 12px;
+          font-weight: 800;
+          padding: 6px 10px;
+          border-radius: 999px;
+          backdrop-filter: blur(4px);
         }
 
-        .sc-card__body { padding: 16px 18px 18px; position: relative; z-index: 1; }
+        .scc-body {
+          padding: 14px 16px 16px;
+        }
 
-        .sc-card__meta-top {
+        .scc-topline {
           display: flex;
-          align-items: center;
           justify-content: space-between;
+          align-items: center;
+          gap: 10px;
           margin-bottom: 8px;
         }
-        .sc-card__rating {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          font-size: 13px;
-          font-weight: 600;
-          color: #1A1F36;
-        }
-        .sc-stars { display: flex; gap: 2px; color: #F59E0B; font-size: 13px; }
-        .sc-card__price { color: #6D5DFD; font-weight: 700; font-size: 14px; }
 
-        .sc-card__title {
-          font-size: 15px;
+        .scc-period {
+          color: #6b7280;
+          font-size: 12px;
           font-weight: 700;
-          color: #1A1F36;
-          margin: 0 0 12px;
-          line-height: 1.4;
+        }
+
+        .scc-title {
+          margin: 0 0 10px;
+          font-size: 17px;
+          font-weight: 800;
+          color: #1a1f36;
+          line-height: 1.32;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+          min-height: 44px;
         }
 
-        .sc-card__sub {
-          margin: -6px 0 12px;
+        .scc-teacher {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          color: #667085;
+          font-size: 13px;
+          font-weight: 600;
+          margin-bottom: 12px;
+        }
+
+        .scc-stats {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          background: #f7f8fc;
+          border-radius: 10px;
+          padding: 10px 12px;
+          margin-bottom: 12px;
+        }
+
+        .scc-stats span,
+        .scc-subinfo div {
+          display: flex;
+          align-items: center;
+          gap: 5px;
           font-size: 12px;
-          color: #5A6676;
-          font-weight: 500;
+          color: #4b5563;
+          font-weight: 600;
+        }
+
+        .scc-subinfo {
+          display: flex;
+          flex-direction: column;
+          gap: 7px;
+          margin-bottom: 12px;
+        }
+
+        .scc-note-box {
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          padding: 12px;
+          background: #fcfcfd;
+          margin-bottom: 12px;
+        }
+
+        .scc-note-badge {
+          display: inline-flex;
+          padding: 5px 10px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 800;
+          margin-bottom: 8px;
+        }
+
+        .scc-note-box p {
+          margin: 0;
+          font-size: 13px;
+          color: #4b5563;
+          font-weight: 600;
           line-height: 1.4;
         }
 
-        .sc-card__stats {
+        .scc-actions {
           display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          background: #F7F8FC;
-          border-radius: 9px;
-          padding: 9px 12px;
-          margin-bottom: 14px;
-        }
-        .sc-card__stats span {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          font-size: 12px;
-          color: #5A6676;
-          font-weight: 500;
-        }
-
-        /* Progress */
-        .sc-card__progress-wrap { margin-bottom: 14px; }
-        .sc-card__progress-header {
-          display: flex;
-          justify-content: space-between;
-          font-size: 11px;
-          color: #9FA8C7;
-          font-weight: 600;
-          margin-bottom: 5px;
-          text-transform: uppercase;
-          letter-spacing: .4px;
-        }
-        .sc-card__progress-track {
-          height: 6px;
-          background: #EEF0FB;
-          border-radius: 99px;
-          overflow: hidden;
-        }
-        .sc-card__progress-fill { height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.4,0,.2,1); }
-
-        /* Footer */
-        .sc-card__footer {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
           gap: 8px;
           flex-wrap: wrap;
         }
-        .sc-card__teacher {
-          display: flex;
-          align-items: center;
-          gap: 8px;
+
+        .scc-btn {
+          border: none;
+          border-radius: 10px;
+          padding: 9px 13px;
           font-size: 13px;
-          font-weight: 600;
-          color: #1A1F36;
-        }
-        .sc-card__teacher img {
-          width: 32px; height: 32px;
-          border-radius: 50%;
-          border: 2px solid #E8EAF5;
-          object-fit: cover;
-        }
-
-        /* Action buttons */
-        .sc-card__actions { display: flex; gap: 6px; }
-        .sc-btn {
+          font-weight: 800;
+          cursor: pointer;
           display: inline-flex;
           align-items: center;
-          gap: 5px;
-          padding: 7px 13px;
-          border-radius: 8px;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          border: none;
-          transition: all .18s;
-          white-space: nowrap;
-        }
-        .sc-btn--cert {
-          background: #6D5DFD;
-          color: #fff;
-          box-shadow: 0 3px 10px rgba(109, 93, 253, 0.3);
-        }
-        .sc-btn--cert:hover {
-          background: #5A4AE8;
-          transform: translateY(-1px);
-          box-shadow: 0 5px 14px rgba(109, 93, 253, 0.38);
-        }
-        .sc-btn--unenroll {
-          background: transparent;
-          color: #EF4444;
-          border: 1.5px solid #FCA5A5;
-        }
-        .sc-btn--unenroll:hover {
-          background: #FEF2F2;
-          border-color: #EF4444;
+          gap: 7px;
+          transition: all .15s ease;
         }
 
-        @media (max-width: 600px) {
-          .sc-root { padding: 20px 14px; }
-          .sc-grid { grid-template-columns: 1fr; }
-          .sc-search { width: 100%; }
-          .sc-header { flex-direction: column; align-items: flex-start; }
+        .scc-btn--info {
+          background: #eef2ff;
+          color: #4338ca;
+        }
+
+        .scc-btn--info:hover {
+          background: #e0e7ff;
+        }
+
+        .scc-btn--cert {
+          background: #6d5dfd;
+          color: #fff;
+          box-shadow: 0 6px 16px rgba(109,93,253,.24);
+        }
+
+        .scc-btn--cert:hover {
+          background: #5a4ae8;
+          transform: translateY(-1px);
+        }
+
+        .scm-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(15, 23, 42, 0.34);
+          backdrop-filter: blur(6px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 18px;
+          z-index: 9999;
+        }
+
+        .scm-modal {
+          width: min(100%, 620px);
+          max-height: 80vh;
+          overflow-y: auto;
+          background: #fff;
+          border-radius: 22px;
+          padding: 18px;
+          box-shadow: 0 24px 64px rgba(15,23,42,.20);
+          position: relative;
+        }
+
+        .scm-close {
+          position: absolute;
+          top: 14px;
+          right: 14px;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          border: none;
+          background: #f3f4f6;
+          color: #374151;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .scm-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 16px;
+          padding-right: 40px;
+        }
+
+        .scm-badge {
+          background: #eef2ff;
+          color: #4338ca;
+          font-size: 13px;
+          font-weight: 900;
+          padding: 9px 11px;
+          border-radius: 12px;
+          white-space: nowrap;
+        }
+
+        .scm-title {
+          margin: 0;
+          font-size: 22px;
+          font-weight: 900;
+          color: #111827;
+          line-height: 1.2;
+        }
+
+        .scm-subline {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          align-items: center;
+          margin-top: 6px;
+          color: #6b7280;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .scm-pill {
+          display: inline-flex;
+          padding: 5px 10px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .scm-top-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+
+        .scm-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        .scm-box {
+          background: #fafafb;
+          border: 1px solid #eceef3;
+          border-radius: 15px;
+          padding: 13px;
+        }
+
+        .scm-box h3 {
+          margin: 0 0 10px;
+          font-size: 15px;
+          font-weight: 800;
+          color: #1f2937;
+        }
+
+        .scm-box p {
+          margin: 0;
+          color: #4b5563;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .scm-list {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px 12px;
+        }
+
+        .scm-list div {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .scm-list span {
+          font-size: 11px;
+          font-weight: 900;
+          color: #98a2b3;
+          text-transform: uppercase;
+          letter-spacing: .05em;
+        }
+
+        .scm-list strong {
+          font-size: 14px;
+          color: #111827;
+          line-height: 1.4;
+        }
+
+        .scm-grade {
+          width: fit-content;
+          min-width: 58px;
+          text-align: center;
+          padding: 9px 12px;
+          background: #eef2ff;
+          color: #4338ca;
+          border-radius: 13px;
+          font-size: 22px;
+          font-weight: 900;
+          margin-top: 10px;
+        }
+
+        .scm-loading {
+          padding: 34px 12px;
+          text-align: center;
+          color: #6b7280;
+          font-size: 15px;
+          font-weight: 600;
+        }
+
+        @media (max-width: 900px) {
+          .scm-top-grid,
+          .scm-grid,
+          .scm-list {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 700px) {
+          .sc-page {
+            padding: 18px 12px;
+          }
+
+          .sc-header {
+            align-items: flex-start;
+          }
+
+          .sc-toolbar {
+            align-items: stretch;
+          }
+
+          .sc-search {
+            width: 100%;
+          }
+
+          .sc-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .scc-card {
+            max-width: 100%;
+          }
+
+          .scm-modal {
+            width: min(100%, 96vw);
+            padding: 16px;
+            border-radius: 18px;
+          }
+
+          .scm-header {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+
+          .scm-title {
+            font-size: 20px;
+          }
         }
       `}</style>
 
-      <div className="sc-root">
+      <div className="sc-page">
         {error ? <div className="sc-error">{error}</div> : null}
 
-        {/* Header */}
         <div className="sc-header">
-          <div className="sc-header__left">
-            <div className="sc-header__pill" />
-            <h1 className="sc-header__title">Mis Cursos</h1>
-            <span className="sc-header__count">
-              {isLoading ? 'Cargando…' : `${courses.length} inscritos`}
+          <div className="sc-header-left">
+            <div className="sc-header-pill" />
+            <h1 className="sc-title">Mis Cursos</h1>
+            <span className="sc-count">
+              {isLoading ? 'Cargando…' : `${total} inscritos`}
             </span>
+          </div>
+        </div>
+
+        <div className="sc-toolbar">
+          <div className="sc-filters">
+            {resumenFiltros.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                className={`sc-filter ${filtroEstado === item.key ? 'active' : ''}`}
+                onClick={() => dispatch(setFiltroEstado(item.key))}
+              >
+                {item.label} ({item.count})
+              </button>
+            ))}
           </div>
 
           <div className="sc-search">
-            <FiSearch size={14} className="sc-search__icon" />
+            <FiSearch size={15} className="sc-search-icon" />
             <input
               type="text"
-              placeholder="Buscar curso..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por nombre, sigla o docente..."
+              value={searchTerm}
+              onChange={(e) => dispatch(setSearchTerm(e.target.value))}
             />
           </div>
         </div>
 
-        {/* Grid */}
-        {filtered.length === 0 ? (
+        {isLoading ? (
           <div className="sc-empty">
-            <FiBook size={48} />
-            <p>
-              {isLoading
-                ? 'Cargando tus cursos…'
-                : (search ? 'No se encontraron cursos con ese criterio.' : 'No estás inscrito en ningún curso.')}
-            </p>
+            <FiBook size={46} />
+            <p>Cargando tus cursos...</p>
+          </div>
+        ) : inscritos.length === 0 ? (
+          <div className="sc-empty">
+            <FiInfo size={46} />
+            <p>No se encontraron cursos con los filtros actuales.</p>
           </div>
         ) : (
           <div className="sc-grid">
-            {filtered.map(course => (
+            {inscritos.map((inscrito, index) => (
               <CourseCard
-                key={course.id}
-                course={course}
-                onUnenroll={handleUnenroll}
+                key={inscrito.id_matricula}
+                inscrito={inscrito}
+                onView={handleOpenDetail}
                 onCertificate={handleCertificate}
+                index={index}
               />
             ))}
           </div>
         )}
+
+        <CourseDetailModal
+          open={modalOpen}
+          onClose={handleCloseModal}
+          inscrito={inscritoSeleccionado}
+          isLoading={isLoadingDetalle}
+        />
       </div>
     </>
   );
