@@ -1,20 +1,35 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { FiUser, FiBookOpen, FiChevronLeft, FiChevronRight, FiMenu, FiShoppingCart } from "react-icons/fi"
+import {
+  FiUser,
+  FiBookOpen,
+  FiChevronLeft,
+  FiChevronRight,
+  FiMenu,
+  FiShoppingCart,
+} from "react-icons/fi"
 import { MdOutlineSchool } from "react-icons/md"
+import { PiNotebookBold } from "react-icons/pi"
 import Swal from "sweetalert2"
 
-import { useSelector } from "react-redux"
-import { selectUserId, selectToken, selectIsAuthenticated } from "../signin/slices/loginSelectors"
+import { useSelector, useDispatch } from "react-redux"
+import {
+  selectUserId,
+  selectToken,
+  selectIsAuthenticated,
+} from "../signin/slices/loginSelectors"
 
+import { perfilApi } from "../../lib/api"
 import StudentProfile from "./perfilEstudiante"
 import StudentCourses from "./cursosEstudiante"
-import CartMain from "./carritoCompras" // nuevo
+import CartMain from "./carritoCompras"
+import OfertaAcademica from "./ofertaAcademica"
 
 const NAV_ITEMS = [
   { id: "profile", label: "Mi Perfil", icon: <FiUser /> },
   { id: "courses", label: "Mis Cursos", icon: <FiBookOpen /> },
-  { id: "cart", label: "Carrito de compras", icon: <FiShoppingCart /> }, // nuevo
+  { id: "offer", label: "Oferta Académica", icon: <PiNotebookBold /> },
+  { id: "cart", label: "Carrito de compras", icon: <FiShoppingCart /> },
 ]
 
 const renderContent = (activeTab) => {
@@ -23,6 +38,8 @@ const renderContent = (activeTab) => {
       return <StudentProfile />
     case "courses":
       return <StudentCourses />
+    case "offer":
+      return <OfertaAcademica />
     case "cart":
       return <CartMain />
     default:
@@ -36,13 +53,12 @@ const StudentWrapper = () => {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const navigate = useNavigate()
+  const dispatch = useDispatch()
 
-  // auth redux
   const userId = useSelector(selectUserId)
   const token = useSelector(selectToken)
   const isAuthed = useSelector(selectIsAuthenticated)
 
-  // datos para el footer del sidebar
   const [me, setMe] = useState({ nombre: "Estudiante", mail: "—" })
 
   useEffect(() => {
@@ -52,18 +68,14 @@ const StudentWrapper = () => {
       if (!isAuthed || !userId || !token) return
 
       try {
-        const res = await fetch(`http://localhost:3000/api/usuarios/perfil/${userId}`, {
-          headers: {
-            "x-token": token,
-            Authorization: `Bearer ${token}`,
-          },
-        })
+        const json = await perfilApi.fetchPerfilByUserId(userId)
 
-        const json = await res.json()
-        if (!res.ok || !json?.ok) return
+        if (!json?.ok) return
 
         const u = json.usuario || {}
-        const fullName = [u.nombres, u.apellido_paterno, u.apellido_materno].filter(Boolean).join(" ")
+        const fullName = [u.nombres, u.apellido_paterno, u.apellido_materno]
+          .filter(Boolean)
+          .join(" ")
 
         if (mounted) {
           setMe({
@@ -71,16 +83,34 @@ const StudentWrapper = () => {
             mail: u.mail || "—",
           })
         }
-      } catch {
-        // si falla, te deja el placeholder
+      } catch (error) {
+        console.error("Error cargando perfil:", error)
       }
     }
 
     loadMe()
+
     return () => {
       mounted = false
     }
   }, [isAuthed, userId, token])
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 991) {
+        setMobileOpen(false)
+      }
+
+      if (window.innerWidth <= 991) {
+        setCollapsed(false)
+      }
+    }
+
+    handleResize()
+    window.addEventListener("resize", handleResize)
+
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
 
   const handleUserClick = async () => {
     const anchor = document.querySelector(".it-admin-sidebar__footer-user")
@@ -158,7 +188,6 @@ const StudentWrapper = () => {
 
   return (
     <>
-      {/* Mobile top bar */}
       <div className="it-admin-mobile-bar">
         <button
           className="it-admin-mobile-bar__toggle"
@@ -172,7 +201,6 @@ const StudentWrapper = () => {
         </h2>
       </div>
 
-      {/* Overlay for mobile drawer */}
       <div
         className={`it-admin-sidebar-overlay${mobileOpen ? " active" : ""}`}
         onClick={() => setMobileOpen(false)}
@@ -188,7 +216,6 @@ const StudentWrapper = () => {
             .filter(Boolean)
             .join(" ")}
         >
-          {/* Brand */}
           <div className="it-admin-sidebar__brand">
             <div className="it-admin-sidebar__brand-icon">
               <MdOutlineSchool />
@@ -198,7 +225,6 @@ const StudentWrapper = () => {
             </span>
           </div>
 
-          {/* Collapse toggle */}
           <button
             className="it-admin-sidebar__toggle"
             onClick={() => setCollapsed((c) => !c)}
@@ -207,12 +233,13 @@ const StudentWrapper = () => {
             {collapsed ? <FiChevronRight /> : <FiChevronLeft />}
           </button>
 
-          {/* Nav */}
           <nav className="it-admin-sidebar__nav" aria-label="Navegación estudiante">
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
-                className={`it-admin-sidebar__nav-item${activeTab === item.id ? " active" : ""}`}
+                className={`it-admin-sidebar__nav-item${
+                  activeTab === item.id ? " active" : ""
+                }`}
                 onClick={() => handleNavClick(item.id)}
                 title={collapsed ? item.label : undefined}
                 aria-current={activeTab === item.id ? "page" : undefined}
@@ -223,7 +250,6 @@ const StudentWrapper = () => {
             ))}
           </nav>
 
-          {/* Footer / logout */}
           <div className="it-admin-sidebar__footer">
             <div
               className="it-admin-sidebar__footer-user"

@@ -183,8 +183,23 @@ export const prerequisitosApi = {
 };
 
 export const inscritosEstudianteApi = {
-  fetchInscripcionesByEstudianteId: (estudianteId) =>
-    api.get(`/inscritos/estudiante/${estudianteId}`).then((res) => res.data).catch(handleError),
+  fetchInscripcionesByEstudianteId: (estudianteId, params = {}) =>
+    api
+      .get(`/inscritos/estudiante/${estudianteId}`, { params })
+      .then((res) => res.data)
+      .catch(handleError),
+
+  fetchInscritoByMatriculaId: (matriculaId) =>
+    api
+      .get(`/inscritos/matricula/${matriculaId}`)
+      .then((res) => res.data)
+      .catch(handleError),
+
+  fetchInscritosByCursoId: (cursoId, params = {}) =>
+    api
+      .get(`/inscritos/curso/${cursoId}`, { params })
+      .then((res) => res.data)
+      .catch(handleError),
 };
 
 // para las notas de las materias, para docente, ver notas y registrar notas
@@ -194,3 +209,28 @@ export const notasDocenteApi = {
   registrarNota: (cursoId, data) =>
     api.post(`/materia-notas/docente/curso/${cursoId}/registrar`, data).then((res) => res.data).catch(handleError),
 };
+export const carritoApi = {
+  fetchCarritoByUsuarioId: (userId) =>
+    api.get(`/carrito/usuario/${userId}`).then((res) => res.data).catch(handleError),
+
+  removeItemCarrito: (idCompraCurso) =>
+    api.delete(`/carrito/item/${idCompraCurso}`).then((res) => res.data).catch(handleError),
+
+  cancelarCarrito: (idCompraTotal) =>
+    api.patch(`/carrito/cancelar/${idCompraTotal}`).then((res) => res.data).catch(handleError),
+};
+export const ofertaAcademicaApi = {
+  fetchOfertaAcademica: (params = {}) =>
+    api.get('/curso/oferta', { params }).then((res) => res.data).catch(handleError),
+
+  addCursoToCarrito: (data) =>
+    api.post('/carrito/add', data).then((res) => res.data).catch(handleError),
+};
+export const perfilApi = {
+  fetchPerfilByUserId: (userId) =>
+    api.get(`/usuarios/perfil/${userId}`).then((res) => res.data).catch(handleError),
+}
+export default api;
+
+
+

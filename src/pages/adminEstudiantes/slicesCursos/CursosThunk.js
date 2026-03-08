@@ -1,30 +1,34 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { inscritosEstudianteApi } from '../../../lib/api';
 
-const extractArray = (resp, ...keys) => {
-  if (Array.isArray(resp)) return resp;
-  const data = resp?.data ?? resp;
-  if (Array.isArray(data)) return data;
-  for (const key of keys) {
-    if (Array.isArray(data?.[key])) return data[key];
-  }
-  if (data && typeof data === 'object') {
-    for (const val of Object.values(data)) {
-      if (Array.isArray(val)) return val;
+export const fetchInscripcionesByEstudianteId = createAsyncThunk(
+  'cursosEstudiante/fetchInscripcionesByEstudianteId',
+  async ({ id_estudiante, page = 1, limit = 50 }, { rejectWithValue }) => {
+    try {
+      const data = await inscritosEstudianteApi.fetchInscripcionesByEstudianteId(
+        id_estudiante,
+        { page, limit }
+      );
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error?.message || 'No se pudieron cargar los cursos inscritos'
+      );
     }
   }
-  return [];
-};
+);
 
-
-export const fetchInscripcionesByEstudianteId = createAsyncThunk(
-  'Curso/fetchInscripcionesByEstudianteId',
-  async (estudianteId, { rejectWithValue }) => {
+export const fetchInscritoByMatriculaId = createAsyncThunk(
+  'cursosEstudiante/fetchInscritoByMatriculaId',
+  async (id_matricula, { rejectWithValue }) => {
     try {
-      const response = await inscritosEstudianteApi.fetchInscripcionesByEstudianteId(estudianteId);
-      return response;
+      const data = await inscritosEstudianteApi.fetchInscritoByMatriculaId(id_matricula);
+      return data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(
+        error?.message || 'No se pudo cargar el detalle del curso'
+      );
     }
   }
 );
