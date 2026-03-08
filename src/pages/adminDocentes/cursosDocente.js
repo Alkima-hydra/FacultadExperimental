@@ -4,7 +4,7 @@ import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 // para consumo
-import { fetchCursosByDocenteId } from './slicesCursos/CursosThunk';
+import { fetchCursosByDocenteId, eliminarCurso, fetchCursosWithInscritosByDocenteId } from './slicesCursos/CursosThunk';
 import { selectCursosState,loadingCursos, errorCursos } from './slicesCursos/CursosSlices';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -12,6 +12,7 @@ import {
   selectToken,
   selectIsAuthenticated,
 } from "../signin/slices/loginSelectors";
+import { tr } from 'date-fns/locale/tr';
 
 /* ─── Mock data ─────────────────────────────────────────────── */
 const MOCK_COURSES = [
@@ -105,6 +106,8 @@ const getAuthFromLocalStorage = () => {
     return null;
 };
 
+//datos del curso que se ven en la card, mapeo de datos del backend a lo que se muestra en la card
+
 const mapCursoToCard = (curso) => {
     const estudiantes =
         curso?.students ??
@@ -123,24 +126,22 @@ const mapCursoToCard = (curso) => {
         rating: Number(curso?.rating ?? 5),
         price: precio,
         lessons: Number(curso?.lessons ?? curso?.lecciones ?? 0),
-        hora_inicio: curso?.hora_inicio || curso?.hours || curso?.duracion || 'Sin horario',
+        // para las horas, mapearlas solo para que se muestren horas y minutos, no segundos, y si no hay horas mostrar "Sin horario"
+        hora_inicio: curso?.hora_inicio || curso?.hora_inicio_clase || curso?.hora_inicio_curso || 'Sin horario',
         hora_fin: curso?.hora_fin || 'Sin horario',
         students: estudiantes,
         image: curso?.image || 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&q=80',
         diasDeclase: curso?.diasDeclase || curso?.dias_de_clases || curso?.fecha_inicio || curso?.fechaInicio,
-        status: curso?.status || curso?.estado || 'active',
+        // el estado en base de datos es un booleano, necesita mapearse a active/inactive o similar para mostrarlo en la card
+        status: curso?.estado,
         completedStudents: Number(curso?.completedStudents ?? curso?.completados ?? 0),
         income: Number(curso?.income ?? (precio * estudiantes)),
         periodo: curso?.periodo || 'Sin periodo',
+        cupos: curso?.cupos ?? curso?.cupo ?? 'N/A',
         raw: curso,
     };
 };
 
-
-const fmt = (dateStr) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
-};
 
 {loadingCursos && (
     <div style={{ marginBottom: '16px', padding: '12px 14px', background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: '10px', color: '#4338CA', fontSize: '13px', fontWeight: 600 }}>
@@ -167,8 +168,8 @@ const StatCard = ({ icon: Icon, label, value, accent }) => (
 
 /* ─── Course Card ───────────────────────────────────────────── */
 const CourseCard = ({ course, onFinish }) => {
-    const pct = Math.round((course.completedStudents / course.students) * 100);
-    const isFinished = course.status === 'finished';
+    const pct = Math.round((course.students/ course.cupos) * 100);
+    const isFinished = course.status === false || course.status === 'finished';
 
     return (
         <div className={`dc-card${isFinished ? ' dc-card--done' : ''}`}>
@@ -181,6 +182,7 @@ const CourseCard = ({ course, onFinish }) => {
                 </p>
 
                 <div className="dc-card__category">{course.category}</div>
+                <div className="dc-card__status">{course.status ? 'Activo' : 'Finalizado'}</div>
                 <div className={`dc-card__status-badge dc-card__status-badge--${course.status}`}>
                     {isFinished ? '✓ Finalizado' : '● En curso'}
                 </div>
@@ -220,9 +222,9 @@ const CourseCard = ({ course, onFinish }) => {
                 {/* Completion progress */}
                 <div className="dc-card__progress-wrap">
                     <div className="dc-card__progress-header">
-                        <span>Notas promedio del curso</span>
+                        <span>Cupos</span>
                         <span style={{ fontWeight: 700, color: isFinished ? '#22C55E' : '#6D5DFD' }}>
-                            {course.completedStudents}/{course.students}
+                            {course.students}/{course.cupos}
                         </span>
                     </div>
                     <div className="dc-card__progress-track">
@@ -270,7 +272,6 @@ const DocenteCourses = () => {
 
     const localAuth = useMemo(() => getAuthFromLocalStorage(), []);
     const docenteId = userIdFromStore || localAuth?.id;
-    console.log('Docente ID:', docenteId);
     const token = tokenFromStore || localAuth?.token;
 
     useEffect(() => {
@@ -285,7 +286,7 @@ const DocenteCourses = () => {
                 setLoadingCursos(true);
                 setErrorCursos('');
 
-                const action = await dispatch(fetchCursosByDocenteId(docenteId));
+                const action = await dispatch(fetchCursosWithInscritosByDocenteId(docenteId));
                 const payload = action?.payload;
 
                 const cursosApi = Array.isArray(payload)
@@ -299,6 +300,7 @@ const DocenteCourses = () => {
                                 : Array.isArray(cursosState)
                                     ? cursosState
                                     : [];
+
 
                 if (cursosApi.length > 0) {
                     setCourses(cursosApi.map(mapCursoToCard));
@@ -318,16 +320,19 @@ const DocenteCourses = () => {
     }, [dispatch, docenteId]);
 
     const totalStudents = courses.reduce((a, c) => a + c.students, 0);
-    const totalIncome   = courses.reduce((a, c) => a + c.income, 0);
-    const avgRating     = courses.length
-        ? (courses.reduce((a, c) => a + c.rating, 0) / courses.length).toFixed(1)
-        : '0.0';
-    const activeCourses = courses.filter(c => c.status === 'active').length;
+    const activeCourses = courses.filter(c => c.status === true).length;
+    const finishedCourses = courses.filter(c => c.status === false).length;
 
     const filtered = courses.filter(c => {
-        const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) ||
-                            c.category.toLowerCase().includes(search.toLowerCase());
-        const matchFilter = filter === 'all' || c.status === filter;
+        const matchSearch =
+            c.title.toLowerCase().includes(search.toLowerCase()) ||
+            c.category.toLowerCase().includes(search.toLowerCase());
+
+        const matchFilter =
+            filter === 'all' ||
+            (filter === 'active' && c.status === true) ||
+            (filter === 'finished' && c.status === false);
+
         return matchSearch && matchFilter;
     });
 
@@ -337,11 +342,11 @@ const DocenteCourses = () => {
         const res = await Swal.fire({
             title: 'Finalizar curso',
             html: `<div style="color:#5A6676;font-size:14px;line-height:1.5;margin-top:6px">
-                     ¿Confirmas que el curso<br/>
-                     <strong style="color:#1A1F36">"${course.title}"</strong><br/>
-                     ha sido <strong style="color:#22C55E">completado</strong>?<br/>
-                     <span style="opacity:.8">Esta acción no se puede deshacer.</span>
-                   </div>`,
+                    ¿Confirmas que el curso<br/>
+                    <strong style="color:#1A1F36">"${course.title}"</strong><br/>
+                    ha sido <strong style="color:#22C55E">completado</strong>?<br/>
+                    <span style="opacity:.8">Esta acción no se puede deshacer, tampoco podrás cambiar las notas registradas hasta ahora.</span>
+                </div>`,
             icon: 'question',
             width: 400,
             showCancelButton: true,
@@ -359,10 +364,26 @@ const DocenteCourses = () => {
             },
         });
 
-        if (res.isConfirmed) {
-            setCourses(cs => cs.map(c =>
-                c.id === course.id ? { ...c, status: 'finished', completedStudents: c.students } : c
-            ));
+        if (!res.isConfirmed) return;
+
+        try {
+
+            // llamada al backend
+            const action = await dispatch(eliminarCurso(course.id));
+
+            if (action.meta.requestStatus === 'rejected') {
+                throw new Error(action.payload?.msg || 'No se pudo finalizar el curso');
+            }
+
+            // actualizar estado local
+            setCourses(cs =>
+                cs.map(c =>
+                    c.id === course.id
+                        ? { ...c, status: false, completedStudents: c.students }
+                        : c
+                )
+            );
+
             Swal.fire({
                 title: '¡Curso finalizado!',
                 text: 'El curso ha sido marcado como completado correctamente.',
@@ -371,6 +392,15 @@ const DocenteCourses = () => {
                 showConfirmButton: false,
                 didOpen: (popup) => { popup.style.borderRadius = '16px'; },
             });
+
+        } catch (error) {
+
+            Swal.fire({
+                title: 'Error',
+                text: error.message,
+                icon: 'error'
+            });
+
         }
     };
 
@@ -422,7 +452,7 @@ const DocenteCourses = () => {
                 /* Stats summary */
                 .dc-stats-row {
                     display: grid;
-                    grid-template-columns: repeat(4, 1fr);
+                    grid-template-columns: repeat(3, 1fr);
                     gap: 14px;
                     margin-bottom: 24px;
                 }
@@ -521,6 +551,13 @@ const DocenteCourses = () => {
                     color: #fff; font-size: 12px; font-weight: 600;
                     padding: 5px 12px; border-radius: 6px;
                 }
+                .dc-card__status {
+                    position: absolute; bottom: 12px; right: 12px;
+                    background: rgba(26,31,54,.82); backdrop-filter: blur(6px);
+                    color: #fff; font-size: 12px; font-weight: 600;
+                    padding: 5px 12px; border-radius: 6px;
+                }
+
                 .dc-card__status-badge {
                     position: absolute; top: 10px; right: 10px;
                     font-size: 11px; font-weight: 700;
@@ -644,17 +681,17 @@ const DocenteCourses = () => {
                 {/* Summary stats */}
                 <div className="dc-stats-row">
                     <StatCard icon={FiBook}      label="Cursos activos"      value={activeCourses}                       accent="#6D5DFD" />
+                    <StatCard icon={FiBook}      label="Cursos finalizados"  value={finishedCourses}                       accent="#6D5DFD" />
                     <StatCard icon={FiUsers}     label="Total estudiantes"   value={totalStudents}                       accent="#3B82F6" />
-                    <StatCard icon={FiBarChart2} label="Ingresos totales"    value={`Bs ${totalIncome.toLocaleString()}`} accent="#22C55E" />
-                    <StatCard icon={FiStar}      label="Valoración promedio" value={avgRating}                           accent="#F59E0B" />
+                    
                 </div>
 
                 {/* Filter tabs */}
                 <div className="dc-filters">
                     {[
-                        { key: 'all',      label: `Todos (${courses.length})` },
-                        { key: 'active',   label: 'En curso' },
-                        { key: 'finished', label: 'Finalizados' },
+                        { key: 'all', label: `Todos (${courses.length})` },
+                        { key: 'active', label: `En curso (${activeCourses})` },
+                        { key: 'finished', label: `Finalizados (${finishedCourses})` },
                     ].map(f => (
                         <button
                             key={f.key}

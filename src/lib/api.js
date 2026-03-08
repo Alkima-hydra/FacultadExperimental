@@ -146,6 +146,10 @@ export const cursosApi = {
   // para obtener los cursos de un docente específico
   fetchCursosByDocenteId: (docenteId) =>
     api.get(`/curso/docente/${docenteId}`).then((res) => res.data).catch(handleError),
+  // para obtener los cursos de un docente con inscritos
+  fetchCursosWithInscritosByDocenteId: (docenteId) =>
+    api.get(`/curso/docente/${docenteId}/inscritos`).then((res) => res.data).catch(handleError),
+
 };
 
 // pa las materias
