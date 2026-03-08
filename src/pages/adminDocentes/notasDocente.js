@@ -803,10 +803,6 @@ const DocenteNotas = () => {
                     </div>
                 )}
 
-                <div style={{ marginBottom: '12px', fontSize: '12px', color: '#64748B', fontWeight: 600 }}>
-                    Docente ID: {docenteId || 'No disponible'} {token || isAuthenticated ? '· sesión activa' : '· sin sesión'}
-                </div>
-
                 {/* ── Page header ── */}
                 <div className="dn-header">
                     <div className="dn-header__left">
