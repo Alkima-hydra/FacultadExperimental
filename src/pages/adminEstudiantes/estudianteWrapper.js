@@ -20,6 +20,14 @@ import {
 } from "../signin/slices/loginSelectors"
 
 import { perfilApi } from "../../lib/api"
+import {
+  fetchCarritoByUsuarioId,
+} from "./slicesCarrito/CarritoThunk"
+import {
+  selectCarrito,
+  selectCarritoLoading,
+} from "./slicesCarrito/CarritoSlice"
+
 import StudentProfile from "./perfilEstudiante"
 import StudentCourses from "./cursosEstudiante"
 import CartMain from "./carritoCompras"
@@ -59,6 +67,11 @@ const StudentWrapper = () => {
   const token = useSelector(selectToken)
   const isAuthed = useSelector(selectIsAuthenticated)
 
+  const carrito = useSelector(selectCarrito)
+  const carritoLoading = useSelector(selectCarritoLoading)
+
+  const cantidadItemsCarrito = carrito?.cantidad_items ?? 0
+
   const [me, setMe] = useState({ nombre: "Estudiante", mail: "—" })
 
   useEffect(() => {
@@ -94,6 +107,12 @@ const StudentWrapper = () => {
       mounted = false
     }
   }, [isAuthed, userId, token])
+
+  useEffect(() => {
+    if (userId) {
+      dispatch(fetchCarritoByUsuarioId(userId))
+    }
+  }, [dispatch, userId])
 
   useEffect(() => {
     const handleResize = () => {
@@ -188,6 +207,48 @@ const StudentWrapper = () => {
 
   return (
     <>
+      <style>{`
+        .it-admin-sidebar__nav-label-wrap{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:8px;
+          width:100%;
+          min-width:0;
+        }
+
+        .it-admin-sidebar__nav-count{
+          min-width:20px;
+          height:20px;
+          padding:0 6px;
+          border-radius:999px;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          background:#6D5DFD;
+          color:#fff;
+          font-size:11px;
+          font-weight:800;
+          line-height:1;
+          flex-shrink:0;
+          box-shadow:0 4px 10px rgba(109, 93, 253, 0.25);
+        }
+
+        .it-admin-sidebar.collapsed .it-admin-sidebar__nav-count{
+          position:absolute;
+          top:8px;
+          right:10px;
+          min-width:18px;
+          height:18px;
+          padding:0 4px;
+          font-size:10px;
+        }
+
+        .it-admin-sidebar__nav-item{
+          position:relative;
+        }
+      `}</style>
+
       <div className="it-admin-mobile-bar">
         <button
           className="it-admin-mobile-bar__toggle"
@@ -234,20 +295,34 @@ const StudentWrapper = () => {
           </button>
 
           <nav className="it-admin-sidebar__nav" aria-label="Navegación estudiante">
-            {NAV_ITEMS.map((item) => (
-              <button
-                key={item.id}
-                className={`it-admin-sidebar__nav-item${
-                  activeTab === item.id ? " active" : ""
-                }`}
-                onClick={() => handleNavClick(item.id)}
-                title={collapsed ? item.label : undefined}
-                aria-current={activeTab === item.id ? "page" : undefined}
-              >
-                <span className="it-admin-sidebar__icon">{item.icon}</span>
-                <span className="it-admin-sidebar__label">{item.label}</span>
-              </button>
-            ))}
+            {NAV_ITEMS.map((item) => {
+              const isCart = item.id === "cart"
+              const showCount = isCart && !carritoLoading && cantidadItemsCarrito > 0
+
+              return (
+                <button
+                  key={item.id}
+                  className={`it-admin-sidebar__nav-item${
+                    activeTab === item.id ? " active" : ""
+                  }`}
+                  onClick={() => handleNavClick(item.id)}
+                  title={collapsed ? item.label : undefined}
+                  aria-current={activeTab === item.id ? "page" : undefined}
+                >
+                  <span className="it-admin-sidebar__icon">{item.icon}</span>
+
+                  <div className="it-admin-sidebar__nav-label-wrap">
+                    <span className="it-admin-sidebar__label">{item.label}</span>
+
+                    {showCount && (
+                      <span className="it-admin-sidebar__nav-count">
+                        {cantidadItemsCarrito}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
           </nav>
 
           <div className="it-admin-sidebar__footer">
