@@ -37,7 +37,7 @@ const initialState = {
     mail: "",
     nombres: "",
     admin: false,
-    rol: "Usuario",
+    rol: "",
     token: null,
     expiresAt: null,
   },
@@ -55,7 +55,7 @@ const loginSlice = createSlice({
         mail: "",
         nombres: "",
         admin: false,
-        rol: "Usuario",
+        rol: "",
         token: null,
         expiresAt: null,
       }

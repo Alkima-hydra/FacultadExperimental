@@ -37,7 +37,6 @@ import BlogTwo from './blog/blog-2';
 import BlogSidebar from './blog/blog-sidebar';
 import BlogDetails from './blog/blog-details';
 import Contact from './contact';
-import AdminCourse from './adminCourse';
 
 import Admin from './admin';
 import Estudiante from './adminEstudiantes';
@@ -84,7 +83,6 @@ export {
   BlogDetails,
   Contact,
   Admin,
-  AdminCourse,
   Estudiante,
   Docente,
 

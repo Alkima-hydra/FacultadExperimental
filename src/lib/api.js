@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { store } from '../store/index';
+import { fetchAllCursos } from '../pages/admin/slicesCursos/CursosThunk';
 
 const api = axios.create({
   baseURL: 'http://localhost:3000/api/',
@@ -146,6 +147,12 @@ export const cursosApi = {
   // para obtener los cursos de un docente específico
   fetchCursosByDocenteId: (docenteId) =>
     api.get(`/curso/docente/${docenteId}`).then((res) => res.data).catch(handleError),
+  fetchAllCursosByDocenteId: (docenteId) =>
+    api.get(`/curso/docente/${docenteId}?all=1`).then((res) => res.data).catch(handleError),  
+  // para obtener los cursos de un docente con inscritos
+  fetchCursosWithInscritosByDocenteId: (docenteId) =>
+    api.get(`/curso/docente/${docenteId}/inscritos`).then((res) => res.data).catch(handleError),
+
 };
 
 // pa las materias
@@ -211,12 +218,12 @@ export const notasDocenteApi = {
       .catch(handleError),
 
   registrarNota: (cursoId, data) =>
-    api
-      .post(`/materia-notas/docente/curso/${cursoId}/registrar`, data)
-      .then((res) => res.data)
-      .catch(handleError),
+    api.post(`/materia-notas/docente/curso/${cursoId}/registrar`, data).then((res) => res.data).catch(handleError),
+  actualizarNotasDeUnCurso: (cursoId, data) =>
+    api.put(`/materia-notas/docente/curso/${cursoId}/actualizar`, data).then((res) => res.data).catch(handleError),
 };
 
+//para el carrito de compras, para el estudiante, ver carrito, eliminar item del carrito, cancelar carrito
 export const carritoApi = {
   fetchCarritoByUsuarioId: (userId) =>
     api
@@ -251,6 +258,7 @@ export const ofertaAcademicaApi = {
       .catch(handleError),
 };
 
+// para el perfil del usuario, para el estudiante y docente, ver perfil, actualizar perfil
 export const perfilApi = {
   fetchPerfilByUserId: (userId) =>
     api

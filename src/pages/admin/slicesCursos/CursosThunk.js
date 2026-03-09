@@ -147,7 +147,7 @@ export const createMateria = createAsyncThunk(
       const response = await materiasApi.createMateria(payload);
       return response?.Materia || response?.materia || response;
     } catch (error) {
-      return rejectWithValue(error?.response?.data || error.message || error);
+      return rejectWithValue(error?.response?.data || error.message || error  );
     }
   }
 );

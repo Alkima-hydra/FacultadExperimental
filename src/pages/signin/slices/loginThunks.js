@@ -20,7 +20,7 @@ function normalizeLoginResponse(res) {
 
   // admin / rol
   const admin = res?.admin ?? res?.usuario?.admin ?? false
-  const rol = admin === true || admin === 1 || admin === "true" ? "Admin" : "Usuario"
+  const rol = res?.rol ?? res?.usuario?.rol ?? (admin ? "Admin" : "Usuario")
 
   return { ok, id, mail, nombres, admin, rol, token }
 }
