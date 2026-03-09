@@ -28,7 +28,47 @@ import {
 
 
 const PAGE_SIZE = 5;
-const PERIODOS  = ['I-2024', 'II-2024', 'I-2025', 'II-2025', 'I-2026'];
+//funcion dinámica para generar los periodos en vez de que sea estatico
+const generarPeriodosRegistrar = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 1–12
+
+    const startYear = currentYear;
+    const endYear = currentYear + 2;
+
+    const periodos = [];
+
+    for (let year = startYear; year <= endYear; year++) {
+
+        // Periodo I
+        if (!(year === currentYear && currentMonth >= 8)) {
+            periodos.push(`I-${year}`);
+        }
+
+        // Periodo II
+        periodos.push(`II-${year}`);
+    }
+
+    return periodos;
+};
+const generarPeriodosFiltros = () => {
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear -2;
+    const endYear = currentYear + 2;
+
+    const periodos = [];
+
+    for (let year = startYear; year <= endYear; year++) {
+        periodos.push(`I-${year}`);
+        periodos.push(`II-${year}`);
+    }
+
+    return periodos;
+};
+
+const PERIODOS  = generarPeriodosRegistrar();
+const PERIODOS_FILTROS = generarPeriodosFiltros();
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 const emptyCursoForm = {
@@ -506,6 +546,7 @@ const CoursesAdmin = () => {
           estado:    materiaInlineForm.estado,
         },
       }));
+      // para acrtualizar
       if (updateMateria.rejected.match(result)) {
         Swal.fire({ title: 'Error', text: result.payload?.message || 'No se pudo actualizar la materia', icon: 'error', ...swalTheme, showCancelButton: false });
         return;
@@ -609,7 +650,15 @@ const CoursesAdmin = () => {
 
       const result = await dispatch(updateCurso({ id: editTarget.id_curso, data: payload }));
       if (updateCurso.rejected.match(result)) {
-        Swal.fire({ title: 'Error', text: result.payload?.message || 'No se pudo actualizar', icon: 'error', ...swalTheme, showCancelButton: false });
+        Swal.fire({
+          title: 'Error',
+          text: typeof result.payload === 'string'
+            ? result.payload
+            : result.payload?.msg || result.payload?.message || 'No se pudo actualizar',
+          icon: 'error',
+          ...swalTheme,
+          showCancelButton: false
+        });
         return;
       }
       await syncPrerequisitos(cursoForm.materia_id_materia);
@@ -625,8 +674,17 @@ const CoursesAdmin = () => {
       if (!confirm.isConfirmed) return;
 
       const result = await dispatch(createCurso(payload));
+      console.log('Create curso result:', result);
       if (createCurso.rejected.match(result)) {
-        Swal.fire({ title: 'Error', text: result.payload?.message || 'No se pudo crear', icon: 'error', ...swalTheme, showCancelButton: false });
+        Swal.fire({
+          title: 'Error',
+          text: typeof result.payload === 'string'
+            ? result.payload
+            : result.payload?.msg || result.payload?.message || 'No se pudo crear',
+          icon: 'error',
+          ...swalTheme,
+          showCancelButton: false
+        });
         return;
       }
       for (const idPrereq of selectedPrereqs) {
@@ -714,7 +772,7 @@ const CoursesAdmin = () => {
             <label className="it-cadm-filters__label">Período</label>
             <select className="it-cadm-filters__select" value={filterPer} onChange={e => setFilterPer(e.target.value)}>
               <option value="">Todos</option>
-              {PERIODOS.map(p => <option key={p} value={p}>{p}</option>)}
+              {PERIODOS_FILTROS.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
           <div className="it-cadm-filters__group">

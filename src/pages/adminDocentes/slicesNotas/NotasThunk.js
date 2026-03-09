@@ -26,3 +26,16 @@ export const registrarNota = createAsyncThunk(
         }
     }
 );
+
+export const actualizarNotasDeUnCurso = createAsyncThunk(
+    'Notas/actualizarNotasDeUnCurso',
+    async ({ cursoId, data }, { rejectWithValue }) => {
+        try {
+            const response = await notasDocenteApi.actualizarNotasDeUnCurso(cursoId, data);
+            return response;
+        }
+        catch (error) {
+            return rejectWithValue(error?.response?.data || error.message || error);
+        }
+    }
+);
