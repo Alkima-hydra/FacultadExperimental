@@ -212,7 +212,11 @@ export const inscritosEstudianteApi = {
 // para las notas de las materias, para docente, ver notas y registrar notas
 export const notasDocenteApi = {
   fetchNotasByCursoId: (cursoId) =>
-    api.get(`/materia-notas/docente/curso/${cursoId}`).then((res) => res.data).catch(handleError),
+    api
+      .get(`/materia-notas/docente/curso/${cursoId}`)
+      .then((res) => res.data)
+      .catch(handleError),
+
   registrarNota: (cursoId, data) =>
     api.post(`/materia-notas/docente/curso/${cursoId}/registrar`, data).then((res) => res.data).catch(handleError),
   actualizarNotasDeUnCurso: (cursoId, data) =>
@@ -222,29 +226,46 @@ export const notasDocenteApi = {
 //para el carrito de compras, para el estudiante, ver carrito, eliminar item del carrito, cancelar carrito
 export const carritoApi = {
   fetchCarritoByUsuarioId: (userId) =>
-    api.get(`/carrito/usuario/${userId}`).then((res) => res.data).catch(handleError),
+    api
+      .get(`/carrito/usuario/${userId}`)
+      .then((res) => res.data)
+      .catch(handleError),
+
+  addItemCarrito: (data) =>
+    api
+      .post('/carrito/add', data)
+      .then((res) => res.data)
+      .catch(handleError),
 
   removeItemCarrito: (idCompraCurso) =>
-    api.delete(`/carrito/item/${idCompraCurso}`).then((res) => res.data).catch(handleError),
+    api
+      .delete(`/carrito/item/${idCompraCurso}`)
+      .then((res) => res.data)
+      .catch(handleError),
 
   cancelarCarrito: (idCompraTotal) =>
-    api.patch(`/carrito/cancelar/${idCompraTotal}`).then((res) => res.data).catch(handleError),
+    api
+      .patch(`/carrito/cancelar/${idCompraTotal}`)
+      .then((res) => res.data)
+      .catch(handleError),
 };
 
-//para la oferta académica, para el estudiante, ver oferta académica, agregar curso al carrito
 export const ofertaAcademicaApi = {
-  fetchOfertaAcademica: (params = {}) =>
-    api.get('/curso/oferta', { params }).then((res) => res.data).catch(handleError),
-
-  addCursoToCarrito: (data) =>
-    api.post('/carrito/add', data).then((res) => res.data).catch(handleError),
+  fetchOfertaAcademicaByUsuarioId: (userId) =>
+    api
+      .get(`/oferta-academica/usuario/${userId}`)
+      .then((res) => res.data)
+      .catch(handleError),
 };
 
 // para el perfil del usuario, para el estudiante y docente, ver perfil, actualizar perfil
 export const perfilApi = {
   fetchPerfilByUserId: (userId) =>
-    api.get(`/usuarios/perfil/${userId}`).then((res) => res.data).catch(handleError),
-}
+    api
+      .get(`/usuarios/perfil/${userId}`)
+      .then((res) => res.data)
+      .catch(handleError),
+};
 export default api;
 
 
