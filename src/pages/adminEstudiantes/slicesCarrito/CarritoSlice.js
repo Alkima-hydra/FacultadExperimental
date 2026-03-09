@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
   fetchCarritoByUsuarioId,
+  addItemCarrito,
   removeItemCarrito,
   cancelarCarrito,
 } from './CarritoThunk';
@@ -8,6 +9,7 @@ import {
 const initialState = {
   carrito: null,
   isLoading: false,
+  isAdding: false,
   isRemoving: false,
   isCanceling: false,
   error: null,
@@ -27,6 +29,7 @@ const CarritoSlice = createSlice({
     clearCarrito(state) {
       state.carrito = null;
       state.isLoading = false;
+      state.isAdding = false;
       state.isRemoving = false;
       state.isCanceling = false;
       state.error = null;
@@ -48,6 +51,21 @@ const CarritoSlice = createSlice({
         state.error = action.payload?.message || 'Error al cargar el carrito.';
       })
 
+      .addCase(addItemCarrito.pending, (state) => {
+        state.isAdding = true;
+        state.error = null;
+        state.successMessage = null;
+      })
+      .addCase(addItemCarrito.fulfilled, (state, action) => {
+        state.isAdding = false;
+        state.carrito = action.payload?.carrito || state.carrito;
+        state.successMessage = action.payload?.message || 'Curso agregado al carrito.';
+      })
+      .addCase(addItemCarrito.rejected, (state, action) => {
+        state.isAdding = false;
+        state.error = action.payload?.message || 'Error al agregar el curso al carrito.';
+      })
+
       .addCase(removeItemCarrito.pending, (state) => {
         state.isRemoving = true;
         state.error = null;
@@ -65,6 +83,10 @@ const CarritoSlice = createSlice({
 
         state.carrito.cantidad_items = state.carrito.items.length;
         state.carrito.total = Number(action.payload.total || 0);
+
+        if (state.carrito.items.length === 0) {
+          state.carrito = null;
+        }
       })
       .addCase(removeItemCarrito.rejected, (state, action) => {
         state.isRemoving = false;
@@ -96,6 +118,7 @@ export const {
 
 export const selectCarrito = (state) => state?.carrito?.carrito ?? null;
 export const selectCarritoLoading = (state) => Boolean(state?.carrito?.isLoading);
+export const selectCarritoAdding = (state) => Boolean(state?.carrito?.isAdding);
 export const selectCarritoRemoving = (state) => Boolean(state?.carrito?.isRemoving);
 export const selectCarritoCanceling = (state) => Boolean(state?.carrito?.isCanceling);
 export const selectCarritoError = (state) => state?.carrito?.error ?? null;

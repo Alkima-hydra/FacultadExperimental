@@ -54,6 +54,30 @@ export const fetchCarritoByUsuarioId = createAsyncThunk(
   }
 );
 
+export const addItemCarrito = createAsyncThunk(
+  'carrito/addItemCarrito',
+  async ({ id_usuario, id_curso }, { rejectWithValue }) => {
+    try {
+      const res = await carritoApi.addItemCarrito({ id_usuario, id_curso });
+
+      if (!res?.ok) {
+        return rejectWithValue({
+          message: res?.msg || 'No se pudo agregar el curso al carrito.',
+        });
+      }
+
+      return {
+        carrito: normalizarCarrito(res),
+        message: res?.msg || 'Curso agregado correctamente al carrito.',
+      };
+    } catch (error) {
+      return rejectWithValue({
+        message: error?.message || 'Error al agregar el curso al carrito.',
+      });
+    }
+  }
+);
+
 export const removeItemCarrito = createAsyncThunk(
   'carrito/removeItemCarrito',
   async (idCompraCurso, { rejectWithValue }) => {
