@@ -1,14 +1,11 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit';
 import {
   fetchAllCursosByDocenteId,
   fetchCursosWithInscritosByDocenteId,
-  eliminarCurso,
   finalizarCurso,
   cancelarCurso,
-} from "./CursosThunk";
-
-const EMPTY_ARRAY = [];
-const EMPTY_OBJECT = {};
+  eliminarCurso,
+} from './CursosThunk';
 
 const initialState = {
   cursos: [],
@@ -16,20 +13,24 @@ const initialState = {
   totalPagesCursos: 1,
   loading: false,
   error: null,
-  CursoSeleccionado: null,
+  cursoSeleccionado: null,
 };
 
-const extraerCursos = (payload) => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.cursos)) return payload.cursos;
-  if (Array.isArray(payload?.data)) return payload.data;
-  return [];
-};
+const getCursoId = (curso) => Number(curso?.id_curso ?? curso?.id ?? 0);
 
-const getCursoId = (curso) => curso?.id_curso ?? curso?.id ?? null;
+const actualizarCursoEnLista = (state, cursoActualizado) => {
+  const idCurso = getCursoId(cursoActualizado);
+  if (!idCurso) return;
+
+  state.cursos = state.cursos.map((curso) =>
+    getCursoId(curso) === idCurso
+      ? { ...curso, ...cursoActualizado }
+      : curso
+  );
+};
 
 const CursosSlice = createSlice({
-  name: "Cursos",
+  name: 'cursosDocente',
   initialState,
   reducers: {
     clearCursosState: (state) => {
@@ -38,10 +39,10 @@ const CursosSlice = createSlice({
       state.totalPagesCursos = 1;
       state.loading = false;
       state.error = null;
-      state.CursoSeleccionado = null;
+      state.cursoSeleccionado = null;
     },
     setCursoSeleccionado: (state, action) => {
-      state.CursoSeleccionado = action.payload || null;
+      state.cursoSeleccionado = action.payload || null;
     },
   },
   extraReducers: (builder) => {
@@ -52,14 +53,14 @@ const CursosSlice = createSlice({
       })
       .addCase(fetchAllCursosByDocenteId.fulfilled, (state, action) => {
         state.loading = false;
-        const cursos = extraerCursos(action.payload);
-        state.cursos = cursos;
-        state.totalItemsCursos = action.payload?.totalItems || cursos.length || 0;
+        state.error = null;
+        state.cursos = action.payload?.cursos || [];
+        state.totalItemsCursos = action.payload?.totalItems || 0;
         state.totalPagesCursos = action.payload?.totalPages || 1;
       })
       .addCase(fetchAllCursosByDocenteId.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Error al cargar los cursos";
+        state.error = action.payload || 'Error al cargar los cursos';
       })
 
       .addCase(fetchCursosWithInscritosByDocenteId.pending, (state) => {
@@ -68,35 +69,17 @@ const CursosSlice = createSlice({
       })
       .addCase(fetchCursosWithInscritosByDocenteId.fulfilled, (state, action) => {
         state.loading = false;
-        const cursos = extraerCursos(action.payload);
-        state.cursos = cursos;
-        state.totalItemsCursos = action.payload?.totalItems || cursos.length || 0;
+        state.error = null;
+        state.cursos = action.payload?.cursos || [];
+        state.totalItemsCursos =
+          action.payload?.totalItems ||
+          action.payload?.cursos?.length ||
+          0;
         state.totalPagesCursos = action.payload?.totalPages || 1;
       })
       .addCase(fetchCursosWithInscritosByDocenteId.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Error al cargar los cursos con inscritos";
-      })
-
-      .addCase(eliminarCurso.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(eliminarCurso.fulfilled, (state, action) => {
-        state.loading = false;
-        const idEliminado =
-          action.payload?.id_curso ??
-          action.payload?.id ??
-          Number(action.meta.arg);
-
-        state.cursos = state.cursos.filter(
-          (curso) => Number(getCursoId(curso)) !== Number(idEliminado)
-        );
-        state.totalItemsCursos = Math.max(0, state.totalItemsCursos - 1);
-      })
-      .addCase(eliminarCurso.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Error al eliminar el curso";
+        state.error = action.payload || 'Error al cargar los cursos con inscritos';
       })
 
       .addCase(finalizarCurso.pending, (state) => {
@@ -105,26 +88,16 @@ const CursosSlice = createSlice({
       })
       .addCase(finalizarCurso.fulfilled, (state, action) => {
         state.loading = false;
+        state.error = null;
 
-        const cursoActualizado = action.payload?.curso || null;
-        const idCurso =
-          cursoActualizado?.id_curso ??
-          cursoActualizado?.id ??
-          Number(action.meta.arg);
-
-        state.cursos = state.cursos.map((curso) =>
-          Number(getCursoId(curso)) === Number(idCurso)
-            ? {
-                ...curso,
-                ...cursoActualizado,
-                estado: "FINALIZADO",
-              }
-            : curso
-        );
+        const cursoActualizado = action.payload?.curso;
+        if (cursoActualizado) {
+          actualizarCursoEnLista(state, cursoActualizado);
+        }
       })
       .addCase(finalizarCurso.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Error al finalizar el curso";
+        state.error = action.payload || 'Error al finalizar el curso';
       })
 
       .addCase(cancelarCurso.pending, (state) => {
@@ -133,38 +106,54 @@ const CursosSlice = createSlice({
       })
       .addCase(cancelarCurso.fulfilled, (state, action) => {
         state.loading = false;
+        state.error = null;
 
-        const cursoActualizado = action.payload?.curso || null;
-        const idCurso =
-          cursoActualizado?.id_curso ??
-          cursoActualizado?.id ??
-          Number(action.meta.arg);
-
-        state.cursos = state.cursos.map((curso) =>
-          Number(getCursoId(curso)) === Number(idCurso)
-            ? {
-                ...curso,
-                ...cursoActualizado,
-                estado: "CANCELADO",
-              }
-            : curso
-        );
+        const cursoActualizado = action.payload?.curso;
+        if (cursoActualizado) {
+          actualizarCursoEnLista(state, cursoActualizado);
+        }
       })
       .addCase(cancelarCurso.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Error al cancelar el curso";
+        state.error = action.payload || 'Error al cancelar el curso';
+      })
+
+      .addCase(eliminarCurso.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(eliminarCurso.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+
+        const idCurso = Number(action.payload?.id_curso ?? action.payload?.id ?? 0);
+        if (idCurso) {
+          state.cursos = state.cursos.filter(
+            (curso) => getCursoId(curso) !== idCurso
+          );
+          state.totalItemsCursos = Math.max(0, state.totalItemsCursos - 1);
+        }
+      })
+      .addCase(eliminarCurso.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Error al eliminar el curso';
       });
   },
 });
 
-export const { clearCursosState, setCursoSeleccionado } = CursosSlice.actions;
+export const {
+  clearCursosState,
+  setCursoSeleccionado,
+} = CursosSlice.actions;
 
-export const selectCursosState = (state) => state.Cursos || EMPTY_OBJECT;
-export const selectCursos = (state) => state.Cursos?.cursos || EMPTY_ARRAY;
-export const selectLoadingCursos = (state) => state.Cursos?.loading ?? false;
-export const selectErrorCursos = (state) => state.Cursos?.error ?? null;
-export const selectTotalItemsCursos = (state) => state.Cursos?.totalItemsCursos ?? 0;
-export const selectTotalPagesCursos = (state) => state.Cursos?.totalPagesCursos ?? 1;
-export const selectCursoSeleccionado = (state) => state.Cursos?.CursoSeleccionado ?? null;
+export const selectCursosState = (state) => state.cursosDocente || initialState;
+export const selectCursos = (state) => state.cursosDocente?.cursos || [];
+export const loadingCursos = (state) => Boolean(state.cursosDocente?.loading);
+export const errorCursos = (state) => state.cursosDocente?.error || null;
+export const selectLoadingCursos = (state) => Boolean(state.cursosDocente?.loading);
+export const selectErrorCursos = (state) => state.cursosDocente?.error || null;
+export const selectTotalItemsCursos = (state) => state.cursosDocente?.totalItemsCursos || 0;
+export const selectTotalPagesCursos = (state) => state.cursosDocente?.totalPagesCursos || 1;
+export const selectCursoSeleccionado = (state) => state.cursosDocente?.cursoSeleccionado || null;
 
 export default CursosSlice.reducer;
