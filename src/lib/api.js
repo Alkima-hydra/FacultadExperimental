@@ -318,5 +318,22 @@ export const comprobantesApi = {
       .then((res) => res.data)
       .catch(handleError),
 };
+export const perfilDocenteApi = {
+  fetchPerfilDocenteByUserId: (userId) =>
+    api.get(`/usuarios/perfil/${userId}`).then((res) => res.data).catch(handleError),
 
+  changePasswordDocente: (userId, data) =>
+    api.put(`/usuarios/${userId}/password`, data)
+      .then((res) => res.data)
+      .catch(handleError),
+};
+export const perfilEstudianteApi = {
+  fetchPerfilEstudianteByUserId: (userId) =>
+    api.get(`/usuarios/perfil/${userId}`).then((res) => res.data).catch(handleError),
+
+  changePasswordEstudiante: (userId, data) =>
+    api.put(`/usuarios/${userId}/password`, data)
+      .then((res) => res.data)
+      .catch(handleError),
+};
 export default api;

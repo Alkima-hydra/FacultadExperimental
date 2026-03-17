@@ -15,7 +15,7 @@ import carritoReducer from '../pages/adminEstudiantes/slicesCarrito/CarritoSlice
 import ofertaAcademicaReducer from '../pages/adminEstudiantes/slicesOfertaAcademica/OfertaAcademicaSlice';
 import cursosEstudianteReducer from '../pages/adminEstudiantes/slicesCursos/CursosSlice';
 import checkoutReducer from '../pages/adminEstudiantes/slicesCheckout/CheckoutSlice';
-
+import perfilDocenteReducer from '../pages/adminDocentes/slicesPerfilDocente/PerfilDocenteSlice';
 const loginPersistConfig = {
   key: 'login',
   storage,
@@ -36,6 +36,7 @@ export const rootReducer = combineReducers({
   ofertaAcademica: ofertaAcademicaReducer,
   cursosEstudiante: cursosEstudianteReducer,
   checkout: checkoutReducer,
+  perfilDocente: perfilDocenteReducer,
 });
 
 export default rootReducer;
