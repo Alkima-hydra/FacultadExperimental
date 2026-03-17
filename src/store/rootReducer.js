@@ -19,6 +19,8 @@ import checkoutReducer from '../pages/adminEstudiantes/slicesCheckout/CheckoutSl
 
 // admin docentes
 import perfilDocenteReducer from '../pages/adminDocentes/slicesPerfilDocente/PerfilDocenteSlice';
+// para que el estudiante vea su historial de saldos
+import saldosMovimientosReducer from '../pages/adminEstudiantes/slicesSaldo/SaldosMovimientosSlice';
 import cursosDocenteReducer from '../pages/adminDocentes/slicesCursos/CursosSlices';
 import notasDocenteReducer from '../pages/adminDocentes/slicesNotas/NotasSlices';
 
@@ -46,6 +48,7 @@ export const rootReducer = combineReducers({
 
   // admin docentes
   perfilDocente: perfilDocenteReducer,
+  saldosMovimientos: saldosMovimientosReducer,
   cursosDocente: cursosDocenteReducer,
   notasDocente: notasDocenteReducer,
 });

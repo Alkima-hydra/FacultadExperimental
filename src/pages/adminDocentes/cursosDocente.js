@@ -308,6 +308,11 @@ const DocenteCourses = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
 
+  //para verificar donde se cargan los cursos
+  console.log('Cursos desde Redux:', cursosRedux);
+  console.log('Cursos mapeados para UI:', courses);
+
+
   const localAuth = useMemo(() => getAuthFromLocalStorage(), []);
   const docenteId = userIdFromStore || localAuth?.id;
 
@@ -318,6 +323,7 @@ const DocenteCourses = () => {
     }
 
     dispatch(fetchCursosWithInscritosByDocenteId(docenteId));
+    console.log('Dispatching fetchCursosWithInscritosByDocenteId with docenteId:', docenteId);
   }, [dispatch, docenteId]);
 
   useEffect(() => {
