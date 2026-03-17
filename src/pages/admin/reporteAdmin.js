@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FiDollarSign,
   FiCreditCard,
@@ -81,7 +81,7 @@ const transformarPago = (pago) => {
     id_pago: pago?.id_pago,
     fecha: pago?.creado_en,
     monto: Number(pago?.monto || 0),
-    metodo: pago?.metodo || "TRANSFERENCIA BANCARIA",
+    metodo: pago?.metodo || "TRANSFERENCIA",
     estado: getStatusLabel(pago),
     referencia: `PAGO-${pago?.id_pago}`,
     cursos,
@@ -90,8 +90,137 @@ const transformarPago = (pago) => {
   };
 };
 
-/* ────────────────────────────────────────────────────────── Excel export */
+/* ────────────────────────────────────────────────────────── Skeleton */
 
+const SkeletonBlock = ({ w, h, radius = 6, style = {} }) => (
+  <div
+    style={{
+      width: w,
+      height: h,
+      borderRadius: radius,
+      background: "#EFF2F7",
+      animation: "skeletonPulse 1.4s ease-in-out infinite",
+      flexShrink: 0,
+      ...style,
+    }}
+  />
+);
+
+const SkeletonMetricCard = () => (
+  <div style={styles.metricCard}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <SkeletonBlock w={40} h={40} radius={10} />
+    </div>
+    <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+      <SkeletonBlock w="65%" h={11} />
+      <SkeletonBlock w="85%" h={24} />
+      <SkeletonBlock w="55%" h={11} />
+    </div>
+  </div>
+);
+
+const SkeletonChartCard = ({ rows = 3 }) => (
+  <div style={styles.card}>
+    <SkeletonBlock w={150} h={13} style={{ marginBottom: 18 }} />
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <SkeletonBlock w={80} h={11} />
+            <SkeletonBlock w={30} h={11} />
+          </div>
+          <SkeletonBlock w="100%" h={6} radius={999} />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const SkeletonTableRow = () => (
+  <tr style={{ borderTop: "1px solid #F1F5F9" }}>
+    {[40, 110, 200, 70, 90, 72, 80].map((w, i) => (
+      <td key={i} style={styles.td}>
+        <SkeletonBlock
+          w={w}
+          h={i === 5 ? 22 : 13}
+          radius={i === 5 ? 999 : 6}
+        />
+      </td>
+    ))}
+  </tr>
+);
+
+const SkeletonLoader = () => (
+  <div style={styles.root}>
+    {/* Header */}
+    <div style={styles.header}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <SkeletonBlock w={130} h={22} radius={999} />
+        <SkeletonBlock w={220} h={34} radius={6} />
+        <SkeletonBlock w={290} h={14} radius={6} />
+      </div>
+      <SkeletonBlock w={120} h={40} radius={10} />
+    </div>
+
+    {/* KPIs */}
+    <div style={styles.metricsGrid}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <SkeletonMetricCard key={i} />
+      ))}
+    </div>
+
+    {/* Charts */}
+    <div style={styles.chartsRow}>
+      <SkeletonChartCard rows={3} />
+      <SkeletonChartCard rows={3} />
+      <div style={styles.card}>
+        <SkeletonBlock w={80} h={13} style={{ marginBottom: 18 }} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {[0, 1, 2].map((i) => (
+            <SkeletonBlock key={i} w="100%" h={58} radius={12} />
+          ))}
+        </div>
+      </div>
+    </div>
+
+    {/* Filters */}
+    <div style={styles.filterCard}>
+      <div style={styles.filterRow}>
+        {[220, 150, 190, 150, 150].map((w, i) => (
+          <div key={i} style={{ flex: `0 1 ${w}px` }}>
+            <SkeletonBlock w={60} h={11} style={{ marginBottom: 10 }} />
+            <SkeletonBlock w="100%" h={38} radius={8} />
+          </div>
+        ))}
+        <SkeletonBlock w={90} h={38} radius={8} style={{ alignSelf: "flex-end" }} />
+      </div>
+    </div>
+
+    {/* Table */}
+    <div style={styles.tableCard}>
+      <div style={styles.tableHeader}>
+        <SkeletonBlock w={160} h={18} />
+        <SkeletonBlock w={110} h={30} radius={8} />
+      </div>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: "#F8FAFC" }}>
+              {["ID", "Fecha", "Cursos", "Método", "Monto", "Estado", "Referencia"].map((h) => (
+                <th key={h} style={styles.th}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 7 }).map((_, i) => (
+              <SkeletonTableRow key={i} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+);
 
 /* ────────────────────────────────────────────────────────── sub-components */
 
@@ -217,7 +346,6 @@ const AdminPaymentsReport = () => {
     dispatch(fetchPagos());
   }, [dispatch]);
 
-  // Reset page on filter change
   useEffect(() => {
     setPage(1);
   }, [search, statusFilter, methodFilter, dateFrom, dateTo, pageSize]);
@@ -279,6 +407,19 @@ const AdminPaymentsReport = () => {
     };
   }, [filteredPayments]);
 
+  // Muestra el skeleton solo en la carga inicial (sin datos previos)
+  if (isLoading && payments.length === 0) {
+    return (
+      <>
+        <SkeletonLoader />
+        <style>{`
+          @keyframes skeletonPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+          * { box-sizing: border-box; }
+        `}</style>
+      </>
+    );
+  }
+
   const hasFilters =
     search || statusFilter !== "TODOS" || methodFilter !== "TODOS" || dateFrom || dateTo;
 
@@ -293,10 +434,9 @@ const AdminPaymentsReport = () => {
   const methodColors = {
     QR: "#6366F1",
     TARJETA: "#0EA5E9",
-    TRANSFERENCIA_BANCARIA: "#10B981",
+    TRANSFERENCIA: "#10B981",
     SALDO: "#F59E0B",
     MIXTO: "#8B5CF6",
-    "TRANSFERENCIA BANCARIA": "#10B981",
   };
 
   return (
@@ -313,13 +453,23 @@ const AdminPaymentsReport = () => {
             Vista administrativa · Sin datos sensibles de estudiantes
           </p>
         </div>
+
+        {/* Botón actualizar funcional con spinner */}
         <button
           onClick={() => dispatch(fetchPagos())}
-          style={styles.refreshBtn}
+          disabled={isLoading}
+          style={{
+            ...styles.refreshBtn,
+            opacity: isLoading ? 0.65 : 1,
+            cursor: isLoading ? "not-allowed" : "pointer",
+          }}
           title="Recargar datos"
         >
-          <FiRefreshCw size={15} />
-          Actualizar
+          <FiRefreshCw
+            size={15}
+            style={isLoading ? { animation: "spin 0.8s linear infinite" } : undefined}
+          />
+          {isLoading ? "Cargando…" : "Actualizar"}
         </button>
       </div>
 
@@ -445,7 +595,7 @@ const AdminPaymentsReport = () => {
           )}
         </div>
 
-        {/* Estado donut-ish */}
+        {/* Estados */}
         <div style={styles.card}>
           <h3 style={styles.cardTitle}>
             <FiActivity size={15} />
@@ -491,7 +641,6 @@ const AdminPaymentsReport = () => {
       {/* ── Filters ── */}
       <div style={styles.filterCard}>
         <div style={styles.filterRow}>
-          {/* Search */}
           <div style={{ flex: "1 1 220px" }}>
             <label style={styles.filterLabel}>Buscar</label>
             <div style={{ position: "relative", marginTop: 6 }}>
@@ -506,7 +655,6 @@ const AdminPaymentsReport = () => {
             </div>
           </div>
 
-          {/* Estado */}
           <div style={{ flex: "0 1 150px" }}>
             <label style={styles.filterLabel}>Estado</label>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={styles.select}>
@@ -517,32 +665,28 @@ const AdminPaymentsReport = () => {
             </select>
           </div>
 
-          {/* Método */}
           <div style={{ flex: "0 1 190px" }}>
             <label style={styles.filterLabel}>Método</label>
             <select value={methodFilter} onChange={(e) => setMethodFilter(e.target.value)} style={styles.select}>
               <option value="TODOS">Todos</option>
               <option value="QR">QR</option>
               <option value="TARJETA">Tarjeta</option>
-              <option value="TRANSFERENCIA_BANCARIA">Transferencia</option>
+              <option value="TRANSFERENCIA">Transferencia</option>
               <option value="SALDO">Saldo</option>
               <option value="MIXTO">Mixto</option>
             </select>
           </div>
 
-          {/* Desde */}
           <div style={{ flex: "0 1 150px" }}>
             <label style={styles.filterLabel}>Desde</label>
             <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={styles.select} />
           </div>
 
-          {/* Hasta */}
           <div style={{ flex: "0 1 150px" }}>
             <label style={styles.filterLabel}>Hasta</label>
             <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={styles.select} />
           </div>
 
-          {/* Actions */}
           <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
             {hasFilters && (
               <button onClick={clearFilters} style={styles.clearBtn} title="Limpiar filtros">
@@ -592,29 +736,29 @@ const AdminPaymentsReport = () => {
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          {isLoading ? (
-            <div style={styles.loadingRow}>
-              <FiRefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} />
-              Cargando pagos…
-            </div>
-          ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ background: "#F8FAFC" }}>
-                  {["ID", "Fecha", "Cursos", "Método", "Monto", "Estado", "Referencia"].map((h) => (
-                    <th key={h} style={styles.th}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {paginated.length === 0 ? (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ background: "#F8FAFC" }}>
+                {["ID", "Fecha", "Cursos", "Método", "Monto", "Estado", "Referencia"].map((h) => (
+                  <th key={h} style={styles.th}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {/* Skeleton rows durante recarga (ya hay datos previos) */}
+              {isLoading
+                ? Array.from({ length: pageSize }).map((_, i) => (
+                    <SkeletonTableRow key={i} />
+                  ))
+                : paginated.length === 0
+                ? (
                   <tr>
                     <td colSpan={7} style={styles.emptyRow}>
                       No se encontraron transacciones con los filtros actuales.
                     </td>
                   </tr>
-                ) : (
-                  paginated.map((p, i) => {
+                )
+                : paginated.map((p, i) => {
                     const s = getStatusStyles(p.estado);
                     return (
                       <tr
@@ -670,11 +814,9 @@ const AdminPaymentsReport = () => {
                         </td>
                       </tr>
                     );
-                  })
-                )}
-              </tbody>
-            </table>
-          )}
+                  })}
+            </tbody>
+          </table>
         </div>
 
         {/* Pagination */}
@@ -690,18 +832,8 @@ const AdminPaymentsReport = () => {
             </span>
 
             <div style={{ display: "flex", gap: 4 }}>
-              <button
-                onClick={() => setPage(1)}
-                disabled={page === 1}
-                style={styles.pageBtn(page === 1)}
-              >
-                «
-              </button>
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                style={styles.pageBtn(page === 1)}
-              >
+              <button onClick={() => setPage(1)} disabled={page === 1} style={styles.pageBtn(page === 1)}>«</button>
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} style={styles.pageBtn(page === 1)}>
                 <FiChevronLeft size={14} />
               </button>
 
@@ -710,30 +842,16 @@ const AdminPaymentsReport = () => {
                 const n = start + i;
                 if (n > totalPages) return null;
                 return (
-                  <button
-                    key={n}
-                    onClick={() => setPage(n)}
-                    style={styles.pageBtn(false, n === page)}
-                  >
+                  <button key={n} onClick={() => setPage(n)} style={styles.pageBtn(false, n === page)}>
                     {n}
                   </button>
                 );
               })}
 
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                style={styles.pageBtn(page === totalPages)}
-              >
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={styles.pageBtn(page === totalPages)}>
                 <FiChevronRight size={14} />
               </button>
-              <button
-                onClick={() => setPage(totalPages)}
-                disabled={page === totalPages}
-                style={styles.pageBtn(page === totalPages)}
-              >
-                »
-              </button>
+              <button onClick={() => setPage(totalPages)} disabled={page === totalPages} style={styles.pageBtn(page === totalPages)}>»</button>
             </div>
           </div>
         )}
@@ -741,6 +859,7 @@ const AdminPaymentsReport = () => {
 
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes skeletonPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
         * { box-sizing: border-box; }
         input:focus, select:focus { border-color: #6366F1 !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
       `}</style>
@@ -802,7 +921,7 @@ const styles = {
     borderRadius: 10,
     fontSize: 13,
     fontWeight: 600,
-    cursor: "pointer",
+    transition: "opacity 0.15s",
   },
   errorBanner: {
     marginBottom: 20,
@@ -976,16 +1095,6 @@ const styles = {
     textAlign: "center",
     color: "#94A3B8",
     fontSize: 14,
-  },
-  loadingRow: {
-    padding: "40px 24px",
-    textAlign: "center",
-    color: "#94A3B8",
-    fontSize: 14,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
   },
   pagination: {
     display: "flex",
