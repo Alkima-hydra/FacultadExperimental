@@ -1,729 +1,1066 @@
-import React, { useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  FiEdit2,
-  FiSave,
-  FiX,
-  FiCamera,
   FiUser,
   FiMail,
-  FiMapPin,
   FiBook,
   FiCalendar,
   FiHash,
   FiShield,
-} from "react-icons/fi"
-import { useSelector } from "react-redux"
+  FiLock,
+  FiCheckCircle,
+  FiCircle,
+  FiChevronDown,
+  FiChevronUp,
+  FiX,
+} from 'react-icons/fi';
+import { useDispatch, useSelector } from 'react-redux';
+import Swal from 'sweetalert2';
+
 import {
   selectUserId,
-  selectToken,
   selectIsAuthenticated,
-} from "../signin/slices/loginSelectors" // ajusta si tu ruta es distinta
-import api from "../../lib/api";
-/* ─────────────────────────────────────────────
-   Helpers UI
-───────────────────────────────────────────── */
-const Field = ({
-  icon: Icon,
-  label,
-  value,
-  editing,
-  name,
-  onChange,
-  type = "text",
-  disabled = false,
-}) => (
-  <div className="sp-field">
-    <div className="sp-field__label">
+} from '../signin/slices/loginSelectors';
+
+import {
+  fetchPerfilDocente,
+  changePasswordDocente,
+} from './slicesPerfilDocente/PerfilDocenteThunk';
+
+import {
+  selectPerfilDocente,
+  selectPerfilDocenteLoading,
+  selectPerfilDocenteError,
+  selectPerfilDocenteSuccess,
+  selectPasswordFormDocente,
+  selectPerfilDocenteChangingPassword,
+  updatePasswordField,
+  resetPasswordForm,
+  clearPerfilDocenteError,
+  clearPerfilDocenteSuccess,
+} from './slicesPerfilDocente/PerfilDocenteSlice';
+
+const swalTheme = {
+  confirmButtonColor: '#704FE6',
+  cancelButtonColor: '#4D5756',
+  customClass: { popup: 'it-cadm-swal-popup' },
+  didOpen: () => {
+    const container = document.querySelector('.swal2-container');
+    if (container) container.style.zIndex = '99999';
+  },
+};
+
+const toastConfig = {
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2400,
+  timerProgressBar: true,
+  ...swalTheme,
+};
+
+const ReadOnlyField = ({ icon: Icon, label, value, muted = false, onBlocked }) => (
+  <button
+    type="button"
+    className={`it-dp-field it-dp-field--readonly${muted ? ' is-muted' : ''}`}
+    onClick={() => onBlocked(label)}
+  >
+    <div className="it-dp-field__label">
       <Icon size={13} />
       <span>{label}</span>
     </div>
+    <p className="it-dp-field__value">{value || '—'}</p>
+  </button>
+);
 
-    {editing ? (
-      <input
-        className="sp-field__input"
-        type={type}
-        name={name}
-        value={value ?? ""}
-        onChange={onChange}
-        autoComplete="off"
-        disabled={disabled}
-      />
-    ) : (
-      <p className="sp-field__value">{value || "—"}</p>
-    )}
+const PasswordField = ({
+  icon: Icon,
+  label,
+  value,
+  name,
+  onChange,
+  type = 'password',
+  placeholder = '',
+}) => (
+  <div className="it-dp-field it-dp-field--editable">
+    <div className="it-dp-field__label">
+      <Icon size={13} />
+      <span>{label}</span>
+    </div>
+    <input
+      className={`it-dp-field__input${type === 'date' ? ' it-dp-field__input--date' : ''}`}
+      type={type}
+      name={name}
+      value={value ?? ''}
+      onChange={onChange}
+      placeholder={placeholder}
+      autoComplete="off"
+    />
   </div>
-)
+);
 
-const Pill = ({ children }) => <span className="sp-pill">{children}</span>
+const CheckItem = ({ ok, text }) => (
+  <div className={`it-dp-check-item${ok ? ' is-ok' : ''}`}>
+    {ok ? <FiCheckCircle size={15} /> : <FiCircle size={15} />}
+    <span>{text}</span>
+  </div>
+);
+
+const formatFecha = (value) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString('es-BO', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+};
 
 const DocenteProfile = () => {
-  const fileRef = useRef(null)
+  const dispatch = useDispatch();
 
-  // auth
-  const userId = useSelector(selectUserId)
-  const token = useSelector(selectToken)
-  const isAuthed = useSelector(selectIsAuthenticated)
+  const userId = useSelector(selectUserId);
+  const isAuthed = useSelector(selectIsAuthenticated);
 
-  // data state
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const data = useSelector(selectPerfilDocente);
+  const loading = useSelector(selectPerfilDocenteLoading);
+  const reduxError = useSelector(selectPerfilDocenteError);
+  const successMessage = useSelector(selectPerfilDocenteSuccess);
 
-  const [data, setData] = useState(null)
-  const [draft, setDraft] = useState(null)
-  const [editing, setEditing] = useState(false)
+  const passwordForm = useSelector(selectPasswordFormDocente);
+  const isChangingPassword = useSelector(selectPerfilDocenteChangingPassword);
 
-  // avatar (solo UI por ahora)
-  const [preview, setPreview] = useState(null)
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [localPasswordError, setLocalPasswordError] = useState('');
 
   useEffect(() => {
-    let mounted = true
+    if (isAuthed && userId) {
+      dispatch(fetchPerfilDocente({ userId }));
+    }
+  }, [dispatch, isAuthed, userId]);
 
-    async function fetchPerfil() {
-      if (!isAuthed || !userId || !token) {
-        if (mounted) {
-          setLoading(false)
-          setError("No hay sesión activa.")
-        }
-        return
-      }
+  useEffect(() => {
+    if (reduxError) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: reduxError,
+        ...toastConfig,
+      });
+      dispatch(clearPerfilDocenteError());
+    }
+  }, [reduxError, dispatch]);
 
-      try {
-  setLoading(true)
-  setError(null)
+  useEffect(() => {
+    if (successMessage) {
+      Swal.fire({
+        icon: 'success',
+        title: successMessage,
+        ...toastConfig,
+      });
+      dispatch(clearPerfilDocenteSuccess());
+    }
+  }, [successMessage, dispatch]);
 
-  const res = await api.get(`usuarios/perfil/${userId}`, {
-    headers: { "x-token": token }
-  })
+  const nombreCompleto = useMemo(() => {
+    if (!data) return '—';
+    return (
+      [data.nombres, data.apellido_paterno, data.apellido_materno]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || '—'
+    );
+  }, [data]);
 
-  const json = res.data
+  const passwordChecks = useMemo(() => {
+    const pwd = passwordForm?.newPassword || '';
+    return {
+      minLen: pwd.length >= 8,
+      hasUpper: /[A-Z]/.test(pwd),
+      hasLower: /[a-z]/.test(pwd),
+      hasNumber: /\d/.test(pwd),
+      hasSymbol: /[^A-Za-z0-9]/.test(pwd),
+      matches:
+        pwd.length > 0 &&
+        (passwordForm?.confirmPassword || '').length > 0 &&
+        pwd === passwordForm.confirmPassword,
+    };
+  }, [passwordForm]);
 
-  if (!json?.ok) {
-    throw new Error(json?.msg || "No se pudo cargar el perfil.")
-  }
+  const allPasswordChecksValid =
+    passwordChecks.minLen &&
+    passwordChecks.hasUpper &&
+    passwordChecks.hasLower &&
+    passwordChecks.hasNumber &&
+    passwordChecks.hasSymbol &&
+    passwordChecks.matches &&
+    Boolean(passwordForm?.currentPassword?.trim());
 
-  const u = json.usuario || {}
-  const d = json.docente || null
+  const handleBlockedField = (label) => {
+    Swal.fire({
+      title: 'Campo no editable',
+      text: `"${label}" no se puede editar aquí. Contacte a soporte.`,
+      icon: 'info',
+      confirmButtonText: 'Entendido',
+      ...swalTheme,
+      showCancelButton: false,
+    });
+  };
 
-        // Si este componente es SOLO para docentes, valida eso:
-        if (!d) {
-          throw new Error("Este perfil no corresponde a un docente.")
-        }
+  const validatePassword = () => {
+    if (!passwordForm.currentPassword.trim()) {
+      return 'Debes ingresar tu contraseña actual.';
+    }
+    if (!passwordForm.newPassword.trim()) {
+      return 'Debes ingresar una nueva contraseña.';
+    }
+    if (passwordForm.newPassword.length < 8) {
+      return 'La nueva contraseña debe tener al menos 8 caracteres.';
+    }
+    if (!/[A-Z]/.test(passwordForm.newPassword)) {
+      return 'La nueva contraseña debe incluir al menos una mayúscula.';
+    }
+    if (!/[a-z]/.test(passwordForm.newPassword)) {
+      return 'La nueva contraseña debe incluir al menos una minúscula.';
+    }
+    if (!/\d/.test(passwordForm.newPassword)) {
+      return 'La nueva contraseña debe incluir al menos un número.';
+    }
+    if (!/[^A-Za-z0-9]/.test(passwordForm.newPassword)) {
+      return 'La nueva contraseña debe incluir al menos un símbolo.';
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      return 'La confirmación no coincide con la nueva contraseña.';
+    }
+    return '';
+  };
 
-        const fullName = [u.nombres, u.apellido_paterno, u.apellido_materno]
-          .filter(Boolean)
-          .join(" ")
+  const handleSavePassword = async () => {
+    setLocalPasswordError('');
 
-        const normalized = {
-          id_persona: u.id_persona ?? "",
-          nombres: u.nombres ?? "",
-          apellido_paterno: u.apellido_paterno ?? "",
-          apellido_materno: u.apellido_materno ?? "",
-          nombreCompleto: fullName || u.nombres || "—",
-
-          mail: u.mail ?? "",
-          ci: u.ci ?? "",
-          genero: u.genero ?? "",
-          fecha_nacimiento: u.fecha_nacimiento ?? "",
-          estado_usuario: u.estado ?? true,
-          admin: u.admin ?? false,
-
-          // docente
-          id_docente: d?.id_docente ?? "",
-          titulo_docente: d?.titulo ?? "",
-          tipo_docente: d?.tipo_docente ?? "",
-          estado_docente: d?.estado ?? null,
-
-          tipo: "DOCENTE",
-          avatar: null,
-        }
-
-        if (mounted) {
-          setData(normalized)
-          setDraft(normalized)
-          setLoading(false)
-        }
-      } catch (err) {
-        if (mounted) {
-          setLoading(false)
-          setError(err?.message || "Error al cargar el perfil.")
-        }
-      }
+    const validationError = validatePassword();
+    if (validationError) {
+      setLocalPasswordError(validationError);
+      Swal.fire({
+        title: 'Revisa la contraseña',
+        text: validationError,
+        icon: 'warning',
+        confirmButtonText: 'Entendido',
+        ...swalTheme,
+        showCancelButton: false,
+      });
+      return;
     }
 
-    fetchPerfil()
-    return () => {
-      mounted = false
+    const confirm = await Swal.fire({
+      title: '¿Cambiar contraseña?',
+      text: 'Se actualizará tu contraseña de acceso.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cambiar',
+      cancelButtonText: 'Cancelar',
+      ...swalTheme,
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    const result = await dispatch(
+      changePasswordDocente({
+        userId,
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      })
+    );
+
+    if (changePasswordDocente.fulfilled.match(result)) {
+      setLocalPasswordError('');
+      setPasswordOpen(false);
     }
-  }, [isAuthed, userId, token])
-
-  const roleLabel = useMemo(() => {
-    if (!data) return "Docente"
-    return "Docente"
-  }, [data])
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setDraft((d) => ({ ...d, [name]: value }))
-  }
-
-  const startEdit = () => {
-    if (!data) return
-    setDraft(data)
-    setEditing(true)
-  }
-
-  const cancel = () => {
-    setEditing(false)
-    setPreview(null)
-    setDraft(data)
-  }
-
-  // Guardar (por ahora solo UI)
-  const save = () => {
-    setData((prev) => ({
-      ...draft,
-      avatar: preview ?? prev?.avatar ?? null,
-    }))
-    setEditing(false)
-    setPreview(null)
-  }
-
-  const handleAvatar = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const url = URL.createObjectURL(file)
-    setPreview(url)
-  }
-
-  const avatarSrc = editing
-    ? preview ?? draft?.avatar ?? data?.avatar
-    : data?.avatar
+  };
 
   if (loading) {
     return (
-      <div style={{ padding: 24, fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial" }}>
-        Cargando perfil...
-      </div>
-    )
+      <>
+        <style>{styles}</style>
+        <div className="it-dp-root">
+          <div className="it-dp-loading-wrap">
+            <div className="it-dp-loading-card">
+              <div className="it-dp-spinner" />
+              <p>Cargando perfil...</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
   }
 
-  if (error) {
+  if (!data) {
     return (
-      <div style={{ padding: 24, fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial" }}>
-        {error}
-      </div>
-    )
-  }
-
-  if (!data || !draft) {
-    return (
-      <div style={{ padding: 24, fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial" }}>
-        No hay datos para mostrar.
-      </div>
-    )
+      <>
+        <style>{styles}</style>
+        <div className="it-dp-root">
+          <div className="it-dp-feedback-wrap">
+            <div className="it-dp-feedback-card">
+              <div className="it-dp-feedback-card__icon">
+                <FiUser size={22} />
+              </div>
+              <h3>Sin datos</h3>
+              <p>No hay información de perfil para mostrar.</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
     <>
-      <style>{`
-        /* =========================================================
-           TIPOGRAFÍA: todo el componente usa SYSTEM FONT
-           (para que NO "choque" con el theme)
-        ========================================================= */
-        .sp-root,
-        .sp-root *{
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-        }
+      <style>{styles}</style>
 
-        .sp-root{
-          min-height:100%;
-          padding:36px 32px;
-          background:#EDEEF5;
-          box-sizing:border-box;
-        }
+      <div className="it-dp-root">
+        <div className="it-dp-layout">
+          <aside className="it-dp-sidebar">
+            <div className="it-dp-profile-card">
+              <div className="it-dp-profile-card__avatar">
+                <FiUser size={42} />
+              </div>
 
-        /* Header */
-        .sp-header{
-          display:flex;
-          align-items:center;
-          gap:10px;
-          margin-bottom:18px;
-          max-width:980px;
-        }
-        .sp-header__pill{
-          width:8px;height:24px;
-          background:#4B5FD6;
-          border-radius:4px;
-        }
-        .sp-header__title{
-          font-size:30px;
-          line-height:1.1;
-          letter-spacing:-0.4px;
-          color:#1A1F36;
-          margin:0;
-          font-weight:800;
-          -webkit-font-smoothing:antialiased;
-          -moz-osx-font-smoothing:grayscale;
-        }
+              <h3 className="it-dp-profile-card__name">{nombreCompleto}</h3>
+              <span className="it-dp-role-badge">Docente</span>
 
-        .sp-subbar{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:12px;
-          margin-bottom:18px;
-          max-width:980px;
-        }
-        .sp-meta{
-          display:flex;
-          gap:10px;
-          flex-wrap:wrap;
-        }
-        .sp-pill{
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          padding:6px 10px;
-          border-radius:999px;
-          background:#F3F4FB;
-          border:1px solid #E5E8F6;
-          color:#33406A;
-          font-size:12px;
-          font-weight:700;
-        }
-        .sp-pill b{
-          font-weight:800;
-          color:#1A1F36;
-        }
-
-        .sp-card{
-          background:#fff;
-          border-radius:18px;
-          padding:34px 38px;
-          box-shadow:0 4px 32px rgba(74,95,210,.07);
-          display:grid;
-          grid-template-columns:240px 1fr;
-          gap:48px;
-          max-width:980px;
-          animation:sp-fade-in .35s ease;
-        }
-        @keyframes sp-fade-in{
-          from{opacity:0;transform:translateY(10px)}
-          to{opacity:1;transform:translateY(0)}
-        }
-
-        .sp-left{
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          gap:14px;
-        }
-
-        .sp-avatar-wrap{
-          position:relative;
-          width:168px;height:168px;
-          border-radius:18px;
-          background:#EEF0F8;
-          overflow:hidden;
-          flex-shrink:0;
-          border:2px solid #E4E6F0;
-        }
-        .sp-avatar-wrap img{width:100%;height:100%;object-fit:cover}
-        .sp-avatar-placeholder{
-          width:100%;height:100%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          color:#9FA8C7;
-        }
-        .sp-avatar-overlay{
-          position:absolute;inset:0;
-          background:rgba(27,35,80,.45);
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-          gap:4px;
-          opacity:0;
-          transition:opacity .2s;
-          cursor:pointer;
-          color:#fff;
-          font-size:11px;
-          font-weight:800;
-          letter-spacing:.4px;
-        }
-        .sp-avatar-wrap:hover .sp-avatar-overlay{opacity:1}
-
-        /* AQUÍ estaba tu “no cuadra”: lo dejamos limpio y consistente */
-        .sp-name{
-          font-weight:900;
-          font-size:22px;
-          letter-spacing:-0.35px;
-          line-height:1.2;
-          color:#1A1F36;
-          text-align:center;
-          margin:10px 0 0;
-        }
-
-        .sp-badge{
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          background:#EEF0FB;
-          color:#4B5FD6;
-          font-size:11px;
-          font-weight:900;
-          padding:6px 12px;
-          border-radius:999px;
-          letter-spacing:.3px;
-        }
-
-        .sp-note{
-          font-size:12px;
-          color:#7B86AD;
-          margin:4px 0 0;
-          line-height:1.4;
-          text-align:center;
-        }
-
-        .sp-right{
-          display:flex;
-          flex-direction:column;
-          gap:8px;
-        }
-
-        .sp-section-title{
-          font-size:11px;
-          font-weight:900;
-          color:#9FA8C7;
-          letter-spacing:.8px;
-          text-transform:uppercase;
-          margin:0 0 10px;
-        }
-
-        .sp-fields-grid{
-          display:grid;
-          grid-template-columns:1fr 1fr;
-          gap:18px 32px;
-        }
-
-        .sp-field__label{
-          display:flex;
-          align-items:center;
-          gap:6px;
-          color:#9FA8C7;
-          font-size:11px;
-          font-weight:900;
-          letter-spacing:.5px;
-          text-transform:uppercase;
-          margin-bottom:6px;
-        }
-        .sp-field__value{
-          margin:0;
-          font-size:14px;
-          color:#1A1F36;
-          font-weight:700;
-        }
-        .sp-field__input{
-          width:100%;
-          box-sizing:border-box;
-          border:1.5px solid #DDE0EF;
-          border-radius:9px;
-          padding:8px 12px;
-          font-size:14px;
-          color:#1A1F36;
-          background:#F7F8FC;
-          outline:none;
-          transition:border-color .15s, box-shadow .15s, background .15s;
-          font-weight:650;
-        }
-        .sp-field__input:focus{
-          border-color:#4B5FD6;
-          box-shadow:0 0 0 3px rgba(75,95,214,.12);
-          background:#fff;
-        }
-        .sp-field__input:disabled{
-          opacity:.7;
-          cursor:not-allowed;
-        }
-
-        .sp-divider{
-          width:100%;
-          height:1px;
-          background:#F0F1F8;
-          margin:18px 0;
-        }
-
-        .sp-actions{
-          display:flex;
-          gap:10px;
-          margin-top:2px;
-          flex-wrap:wrap;
-        }
-        .sp-btn{
-          display:inline-flex;
-          align-items:center;
-          gap:7px;
-          padding:10px 18px;
-          border-radius:10px;
-          font-size:13px;
-          font-weight:900;
-          cursor:pointer;
-          transition:all .18s;
-          border:none;
-          user-select:none;
-        }
-        .sp-btn--primary{
-          background:#4B5FD6;
-          color:#fff;
-          box-shadow:0 3px 12px rgba(75,95,214,.3);
-        }
-        .sp-btn--primary:hover{
-          background:#3A4EC2;
-          transform:translateY(-1px);
-          box-shadow:0 5px 16px rgba(75,95,214,.38);
-        }
-        .sp-btn--outline{
-          background:transparent;
-          color:#4B5FD6;
-          border:1.5px solid #CBD0EC;
-        }
-        .sp-btn--outline:hover{background:#F0F1FB}
-        .sp-btn--ghost{
-          background:transparent;
-          color:#9FA8C7;
-          border:1.5px solid #E4E6F0;
-        }
-        .sp-btn--ghost:hover{background:#F7F8FC}
-
-        @media (max-width: 760px){
-          .sp-root{padding:20px 16px}
-          .sp-card{
-            grid-template-columns:1fr;
-            gap:26px;
-            padding:22px 18px;
-          }
-          .sp-fields-grid{grid-template-columns:1fr}
-        }
-      `}</style>
-
-      <div className="sp-root">
-        <div className="sp-header">
-          <div className="sp-header__pill" />
-          <h1 className="sp-header__title">Mi Perfil</h1>
-        </div>
-
-        <div className="sp-subbar">
-          <div className="sp-meta">
-            <Pill>
-              <FiHash size={14} /> <b>ID:</b> {data.id_persona}
-            </Pill>
-            <Pill>
-              <FiShield size={14} /> <b>Tipo:</b> {roleLabel}
-            </Pill>
-            <Pill>
-              <b>Estado:</b> {data.estado_usuario ? "Activo" : "Inactivo"}
-            </Pill>
-          </div>
-        </div>
-
-        <div className="sp-card">
-          {/* LEFT */}
-          <div className="sp-left">
-            <div className="sp-avatar-wrap">
-              {avatarSrc ? (
-                <img src={avatarSrc} alt="avatar" />
-              ) : (
-                <div className="sp-avatar-placeholder">
-                  <FiUser size={56} />
+              <div className="it-dp-profile-card__info-list">
+                <div className="it-dp-mini-info">
+                  <FiMail size={15} />
+                  <div>
+                    <span>Correo</span>
+                    <strong>{data.mail || '—'}</strong>
+                  </div>
                 </div>
-              )}
 
-              {editing && (
-                <div
-                  className="sp-avatar-overlay"
-                  onClick={() => fileRef.current?.click()}
-                >
-                  <FiCamera size={20} />
-                  <span>Cambiar foto</span>
+                <div className="it-dp-mini-info">
+                  <FiBook size={15} />
+                  <div>
+                    <span>Título</span>
+                    <strong>{data.titulo || '—'}</strong>
+                  </div>
                 </div>
-              )}
+
+                <div className="it-dp-mini-info">
+                  <FiShield size={15} />
+                  <div>
+                    <span>Estado</span>
+                    <strong>{data.estado_docente ? 'Activo' : 'Inactivo'}</strong>
+                  </div>
+                </div>
+              </div>
             </div>
+          </aside>
 
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={handleAvatar}
-            />
+          <section className="it-dp-main">
+            <div className="it-dp-content-card">
+              <div className="it-dp-top-note">
+                <div className="it-dp-top-note__dot" />
+                <p>
+                  Aquí puedes revisar tu información personal y los datos de tu perfil docente.
+                  Estos datos no se pueden modificar desde este panel. Solo puedes cambiar tu contraseña.
+                </p>
+              </div>
 
-            <h2 className="sp-name">
-              {editing ? draft.nombreCompleto : data.nombreCompleto}
-            </h2>
+              <div className="it-dp-section">
+                <div className="it-dp-section__header">
+                  <span className="it-dp-section__title">Información personal</span>
+                </div>
 
-            <span className="sp-badge">
-              <FiBook size={12} />
-              {roleLabel}
-            </span>
+                <div className="it-dp-fields-grid">
+                  <ReadOnlyField
+                    icon={FiUser}
+                    label="Nombres"
+                    value={data.nombres}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiUser}
+                    label="Apellido paterno"
+                    value={data.apellido_paterno}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiUser}
+                    label="Apellido materno"
+                    value={data.apellido_materno}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiMail}
+                    label="Correo electrónico"
+                    value={data.mail}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiHash}
+                    label="CI"
+                    value={data.ci}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiUser}
+                    label="Género"
+                    value={data.genero}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiCalendar}
+                    label="Fecha de nacimiento"
+                    value={formatFecha(data.fecha_nacimiento)}
+                    onBlocked={handleBlockedField}
+                  />
+              
+                </div>
+              </div>
 
-            <p className="sp-note">
-              Aquí se muestran datos del usuario y del perfil de docente.
-            </p>
-          </div>
+              <div className="it-dp-divider" />
 
-          {/* RIGHT */}
-          <div className="sp-right">
-            <p className="sp-section-title">Información personal</p>
+              <div className="it-dp-section">
+                <div className="it-dp-section__header">
+                  <span className="it-dp-section__title">Perfil docente</span>
+                </div>
 
-            <div className="sp-fields-grid">
-              <Field
-                icon={FiUser}
-                label="Nombres"
-                name="nombres"
-                value={editing ? draft.nombres : data.nombres}
-                editing={editing}
-                onChange={handleChange}
-              />
-              <Field
-                icon={FiUser}
-                label="Apellido paterno"
-                name="apellido_paterno"
-                value={editing ? draft.apellido_paterno : data.apellido_paterno}
-                editing={editing}
-                onChange={handleChange}
-              />
-              <Field
-                icon={FiUser}
-                label="Apellido materno"
-                name="apellido_materno"
-                value={editing ? draft.apellido_materno : data.apellido_materno}
-                editing={editing}
-                onChange={handleChange}
-              />
-              <Field
-                icon={FiMail}
-                label="Correo electrónico"
-                name="mail"
-                value={editing ? draft.mail : data.mail}
-                editing={editing}
-                onChange={handleChange}
-                type="email"
-              />
-              <Field
-                icon={FiHash}
-                label="CI"
-                name="ci"
-                value={editing ? draft.ci : data.ci}
-                editing={editing}
-                onChange={handleChange}
-                disabled
-              />
-              <Field
-                icon={FiUser}
-                label="Género"
-                name="genero"
-                value={editing ? draft.genero : data.genero}
-                editing={editing}
-                onChange={handleChange}
-              />
-              <Field
-                icon={FiCalendar}
-                label="Fecha de nacimiento"
-                name="fecha_nacimiento"
-                value={editing ? draft.fecha_nacimiento : data.fecha_nacimiento}
-                editing={editing}
-                onChange={handleChange}
-                type="date"
-              />
-              <Field
-                icon={FiShield}
-                label="Admin"
-                name="admin"
-                value={data.admin ? "Sí" : "No"}
-                editing={false}
-              />
-            </div>
+                <div className="it-dp-fields-grid">
+                  <ReadOnlyField
+                    icon={FiBook}
+                    label="Título"
+                    value={data.titulo}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiUser}
+                    label="Tipo de docente"
+                    value={data.tipo_docente}
+                    onBlocked={handleBlockedField}
+                  />
+                  
+                </div>
+              </div>
 
-            <div className="sp-divider" />
+              <div className="it-dp-divider" />
 
-            <p className="sp-section-title">Perfil de docente</p>
+              <div className="it-dp-section">
+                <div className="it-dp-section__header it-dp-section__header--actions">
+                  <span className="it-dp-section__title">Seguridad</span>
 
-            <div className="sp-fields-grid">
-              <Field
-                icon={FiBook}
-                label="Título"
-                name="titulo_docente"
-                value={editing ? draft.titulo_docente : data.titulo_docente}
-                editing={editing}
-                onChange={handleChange}
-              />
-              <Field
-                icon={FiUser}
-                label="Tipo de docente"
-                name="tipo_docente"
-                value={editing ? draft.tipo_docente : data.tipo_docente}
-                editing={editing}
-                onChange={handleChange}
-              />
-              <Field
-                icon={FiShield}
-                label="Estado docente"
-                name="estado_docente"
-                value={data.estado_docente ? "Activo" : "Inactivo"}
-                editing={false}
-              />
-              <Field
-                icon={FiHash}
-                label="ID docente"
-                name="id_docente"
-                value={String(data.id_docente || "")}
-                editing={false}
-              />
-            </div>
-
-            <div className="sp-divider" />
-
-            <div className="sp-actions">
-              {editing ? (
-                <>
                   <button
-                    className="sp-btn sp-btn--primary"
+                    className="it-dp-btn it-dp-btn--outline"
                     type="button"
-                    onClick={save}
+                    onClick={() => {
+                      setPasswordOpen((prev) => !prev);
+                      setLocalPasswordError('');
+                      dispatch(resetPasswordForm());
+                    }}
                   >
-                    <FiSave size={14} /> Guardar cambios
+                    <FiLock />
+                    <span>
+                      {passwordOpen ? 'Ocultar cambio de contraseña' : 'Cambiar contraseña'}
+                    </span>
+                    {passwordOpen ? <FiChevronUp /> : <FiChevronDown />}
                   </button>
-                  <button
-                    className="sp-btn sp-btn--ghost"
-                    type="button"
-                    onClick={cancel}
-                  >
-                    <FiX size={14} /> Cancelar
-                  </button>
-                </>
-              ) : (
-                <button
-                  className="sp-btn sp-btn--outline"
-                  type="button"
-                  onClick={startEdit}
-                >
-                  <FiEdit2 size={14} /> Editar perfil
-                </button>
-              )}
-            </div>
+                </div>
 
-            {editing && (
-              <p className="sp-note">
-                Nota: por ahora “Guardar” solo actualiza la vista. Si quieres, lo
-                conectamos a tu backend con PUT /api/usuarios/:id y PUT /api/docentes/:id.
-              </p>
-            )}
-          </div>
+                {passwordOpen && (
+                  <div className="it-dp-password-box">
+                    <div className="it-dp-password-grid">
+                      <PasswordField
+                        icon={FiLock}
+                        label="Contraseña actual"
+                        name="currentPassword"
+                        type="password"
+                        value={passwordForm.currentPassword}
+                        onChange={(e) =>
+                          dispatch(
+                            updatePasswordField({
+                              name: 'currentPassword',
+                              value: e.target.value,
+                            })
+                          )
+                        }
+                        placeholder="Ingresa tu contraseña actual"
+                      />
+
+                      <PasswordField
+                        icon={FiLock}
+                        label="Nueva contraseña"
+                        name="newPassword"
+                        type="password"
+                        value={passwordForm.newPassword}
+                        onChange={(e) =>
+                          dispatch(
+                            updatePasswordField({
+                              name: 'newPassword',
+                              value: e.target.value,
+                            })
+                          )
+                        }
+                        placeholder="Ingresa tu nueva contraseña"
+                      />
+
+                      <PasswordField
+                        icon={FiLock}
+                        label="Confirmar nueva contraseña"
+                        name="confirmPassword"
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) =>
+                          dispatch(
+                            updatePasswordField({
+                              name: 'confirmPassword',
+                              value: e.target.value,
+                            })
+                          )
+                        }
+                        placeholder="Confirma la nueva contraseña"
+                      />
+                    </div>
+
+                    <div className="it-dp-password-rules">
+                      <p>La nueva contraseña debe cumplir con lo siguiente:</p>
+
+                      <div className="it-dp-checks-grid">
+                        <CheckItem ok={passwordChecks.minLen} text="Mínimo 8 caracteres" />
+                        <CheckItem ok={passwordChecks.hasUpper} text="Al menos 1 mayúscula" />
+                        <CheckItem ok={passwordChecks.hasLower} text="Al menos 1 minúscula" />
+                        <CheckItem ok={passwordChecks.hasNumber} text="Al menos 1 número" />
+                        <CheckItem ok={passwordChecks.hasSymbol} text="Al menos 1 símbolo" />
+                        <CheckItem ok={passwordChecks.matches} text="La confirmación coincide" />
+                      </div>
+                    </div>
+
+                    <div className="it-dp-password-actions">
+                      <button
+                        className="it-dp-btn it-dp-btn--ghost"
+                        type="button"
+                        onClick={() => {
+                          dispatch(resetPasswordForm());
+                          setLocalPasswordError('');
+                        }}
+                        disabled={isChangingPassword}
+                      >
+                        <FiX />
+                        <span>Limpiar</span>
+                      </button>
+
+                      <button
+                        className="it-dp-btn it-dp-btn--primary"
+                        type="button"
+                        onClick={handleSavePassword}
+                        disabled={isChangingPassword || !allPasswordChecksValid}
+                      >
+                        <FiLock />
+                        <span>
+                          {isChangingPassword ? 'Actualizando...' : 'Guardar contraseña'}
+                        </span>
+                      </button>
+                    </div>
+
+                    {localPasswordError && (
+                      <p className="it-dp-inline-error">{localPasswordError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default DocenteProfile
+const styles = `
+  .it-dp-root{
+    min-height:100%;
+    padding:20px;
+    background:transparent;
+    box-sizing:border-box;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+
+  .it-dp-layout{
+    display:grid;
+    grid-template-columns:300px minmax(0, 1fr);
+    gap:20px;
+    align-items:start;
+  }
+
+  .it-dp-sidebar,
+  .it-dp-main{
+    min-width:0;
+  }
+
+  .it-dp-profile-card,
+  .it-dp-content-card{
+    background:#ffffff;
+    border:1px solid #e7edf5;
+    border-radius:22px;
+    box-shadow:0 12px 32px rgba(15,23,42,0.05);
+  }
+
+  .it-dp-profile-card{
+    padding:24px 20px;
+    position:sticky;
+    top:20px;
+  }
+
+  .it-dp-profile-card__avatar{
+    width:92px;
+    height:92px;
+    border-radius:22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 16px;
+    background:linear-gradient(180deg,#f2f4fb 0%, #e7ebf8 100%);
+    border:2px solid #e8ebf4;
+    color:#8590b5;
+  }
+
+  .it-dp-profile-card__name{
+    margin:0;
+    color:#111827;
+    font-size:24px;
+    line-height:1.2;
+    font-weight:800;
+    letter-spacing:-0.2px;
+    text-align:center;
+  }
+
+  .it-dp-role-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin:12px auto 0;
+    background:#eef2ff;
+    color:#4f46e5;
+    font-size:11px;
+    font-weight:800;
+    padding:7px 12px;
+    border-radius:999px;
+    letter-spacing:.3px;
+  }
+
+  .it-dp-profile-card__info-list{
+    margin-top:22px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .it-dp-mini-info{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    padding:12px 13px;
+    border-radius:14px;
+    background:#f8fafc;
+    border:1px solid #e9edf5;
+    color:#6b7280;
+  }
+
+  .it-dp-mini-info > div{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    min-width:0;
+  }
+
+  .it-dp-mini-info span{
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.45px;
+    color:#98a2b3;
+  }
+
+  .it-dp-mini-info strong{
+    font-size:13px;
+    line-height:1.45;
+    color:#1f2937;
+    word-break:break-word;
+  }
+
+  .it-dp-content-card{
+    padding:24px 26px;
+  }
+
+  .it-dp-top-note{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:14px 16px;
+    margin-bottom:22px;
+    border-radius:16px;
+    background:#f8fafc;
+    border:1px solid #e9edf5;
+  }
+
+  .it-dp-top-note__dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#7c5cff;
+    margin-top:4px;
+    flex-shrink:0;
+  }
+
+  .it-dp-top-note p{
+    margin:0;
+    font-size:13px;
+    line-height:1.6;
+    color:#667085;
+    font-weight:600;
+  }
+
+  .it-dp-section{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .it-dp-section__header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .it-dp-section__header--actions{
+    align-items:center;
+  }
+
+  .it-dp-section__title{
+    font-size:12px;
+    font-weight:900;
+    color:#98a2b3;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+
+  .it-dp-fields-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:18px 20px;
+  }
+
+  .it-dp-password-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:18px 20px;
+  }
+
+  .it-dp-field{
+    min-width:0;
+    text-align:left;
+    background:none;
+    border:none;
+    padding:0;
+  }
+
+  .it-dp-field__label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-bottom:7px;
+    color:#98a2b3;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    flex-wrap:wrap;
+  }
+
+  .it-dp-field--readonly{
+    cursor:pointer;
+  }
+
+  .it-dp-field--readonly .it-dp-field__value{
+    padding:14px 15px;
+    background:#f8fafc;
+    border:1px solid #e6ebf3;
+    border-radius:14px;
+    color:#4b5563;
+    transition:all .16s ease;
+  }
+
+  .it-dp-field--readonly.is-muted .it-dp-field__value{
+    background:#f1f5f9;
+  }
+
+  .it-dp-field--readonly:hover .it-dp-field__value{
+    background:#f4f7fb;
+    border-color:#dde4ef;
+  }
+
+  .it-dp-field__value{
+    margin:0;
+    min-height:20px;
+    color:#111827;
+    font-size:14px;
+    font-weight:700;
+    line-height:1.5;
+    word-break:break-word;
+  }
+
+  .it-dp-field__input{
+    width:100%;
+    box-sizing:border-box;
+    border:1px solid #dfe6f0;
+    border-radius:14px;
+    background:#fbfcfe;
+    color:#111827;
+    font-size:14px;
+    font-weight:600;
+    padding:12px 14px;
+    outline:none;
+    transition:all .16s ease;
+    box-shadow:0 0 0 0 rgba(112,79,230,0);
+  }
+
+  .it-dp-field__input:focus{
+    border-color:#8f7bff;
+    background:#fff;
+    box-shadow:0 0 0 4px rgba(124,92,255,.10);
+  }
+
+  .it-dp-field__input--date{
+    appearance:none;
+    -webkit-appearance:none;
+    min-height:48px;
+  }
+
+  .it-dp-divider{
+    width:100%;
+    height:1px;
+    background:#eef2f7;
+    margin:22px 0;
+  }
+
+  .it-dp-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border:none;
+    cursor:pointer;
+    border-radius:13px;
+    padding:11px 18px;
+    font-size:13px;
+    font-weight:800;
+    transition:all .18s ease;
+    min-height:44px;
+  }
+
+  .it-dp-btn--primary{
+    background:linear-gradient(135deg,#7c5cff 0%, #6d5dfd 100%);
+    color:#fff;
+    box-shadow:0 10px 22px rgba(109,93,253,.20);
+  }
+
+  .it-dp-btn--primary:hover{
+    transform:translateY(-1px);
+  }
+
+  .it-dp-btn--outline{
+    background:#fff;
+    color:#475467;
+    border:1px solid #e4e7ec;
+  }
+
+  .it-dp-btn--outline:hover{
+    background:#f9fafb;
+  }
+
+  .it-dp-btn--ghost{
+    background:#fff;
+    color:#667085;
+    border:1px solid #e4e7ec;
+  }
+
+  .it-dp-btn--ghost:hover{
+    background:#f9fafb;
+  }
+
+  .it-dp-btn:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+    transform:none;
+    box-shadow:none;
+  }
+
+  .it-dp-password-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .it-dp-password-box{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    padding:18px;
+    border:1px solid #e7edf5;
+    border-radius:18px;
+    background:#fcfcff;
+  }
+
+  .it-dp-password-rules{
+    padding:14px 16px;
+    border-radius:14px;
+    background:#f8fafc;
+    border:1px solid #e9edf5;
+  }
+
+  .it-dp-password-rules p{
+    margin:0 0 10px;
+    color:#475467;
+    font-size:13px;
+    font-weight:800;
+  }
+
+  .it-dp-checks-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px 14px;
+  }
+
+  .it-dp-check-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:#667085;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .it-dp-check-item.is-ok{
+    color:#15803d;
+  }
+
+  .it-dp-inline-error{
+    margin:0;
+    color:#b42318;
+    font-size:13px;
+    font-weight:800;
+  }
+
+  .it-dp-loading-wrap,
+  .it-dp-feedback-wrap{
+    min-height:68vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .it-dp-loading-card,
+  .it-dp-feedback-card{
+    width:min(460px, 100%);
+    background:#fff;
+    border:1px solid #e7edf5;
+    border-radius:24px;
+    padding:32px 26px;
+    text-align:center;
+    box-shadow:0 12px 32px rgba(15,23,42,.05);
+  }
+
+  .it-dp-feedback-card__icon{
+    width:52px;
+    height:52px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 14px;
+    background:#f4f6fc;
+    color:#5c6788;
+  }
+
+  .it-dp-feedback-card h3{
+    margin:0 0 8px;
+    color:#111827;
+    font-size:20px;
+    font-weight:800;
+  }
+
+  .it-dp-feedback-card p{
+    margin:0;
+    color:#6b7280;
+    font-size:14px;
+    line-height:1.6;
+  }
+
+  .it-dp-spinner{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:4px solid #e8eafb;
+    border-top-color:#704fe6;
+    margin:0 auto 14px;
+    animation:it-dp-spin .8s linear infinite;
+  }
+
+  .it-dp-loading-card p{
+    margin:0;
+    color:#475467;
+    font-weight:800;
+    font-size:15px;
+  }
+
+  @keyframes it-dp-spin{
+    to{ transform:rotate(360deg); }
+  }
+
+  @media (max-width: 1100px){
+    .it-dp-layout{
+      grid-template-columns:1fr;
+    }
+
+    .it-dp-profile-card{
+      position:static;
+    }
+  }
+
+  @media (max-width: 760px){
+    .it-dp-root{
+      padding:14px 12px 18px;
+    }
+
+    .it-dp-content-card,
+    .it-dp-profile-card{
+      padding:18px 16px;
+      border-radius:20px;
+    }
+
+    .it-dp-fields-grid,
+    .it-dp-password-grid,
+    .it-dp-checks-grid{
+      grid-template-columns:1fr;
+      gap:16px;
+    }
+
+    .it-dp-section__header,
+    .it-dp-section__header--actions{
+      align-items:stretch;
+      flex-direction:column;
+    }
+
+    .it-dp-password-actions{
+      width:100%;
+      flex-direction:column;
+    }
+
+    .it-dp-password-actions .it-dp-btn,
+    .it-dp-section__header .it-dp-btn{
+      width:100%;
+      justify-content:center;
+    }
+  }
+`;
+
+export default DocenteProfile;

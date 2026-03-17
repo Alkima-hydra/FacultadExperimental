@@ -164,7 +164,10 @@ export const selectPerfilError = (state) => state?.perfil?.error ?? null;
 export const selectPerfilSuccess = (state) => state?.perfil?.successMessage ?? null;
 
 export const selectEditForm = (state) =>
-  state?.perfil?.editForm ?? { direccion: '', fecha_nacimiento: '' };
+  state?.perfil?.editForm ?? {
+    direccion: '',
+    fecha_nacimiento: '',
+  };
 
 export const selectPerfilSavingProfile = (state) =>
   Boolean(state?.perfil?.isSavingProfile);

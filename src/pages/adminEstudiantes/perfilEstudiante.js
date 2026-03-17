@@ -181,6 +181,7 @@ const StudentProfile = () => {
       hasUpper: /[A-Z]/.test(pwd),
       hasLower: /[a-z]/.test(pwd),
       hasNumber: /\d/.test(pwd),
+      hasSymbol: /[^A-Za-z0-9]/.test(pwd),
       matches:
         pwd.length > 0 &&
         passwordForm.confirmPassword.length > 0 &&
@@ -244,6 +245,9 @@ const StudentProfile = () => {
     if (!/\d/.test(passwordForm.newPassword)) {
       return 'La nueva contraseña debe incluir al menos un número.';
     }
+    if (!/[^A-Za-z0-9]/.test(passwordForm.newPassword)) {
+      return 'La nueva contraseña debe incluir al menos un símbolo.';
+    }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       return 'La confirmación no coincide con la nueva contraseña.';
     }
@@ -281,7 +285,8 @@ const StudentProfile = () => {
 
     const result = await dispatch(
       changePasswordPerfil({
-        idEstudiante: data?.id_estudiante,
+        userId,
+        currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       })
     );
@@ -635,6 +640,7 @@ const StudentProfile = () => {
                         <CheckItem ok={passwordChecks.hasUpper} text="Al menos 1 mayúscula" />
                         <CheckItem ok={passwordChecks.hasLower} text="Al menos 1 minúscula" />
                         <CheckItem ok={passwordChecks.hasNumber} text="Al menos 1 número" />
+                        <CheckItem ok={passwordChecks.hasSymbol} text="Al menos 1 símbolo" />
                         <CheckItem ok={passwordChecks.matches} text="La confirmación coincide" />
                       </div>
                     </div>

@@ -91,16 +91,23 @@ export const updatePerfilEditable = createAsyncThunk(
 
 export const changePasswordPerfil = createAsyncThunk(
   'perfil/changePasswordPerfil',
-  async ({ idEstudiante, newPassword }, { rejectWithValue }) => {
+  async ({ userId, currentPassword, newPassword }, { rejectWithValue }) => {
     try {
-      if (!idEstudiante) {
+      if (!userId) {
         return rejectWithValue({
           message: 'Faltan datos para actualizar la contraseña.',
         });
       }
 
-      const res = await api.put(`/estudiantes/${idEstudiante}`, {
-        password: newPassword,
+      if (!currentPassword || !newPassword) {
+        return rejectWithValue({
+          message: 'Debes completar la contraseña actual y la nueva contraseña.',
+        });
+      }
+
+      const res = await api.put(`/usuarios/${userId}/password`, {
+        currentPassword,
+        newPassword,
       });
 
       const json = res.data;
@@ -113,6 +120,20 @@ export const changePasswordPerfil = createAsyncThunk(
 
       return { ok: true };
     } catch (error) {
+      const backendErrors = error?.data?.errors;
+
+      if (backendErrors?.newPassword?.msg) {
+        return rejectWithValue({
+          message: backendErrors.newPassword.msg,
+        });
+      }
+
+      if (backendErrors?.currentPassword?.msg) {
+        return rejectWithValue({
+          message: backendErrors.currentPassword.msg,
+        });
+      }
+
       return rejectWithValue({
         message: error?.message || 'Error al cambiar la contraseña.',
       });
