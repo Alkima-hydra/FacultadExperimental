@@ -336,4 +336,10 @@ export const perfilEstudianteApi = {
       .then((res) => res.data)
       .catch(handleError),
 };
+
+//para ver el historial de movimientos de un estudiante
+export const saldosMovimientosApi = {
+  fetchSaldosByEstudianteId: (estudianteId) =>
+    api.get(`/saldo-movimientos/${estudianteId}`).then((res) => res.data).catch(handleError),
+};
 export default api;

@@ -17,6 +17,10 @@ import ofertaAcademicaReducer from '../pages/adminEstudiantes/slicesOfertaAcadem
 import cursosEstudianteReducer from '../pages/adminEstudiantes/slicesCursos/CursosSlice';
 import checkoutReducer from '../pages/adminEstudiantes/slicesCheckout/CheckoutSlice';
 import perfilDocenteReducer from '../pages/adminDocentes/slicesPerfilDocente/PerfilDocenteSlice';
+// para que el estudiante vea su historial de saldos
+import saldosMovimientosReducer from '../pages/adminEstudiantes/slicesSaldo/SaldosMovimientosSlice';
+//admin para docente
+
 const loginPersistConfig = {
   key: 'login',
   storage,
@@ -39,6 +43,7 @@ export const rootReducer = combineReducers({
   cursosEstudiante: cursosEstudianteReducer,
   checkout: checkoutReducer,
   perfilDocente: perfilDocenteReducer,
+  saldosMovimientos: saldosMovimientosReducer,
 });
 
 export default rootReducer;

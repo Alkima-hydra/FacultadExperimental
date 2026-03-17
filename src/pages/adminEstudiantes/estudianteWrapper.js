@@ -8,6 +8,7 @@ import {
   FiMenu,
   FiShoppingCart,
   FiLogOut,
+  FiDollarSign
 } from "react-icons/fi";
 import { MdOutlineSchool } from "react-icons/md";
 import { PiNotebookBold } from "react-icons/pi";
@@ -31,6 +32,7 @@ import StudentProfile from "./perfilEstudiante";
 import StudentCourses from "./cursosEstudiante";
 import CartMain from "./carritoCompras";
 import OfertaAcademica from "./ofertaAcademica";
+import StudentBalanceHistory from "./saldosMovimientos";
 
 const NAV_ITEMS = [
   {
@@ -61,6 +63,14 @@ const NAV_ITEMS = [
     title: "Carrito de compras",
     description: "Administra tus cursos seleccionados antes de pagar.",
   },
+  {
+    id: "balances",
+    label: "Saldos y Movimientos",
+    icon: <FiDollarSign />,
+    title: "Saldos y movimientos",
+    description: "Consulta tu historial de transacciones y saldo disponible.",
+  }
+
 ];
 
 const renderContent = (activeTab, onGoToOffer) => {
@@ -73,6 +83,8 @@ const renderContent = (activeTab, onGoToOffer) => {
       return <OfertaAcademica />;
     case "cart":
       return <CartMain onGoToOffer={onGoToOffer} />;
+    case "balances":
+      return <StudentBalanceHistory />;
     default:
       return null;
   }
