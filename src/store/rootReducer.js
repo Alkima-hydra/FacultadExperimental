@@ -8,6 +8,7 @@ import loginReducer from '../pages/signin/slices/loginSlice';
 import studentsReducer from '../pages/admin/slicesStudents/StudentsSlice';
 import docentesReducer from '../pages/admin/slicesDocentes/DocentesSlice';
 import cursoReducer from '../pages/admin/slicesCursos/CursosSlice';
+import pagosReducer from '../pages/admin/slicesPagos/PagosSlice';
 
 // admin estudiantes
 import perfilReducer from '../pages/adminEstudiantes/slicesPerfil/PerfilSlice';
@@ -34,6 +35,7 @@ export const rootReducer = combineReducers({
   students: studentsReducer,
   docentes: docentesReducer,
   cursos: cursoReducer,
+  pagos: pagosReducer,
 
   // admin estudiantes
   perfil: perfilReducer,

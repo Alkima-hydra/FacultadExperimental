@@ -16,6 +16,7 @@ import Swal from "sweetalert2";
 import StudentsAdmin from "./studentsAdmin";
 import CoursesAdmin from "./coursesAdmin";
 import DocentesAdmin from "./docentesAdmin";
+import ReportesAdmin from "./reporteAdmin";
 
 import {
   selectUserId,
@@ -47,6 +48,13 @@ const NAV_ITEMS = [
     title: "Gestión de docentes",
     description: "Consulta y administra a los docentes registrados.",
   },
+  {
+    id:"reportes",
+    label:"Reportes",
+    icon:<FiBookOpen />,
+    title:"Reportes y estadísticas",
+    description:"Visualiza reportes de pagos y estadísticas clave.",
+  }
 ];
 
 const renderContent = (activeTab) => {
@@ -57,6 +65,8 @@ const renderContent = (activeTab) => {
       return <CoursesAdmin />;
     case "docentes":
       return <DocentesAdmin />;
+    case "reportes":
+      return <ReportesAdmin />;
     default:
       return null;
   }
