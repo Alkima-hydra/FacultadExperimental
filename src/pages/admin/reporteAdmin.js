@@ -25,6 +25,7 @@ import {
   selectPagosLoading,
   selectPagosError,
 } from "./slicesPagos/PagosSlice";
+import { exportToExcel } from "./exportToExcel";
 
 /* ────────────────────────────────────────────────────────── helpers */
 
@@ -80,7 +81,7 @@ const transformarPago = (pago) => {
     id_pago: pago?.id_pago,
     fecha: pago?.creado_en,
     monto: Number(pago?.monto || 0),
-    metodo: pago?.metodo || "-",
+    metodo: pago?.metodo || "TRANSFERENCIA BANCARIA",
     estado: getStatusLabel(pago),
     referencia: `PAGO-${pago?.id_pago}`,
     cursos,
@@ -91,52 +92,6 @@ const transformarPago = (pago) => {
 
 /* ────────────────────────────────────────────────────────── Excel export */
 
-const exportToExcel = (payments, stats) => {
-  // Build CSV with BOM for Excel UTF-8 compatibility
-  const BOM = "\uFEFF";
-  const sep = ";";
-
-  const metaRows = [
-    ["REPORTE DE PAGOS - PLATAFORMA EDUCATIVA"],
-    [`Generado:${sep}${new Date().toLocaleString("es-BO")}`],
-    [`Total registros:${sep}${payments.length}`],
-    [],
-    ["── RESUMEN ESTADÍSTICO ──"],
-    [`Ingresos confirmados (BOB):${sep}${stats.totalIngresos.toFixed(2)}`],
-    [`Ticket promedio (BOB):${sep}${stats.ticketPromedio.toFixed(2)}`],
-    [`Tasa de conversión (%):${sep}${stats.tasaConversion.toFixed(1)}`],
-    [`Completados:${sep}${stats.completados}`],
-    [`Pendientes:${sep}${stats.pendientes}`],
-    [`Cancelados:${sep}${stats.cancelados}`],
-    [],
-    ["── DESGLOSE POR MÉTODO ──"],
-    ...Object.entries(stats.porMetodo).map(([m, c]) => [`${m}:${sep}${c}`]),
-    [],
-    ["── TRANSACCIONES ──"],
-    ["ID", "Fecha", "Cursos", "Método", "Monto (BOB)", "Estado", "Referencia"].join(sep),
-  ];
-
-  const dataRows = payments.map((p) =>
-    [
-      `#${p.id_pago}`,
-      formatDate(p.fecha),
-      `"${p.resumenCursos}"`,
-      p.metodo,
-      p.monto.toFixed(2),
-      p.estado,
-      p.referencia,
-    ].join(sep)
-  );
-
-  const csv = BOM + [...metaRows.map((r) => (Array.isArray(r) ? r.join(sep) : r)), ...dataRows].join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `reporte_pagos_${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-};
 
 /* ────────────────────────────────────────────────────────── sub-components */
 
@@ -341,7 +296,7 @@ const AdminPaymentsReport = () => {
     TRANSFERENCIA_BANCARIA: "#10B981",
     SALDO: "#F59E0B",
     MIXTO: "#8B5CF6",
-    "-": "#94A3B8",
+    "TRANSFERENCIA BANCARIA": "#10B981",
   };
 
   return (
