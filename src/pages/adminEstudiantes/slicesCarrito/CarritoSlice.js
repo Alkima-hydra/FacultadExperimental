@@ -59,11 +59,13 @@ const CarritoSlice = createSlice({
       .addCase(addItemCarrito.fulfilled, (state, action) => {
         state.isAdding = false;
         state.carrito = action.payload?.carrito || state.carrito;
-        state.successMessage = action.payload?.message || 'Curso agregado al carrito.';
+        state.successMessage =
+          action.payload?.message || 'Curso agregado al carrito.';
       })
       .addCase(addItemCarrito.rejected, (state, action) => {
         state.isAdding = false;
-        state.error = action.payload?.message || 'Error al agregar el curso al carrito.';
+        state.error =
+          action.payload?.message || 'Error al agregar el curso al carrito.';
       })
 
       .addCase(removeItemCarrito.pending, (state) => {
@@ -73,20 +75,9 @@ const CarritoSlice = createSlice({
       })
       .addCase(removeItemCarrito.fulfilled, (state, action) => {
         state.isRemoving = false;
-        state.successMessage = action.payload?.message || 'Item eliminado.';
-
-        if (!state.carrito) return;
-
-        state.carrito.items = (state.carrito.items || []).filter(
-          (item) => String(item.id_compra_curso) !== String(action.payload.id_compra_curso)
-        );
-
-        state.carrito.cantidad_items = state.carrito.items.length;
-        state.carrito.total = Number(action.payload.total || 0);
-
-        if (state.carrito.items.length === 0) {
-          state.carrito = null;
-        }
+        state.successMessage =
+          action.payload?.message || 'Item eliminado correctamente.';
+        state.carrito = action.payload?.carrito ?? null;
       })
       .addCase(removeItemCarrito.rejected, (state, action) => {
         state.isRemoving = false;
@@ -100,7 +91,8 @@ const CarritoSlice = createSlice({
       })
       .addCase(cancelarCarrito.fulfilled, (state, action) => {
         state.isCanceling = false;
-        state.successMessage = action.payload?.message || 'Carrito cancelado.';
+        state.successMessage =
+          action.payload?.message || 'Carrito cancelado correctamente.';
         state.carrito = null;
       })
       .addCase(cancelarCarrito.rejected, (state, action) => {
@@ -124,5 +116,4 @@ export const selectCarritoCanceling = (state) => Boolean(state?.carrito?.isCance
 export const selectCarritoError = (state) => state?.carrito?.error ?? null;
 export const selectCarritoSuccess = (state) => state?.carrito?.successMessage ?? null;
 
-export const CarritoReducer = CarritoSlice.reducer;
 export default CarritoSlice.reducer;

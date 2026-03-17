@@ -21,7 +21,6 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { selectUserId } from '../signin/slices/loginSelectors';
 
-
 import {
   fetchOfertaAcademicaByUsuarioId,
   addCursoOfertaToCarrito,
@@ -57,6 +56,10 @@ import {
   closeOfertaDetalle,
 } from './slicesOfertaAcademica/OfertaAcademicaSlice';
 
+const ESTADO_CURSO_ACTIVO = 'ACTIVO';
+const ESTADO_CURSO_FINALIZADO = 'FINALIZADO';
+const ESTADO_CURSO_CANCELADO = 'CANCELADO';
+
 const swalTheme = {
   confirmButtonColor: '#704FE6',
   cancelButtonColor: '#4D5756',
@@ -82,16 +85,83 @@ function docenteNombre(docente) {
   return [u.nombres, u.apellido_paterno, u.apellido_materno].filter(Boolean).join(' ');
 }
 
+function cursoEstaDisponibleRealmente(curso) {
+  return Boolean(
+    curso &&
+      curso.estado === ESTADO_CURSO_ACTIVO &&
+      curso.puede_inscribirse === true
+  );
+}
+
 function getBadge(curso) {
-  if (curso?.ya_aprobada) return { text: 'Ya aprobada', cls: 'oa-badge oa-badge--gray' };
-  if (curso?.cursando_actualmente) return { text: 'Cursando', cls: 'oa-badge oa-badge--blue' };
-  if (curso?.en_carrito_pendiente) return { text: 'En carrito', cls: 'oa-badge oa-badge--purple' };
-  if (curso?.tiene_prerequisitos_pendientes) return { text: 'Prerequisitos pendientes', cls: 'oa-badge oa-badge--red' };
-  if (curso?.sin_cupos) return { text: 'Sin cupos', cls: 'oa-badge oa-badge--orange' };
-  if (curso?.choque_horario) return { text: 'Choque horario', cls: 'oa-badge oa-badge--red' };
-  if (curso?.reprobada_previamente) return { text: 'Repite materia', cls: 'oa-badge oa-badge--yellow' };
-  if (curso?.puede_inscribirse) return { text: 'Disponible', cls: 'oa-badge oa-badge--green' };
+  if (curso?.estado === ESTADO_CURSO_FINALIZADO) {
+    return { text: 'Finalizado', cls: 'oa-badge oa-badge--gray' };
+  }
+
+  if (curso?.estado === ESTADO_CURSO_CANCELADO) {
+    return { text: 'Cancelado', cls: 'oa-badge oa-badge--red' };
+  }
+
+  if (curso?.ya_aprobada) {
+    return { text: 'Ya aprobada', cls: 'oa-badge oa-badge--gray' };
+  }
+
+  if (curso?.cursando_actualmente) {
+    return { text: 'Cursando', cls: 'oa-badge oa-badge--blue' };
+  }
+
+  if (curso?.en_carrito_pendiente) {
+    return { text: 'En carrito', cls: 'oa-badge oa-badge--purple' };
+  }
+
+  if (curso?.tiene_prerequisitos_pendientes) {
+    return { text: 'Prerequisitos pendientes', cls: 'oa-badge oa-badge--red' };
+  }
+
+  if (curso?.sin_cupos) {
+    return { text: 'Sin cupos', cls: 'oa-badge oa-badge--orange' };
+  }
+
+  if (curso?.choque_horario) {
+    return { text: 'Choque horario', cls: 'oa-badge oa-badge--red' };
+  }
+
+  if (curso?.reprobada_previamente) {
+    return { text: 'Repite materia', cls: 'oa-badge oa-badge--yellow' };
+  }
+
+  if (cursoEstaDisponibleRealmente(curso)) {
+    return { text: 'Disponible', cls: 'oa-badge oa-badge--green' };
+  }
+
   return { text: 'Bloqueado', cls: 'oa-badge oa-badge--gray' };
+}
+
+function getMotivosBloqueo(curso) {
+  if (!curso) return ['No disponible para agregar al carrito.'];
+
+  if (curso.estado === ESTADO_CURSO_FINALIZADO) {
+    return ['Este curso ya fue finalizado.'];
+  }
+
+  if (curso.estado === ESTADO_CURSO_CANCELADO) {
+    return ['Este curso fue cancelado y ya no está disponible.'];
+  }
+
+  const motivos = Array.isArray(curso.motivos_bloqueo) ? curso.motivos_bloqueo.filter(Boolean) : [];
+
+  if (motivos.length > 0) return motivos;
+
+  if (!curso.puede_inscribirse) {
+    return [curso.motivo_bloqueo || 'No disponible para agregar al carrito.'];
+  }
+
+  return [];
+}
+
+function getMotivoPrincipal(curso) {
+  const motivos = getMotivosBloqueo(curso);
+  return motivos[0] || 'No disponible para agregar al carrito.';
 }
 
 const PrereqPill = ({ item, ok }) => (
@@ -106,7 +176,8 @@ const OfertaDetailModal = ({ open, onClose, curso, onAdd, isAdding }) => {
   if (!open || !curso) return null;
 
   const badge = getBadge(curso);
-  const motivos = Array.isArray(curso?.motivos_bloqueo) ? curso.motivos_bloqueo : [];
+  const motivos = getMotivosBloqueo(curso);
+  const disponibleReal = cursoEstaDisponibleRealmente(curso);
 
   return (
     <div className="oa-modal-backdrop" onClick={onClose}>
@@ -134,6 +205,7 @@ const OfertaDetailModal = ({ open, onClose, curso, onAdd, isAdding }) => {
               <div><span>Materia</span><strong>{curso?.materia?.nombre || '—'}</strong></div>
               <div><span>Categoría</span><strong>{curso?.materia?.categoria || '—'}</strong></div>
               <div><span>Periodo</span><strong>{curso?.periodo || '—'}</strong></div>
+              <div><span>Estado</span><strong>{curso?.estado || '—'}</strong></div>
             </div>
           </div>
 
@@ -160,9 +232,9 @@ const OfertaDetailModal = ({ open, onClose, curso, onAdd, isAdding }) => {
           <div className="oa-modal__card">
             <h4>Disponibilidad</h4>
             <div className="oa-modal__list">
-              <div><span>Cupos</span><strong>{curso?.cupos ?? 0}</strong></div>
-              <div><span>Inscritos actuales</span><strong>{curso?.inscritos_actuales ?? 0}</strong></div>
               <div><span>Cupos disponibles</span><strong>{curso?.cupos_disponibles ?? 0}</strong></div>
+              <div><span>Inscritos actuales</span><strong>{curso?.inscritos_actuales ?? 0}</strong></div>
+              <div><span>Cupos máximos</span><strong>{curso?.cupos_max ?? 0}</strong></div>
               <div><span>Precio</span><strong>{money(curso?.precio)}</strong></div>
             </div>
           </div>
@@ -238,7 +310,7 @@ const OfertaDetailModal = ({ open, onClose, curso, onAdd, isAdding }) => {
             </div>
           )}
 
-          {!curso?.puede_inscribirse && motivos.length > 0 && (
+          {!disponibleReal && motivos.length > 0 && (
             <div className="oa-modal__card oa-modal__card--full oa-modal__card--warning">
               <h4>¿Por qué no puedes agregarla al carrito?</h4>
               <ul className="oa-modal__reasons">
@@ -260,13 +332,13 @@ const OfertaDetailModal = ({ open, onClose, curso, onAdd, isAdding }) => {
 
           <button
             type="button"
-            className={`oa-btn ${curso?.puede_inscribirse ? 'oa-btn--primary' : 'oa-btn--disabled'}`}
-            onClick={() => curso?.puede_inscribirse && onAdd(curso)}
-            disabled={!curso?.puede_inscribirse || isAdding}
+            className={`oa-btn ${disponibleReal ? 'oa-btn--primary' : 'oa-btn--disabled'}`}
+            onClick={() => disponibleReal && onAdd(curso)}
+            disabled={!disponibleReal || isAdding}
           >
             <FiShoppingCart size={15} />
             <span>
-              {curso?.puede_inscribirse
+              {disponibleReal
                 ? isAdding
                   ? 'Agregando...'
                   : 'Agregar al carrito'
@@ -281,7 +353,7 @@ const OfertaDetailModal = ({ open, onClose, curso, onAdd, isAdding }) => {
 
 const OfertaCard = ({ curso, onOpen, onAdd, isAdding }) => {
   const badge = getBadge(curso);
-  const blocked = !curso?.puede_inscribirse;
+  const blocked = !cursoEstaDisponibleRealmente(curso);
 
   return (
     <div className={`oa-card${blocked ? ' blocked' : ''}`}>
@@ -331,7 +403,7 @@ const OfertaCard = ({ curso, onOpen, onAdd, isAdding }) => {
       {blocked ? (
         <div className="oa-card__reason">
           <FiSlash size={14} />
-          <span>{curso?.motivo_bloqueo || 'No disponible para agregar al carrito.'}</span>
+          <span>{getMotivoPrincipal(curso)}</span>
         </div>
       ) : (
         <div className="oa-card__reason oa-card__reason--ok">
@@ -433,6 +505,8 @@ const OfertaAcademica = () => {
   }, [cursosBase]);
 
   const handleAdd = async (curso) => {
+    if (!cursoEstaDisponibleRealmente(curso)) return;
+
     const confirm = await Swal.fire({
       title: '¿Agregar al carrito?',
       html: `<div style="margin-top:6px; color:#5A6676; font-size:14px; line-height:1.5">
@@ -460,134 +534,143 @@ const OfertaAcademica = () => {
       <style>{styles}</style>
 
       <div className="oa-root">
-        <div className="oa-header">
-          <div className="oa-header__left">
-            <div className="oa-header__pill" />
-            <div>
-              <h1 className="oa-header__title">Oferta Académica</h1>
-              <p className="oa-header__sub">
-                Explora materias disponibles y revisa restricciones antes de agregar al carrito.
-              </p>
+        <div className="oa-shell">
+          <div className="oa-headbar">
+            <div className="oa-headbar__left">
+              <div className="oa-headbar__accent" />
+              <div className="oa-headbar__text">
+                <h2 className="oa-headbar__title">Cursos disponibles</h2>
+                <p className="oa-headbar__sub">
+                  Explora materias, revisa restricciones y agrégalas a tu carrito.
+                </p>
+              </div>
+            </div>
+
+            <div className="oa-headbar__stats">
+              <span>{resumen?.total_cursos_activos ?? 0} cursos</span>
+              <span>{resumen?.disponibles ?? 0} disponibles</span>
+              <span>{resumen?.bloqueados ?? 0} bloqueados</span>
             </div>
           </div>
 
-          <div className="oa-header__stats">
-            <span>{resumen?.total_cursos_activos ?? 0} cursos</span>
-            <span>{resumen?.disponibles ?? 0} disponibles</span>
-            <span>{resumen?.bloqueados ?? 0} bloqueados</span>
-          </div>
-        </div>
-
-        <div className="oa-toolbar">
-          <div className="oa-search">
-            <FiSearch className="oa-search__icon" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre, sigla, docente, motivo o prerequisito..."
-              value={search}
-              onChange={(e) => dispatch(setOfertaSearch(e.target.value))}
-            />
-          </div>
-
-          <button
-            type="button"
-            className={`oa-filter-toggle${showFilters ? ' active' : ''}`}
-            onClick={() => setShowFilters((v) => !v)}
-          >
-            <FiFilter size={15} />
-            <span>Filtros</span>
-          </button>
-        </div>
-
-        {showFilters && (
-          <div className="oa-filters">
-            <select
-              value={filtroEstado}
-              onChange={(e) => dispatch(setOfertaFiltroEstado(e.target.value))}
-            >
-              <option value="todos">Todos los estados</option>
-              <option value="disponibles">Disponibles</option>
-              <option value="bloqueados">Bloqueados</option>
-              <option value="aprobadas">Ya aprobadas</option>
-              <option value="cursando">Cursando actualmente</option>
-              <option value="carrito">En carrito</option>
-              <option value="reprobadas">Reprobadas previamente</option>
-              <option value="choque">Con choque horario</option>
-            </select>
-
-            <select
-              value={filtroDisponibilidad}
-              onChange={(e) => dispatch(setOfertaFiltroDisponibilidad(e.target.value))}
-            >
-              <option value="todos">Todos los cupos</option>
-              <option value="con-cupos">Con cupos</option>
-              <option value="sin-cupos">Sin cupos</option>
-            </select>
-
-            <select
-              value={filtroCategoria}
-              onChange={(e) => dispatch(setOfertaFiltroCategoria(e.target.value))}
-            >
-              <option value="todas">Todas las categorías</option>
-              {categorias.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-
-            <select
-              value={filtroPeriodo}
-              onChange={(e) => dispatch(setOfertaFiltroPeriodo(e.target.value))}
-            >
-              <option value="todos">Todos los periodos</option>
-              {periodos.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-
-            <select
-              value={filtroPrerequisitos}
-              onChange={(e) => dispatch(setOfertaFiltroPrerequisitos(e.target.value))}
-            >
-              <option value="todos">Todos los prerequisitos</option>
-              <option value="con-prerequisitos">Con prerequisitos</option>
-              <option value="sin-prerequisitos">Sin prerequisitos</option>
-              <option value="prerequisitos-pendientes">Con prerequisitos pendientes</option>
-              <option value="prerequisitos-completos">Prerequisitos completos</option>
-            </select>
+          <div className="oa-toolbar">
+            <div className="oa-search">
+              <FiSearch className="oa-search__icon" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre, sigla, docente, motivo o prerequisito..."
+                value={search}
+                onChange={(e) => dispatch(setOfertaSearch(e.target.value))}
+              />
+            </div>
 
             <button
               type="button"
-              className="oa-clear-btn"
-              onClick={() => dispatch(clearOfertaFiltros())}
+              className={`oa-filter-toggle${showFilters ? ' active' : ''}`}
+              onClick={() => setShowFilters((v) => !v)}
             >
-              Limpiar
+              <FiFilter size={15} />
+              <span>Filtros</span>
             </button>
           </div>
-        )}
 
-        {loading ? (
-          <div className="oa-empty">
-            <FiBook size={42} />
-            <p>Cargando oferta académica...</p>
+          {showFilters && (
+            <div className="oa-filters">
+              <select
+                value={filtroEstado}
+                onChange={(e) => dispatch(setOfertaFiltroEstado(e.target.value))}
+              >
+                <option value="todos">Todos los estados</option>
+                <option value="disponibles">Disponibles</option>
+                <option value="bloqueados">Bloqueados</option>
+                <option value="aprobadas">Ya aprobadas</option>
+                <option value="cursando">Cursando actualmente</option>
+                <option value="carrito">En carrito</option>
+                <option value="reprobadas">Reprobadas previamente</option>
+                <option value="choque">Con choque horario</option>
+                <option value="activos">Solo activos</option>
+                <option value="finalizados">Solo finalizados</option>
+                <option value="cancelados">Solo cancelados</option>
+              </select>
+
+              <select
+                value={filtroDisponibilidad}
+                onChange={(e) => dispatch(setOfertaFiltroDisponibilidad(e.target.value))}
+              >
+                <option value="todos">Todos los cupos</option>
+                <option value="con-cupos">Con cupos</option>
+                <option value="sin-cupos">Sin cupos</option>
+              </select>
+
+              <select
+                value={filtroCategoria}
+                onChange={(e) => dispatch(setOfertaFiltroCategoria(e.target.value))}
+              >
+                <option value="todas">Todas las categorías</option>
+                {categorias.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+
+              <select
+                value={filtroPeriodo}
+                onChange={(e) => dispatch(setOfertaFiltroPeriodo(e.target.value))}
+              >
+                <option value="todos">Todos los periodos</option>
+                {periodos.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+
+              <select
+                value={filtroPrerequisitos}
+                onChange={(e) => dispatch(setOfertaFiltroPrerequisitos(e.target.value))}
+              >
+                <option value="todos">Todos los prerequisitos</option>
+                <option value="con-prerequisitos">Con prerequisitos</option>
+                <option value="sin-prerequisitos">Sin prerequisitos</option>
+                <option value="prerequisitos-pendientes">Con prerequisitos pendientes</option>
+                <option value="prerequisitos-completos">Prerequisitos completos</option>
+              </select>
+
+              <button
+                type="button"
+                className="oa-clear-btn"
+                onClick={() => dispatch(clearOfertaFiltros())}
+              >
+                Limpiar
+              </button>
+            </div>
+          )}
+
+          <div className="oa-content">
+            {error ? <div className="oa-error">{error}</div> : null}
+
+            {loading ? (
+              <div className="oa-empty">
+                <FiBook size={42} />
+                <p>Cargando oferta académica...</p>
+              </div>
+            ) : cursos.length === 0 ? (
+              <div className="oa-empty">
+                <FiInfo size={42} />
+                <p>No se encontraron cursos con los filtros seleccionados.</p>
+              </div>
+            ) : (
+              <div className="oa-grid">
+                {cursos.map((curso) => (
+                  <OfertaCard
+                    key={curso.id_curso}
+                    curso={curso}
+                    onOpen={(c) => dispatch(openOfertaDetalle(c))}
+                    onAdd={handleAdd}
+                    isAdding={isAdding}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        ) : cursos.length === 0 ? (
-          <div className="oa-empty">
-            <FiInfo size={42} />
-            <p>No se encontraron cursos con los filtros seleccionados.</p>
-          </div>
-        ) : (
-          <div className="oa-grid">
-            {cursos.map((curso) => (
-              <OfertaCard
-                key={curso.id_curso}
-                curso={curso}
-                onOpen={(c) => dispatch(openOfertaDetalle(c))}
-                onAdd={handleAdd}
-                isAdding={isAdding}
-              />
-            ))}
-          </div>
-        )}
+        </div>
 
         <OfertaDetailModal
           open={modalOpen}
@@ -604,67 +687,78 @@ const OfertaAcademica = () => {
 const styles = `
   .oa-root{
     min-height:100%;
-    padding:32px;
-    background:#f6f7fb;
+    padding:16px 18px 22px;
+    background:transparent;
     box-sizing:border-box;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   }
 
-  .oa-header{
+  .oa-shell{
+    background:#ffffff;
+    border:1px solid #e7edf5;
+    border-radius:22px;
+    box-shadow:0 12px 32px rgba(15, 23, 42, 0.05);
+    overflow:hidden;
+  }
+
+  .oa-headbar{
     display:flex;
     justify-content:space-between;
     gap:18px;
     align-items:flex-start;
     flex-wrap:wrap;
-    margin-bottom:22px;
+    padding:18px 20px 16px;
+    border-bottom:1px solid #eef2f7;
+    background:#ffffff;
   }
 
-  .oa-header__left{
+  .oa-headbar__left{
     display:flex;
     gap:14px;
     align-items:flex-start;
   }
 
-  .oa-header__pill{
+  .oa-headbar__accent{
     width:8px;
-    height:48px;
-    border-radius:8px;
-    background:linear-gradient(180deg,#704fe6 0%, #4b5fd6 100%);
+    height:40px;
+    border-radius:999px;
+    background:linear-gradient(180deg,#7c5cff 0%, #6d5dfd 100%);
     margin-top:2px;
+    flex-shrink:0;
   }
 
-  .oa-header__title{
+  .oa-headbar__title{
     margin:0;
-    font-size:32px;
-    line-height:1.08;
-    font-weight:500;
-    color:#1a1f36;
-    letter-spacing:-0.3px;
+    font-size:20px;
+    line-height:1.12;
+    font-weight:900;
+    color:#111827;
   }
 
-  .oa-header__sub{
-    margin:8px 0 0;
-    color:#68708b;
-    font-size:14px;
-    line-height:1.6;
+  .oa-headbar__sub{
+    margin:5px 0 0;
+    color:#667085;
+    font-size:13px;
+    line-height:1.55;
+    font-weight:700;
   }
 
-  .oa-header__stats{
+  .oa-headbar__stats{
     display:flex;
     gap:10px;
     flex-wrap:wrap;
   }
 
-  .oa-header__stats span{
+  .oa-headbar__stats span{
     display:inline-flex;
     align-items:center;
     padding:10px 14px;
     border-radius:999px;
-    background:#fff;
-    border:1px solid #e6e9f2;
-    color:#4d5673;
+    background:#f8fafc;
+    border:1px solid #e6ebf2;
+    color:#475467;
     font-size:13px;
-    font-weight:700;
+    font-weight:800;
   }
 
   .oa-toolbar{
@@ -672,7 +766,9 @@ const styles = `
     justify-content:space-between;
     gap:14px;
     flex-wrap:wrap;
-    margin-bottom:18px;
+    padding:16px 20px 18px;
+    background:#ffffff;
+    border-bottom:1px solid #eef2f7;
   }
 
   .oa-search{
@@ -684,18 +780,20 @@ const styles = `
   .oa-search input{
     width:100%;
     box-sizing:border-box;
-    border:1.5px solid #dde0ef;
-    border-radius:14px;
-    padding:12px 14px 12px 40px;
+    border:1px solid #dfe6f0;
+    border-radius:15px;
+    padding:13px 14px 13px 42px;
     font-size:14px;
-    background:#fff;
+    font-weight:600;
+    background:#fbfcfe;
     color:#1a1f36;
     outline:none;
   }
 
   .oa-search input:focus{
-    border-color:#6d5dfd;
-    box-shadow:0 0 0 3px rgba(109,93,253,.12);
+    border-color:#8f7bff;
+    box-shadow:0 0 0 4px rgba(124,92,255,.10);
+    background:#fff;
   }
 
   .oa-search__icon{
@@ -707,10 +805,9 @@ const styles = `
   }
 
   .oa-filter-toggle{
-    border:none;
-    background:#fff;
-    border:1px solid #e6e9f2;
-    color:#4d5673;
+    border:1px solid #dfe6f0;
+    background:#fbfcfe;
+    color:#344054;
     border-radius:14px;
     padding:12px 16px;
     font-size:13px;
@@ -722,20 +819,18 @@ const styles = `
   }
 
   .oa-filter-toggle.active{
-    background:#eef2ff;
-    color:#4b5fd6;
-    border-color:#d8def8;
+    background:#f4f0ff;
+    color:#5b48dc;
+    border-color:#d9d0ff;
   }
 
   .oa-filters{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
     gap:12px;
-    margin-bottom:20px;
-    background:#fff;
-    border:1px solid #eceef5;
-    border-radius:18px;
-    padding:16px;
+    padding:0 20px 18px;
+    background:#ffffff;
+    border-bottom:1px solid #eef2f7;
   }
 
   .oa-filters select,
@@ -743,18 +838,42 @@ const styles = `
     width:100%;
     min-height:44px;
     border-radius:12px;
-    border:1px solid #dde0ef;
-    background:#fff;
+    border:1px solid #dfe6f0;
+    background:#fbfcfe;
     padding:10px 12px;
     font-size:14px;
+    font-weight:600;
     color:#1a1f36;
     outline:none;
+  }
+
+  .oa-filters select:focus{
+    border-color:#8f7bff;
+    box-shadow:0 0 0 4px rgba(124,92,255,.10);
+    background:#fff;
   }
 
   .oa-clear-btn{
     cursor:pointer;
     font-weight:800;
-    background:#f8f9fd;
+    background:#f8fafc;
+    color:#4d5673;
+  }
+
+  .oa-content{
+    padding:20px;
+    background:#ffffff;
+  }
+
+  .oa-error{
+    background:#fef2f2;
+    color:#991b1b;
+    border:1px solid #fecaca;
+    border-radius:14px;
+    padding:12px 14px;
+    margin-bottom:18px;
+    font-size:14px;
+    font-weight:700;
   }
 
   .oa-grid{
@@ -765,16 +884,16 @@ const styles = `
 
   .oa-card{
     background:#fff;
-    border:1px solid #eceef5;
+    border:1px solid #e7edf5;
     border-radius:22px;
-    box-shadow:0 10px 30px rgba(40,52,109,.05);
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
     padding:18px;
     transition:all .18s ease;
   }
 
   .oa-card:hover{
     transform:translateY(-3px);
-    box-shadow:0 14px 34px rgba(40,52,109,.08);
+    box-shadow:0 14px 30px rgba(15,23,42,.08);
   }
 
   .oa-card.blocked{
@@ -797,12 +916,12 @@ const styles = `
     height:34px;
     padding:0 12px;
     border-radius:999px;
-    background:linear-gradient(180deg,#f2f4fb 0%, #e8ecfb 100%);
+    background:#eef2ff;
     color:#5a55d6;
-    font-weight:800;
+    font-weight:900;
     font-size:12px;
     letter-spacing:.3px;
-    border:1px solid #e3e7f6;
+    border:1px solid #e1e7ff;
   }
 
   .oa-badge{
@@ -813,12 +932,12 @@ const styles = `
     padding:6px 10px;
     border-radius:999px;
     font-size:12px;
-    font-weight:800;
+    font-weight:900;
     white-space:nowrap;
   }
 
-  .oa-badge--green{ background:#e8fff2; color:#177245; }
-  .oa-badge--gray{ background:#f1f3f6; color:#596273; }
+  .oa-badge--green{ background:#e7f8f0; color:#16a36d; }
+  .oa-badge--gray{ background:#f2f4f7; color:#596273; }
   .oa-badge--blue{ background:#eef2ff; color:#4b5fd6; }
   .oa-badge--purple{ background:#f3eefe; color:#6b4fd8; }
   .oa-badge--orange{ background:#fff4e8; color:#b86911; }
@@ -827,19 +946,19 @@ const styles = `
 
   .oa-card__title{
     margin:0 0 10px;
-    color:#1a1f36;
-    font-size:20px;
+    color:#101828;
+    font-size:18px;
     line-height:1.3;
-    font-weight:800;
+    font-weight:900;
   }
 
   .oa-card__teacher{
     display:flex;
     align-items:center;
     gap:7px;
-    color:#5f6781;
+    color:#667085;
     font-size:13px;
-    font-weight:600;
+    font-weight:700;
     margin:0 0 12px;
   }
 
@@ -856,11 +975,11 @@ const styles = `
     gap:6px;
     padding:8px 10px;
     border-radius:12px;
-    background:#f8f9fd;
-    border:1px solid #edf0f7;
+    background:#f8fafc;
+    border:1px solid #edf2f7;
     color:#5f6781;
     font-size:12px;
-    font-weight:600;
+    font-weight:700;
   }
 
   .oa-card__chips{
@@ -876,7 +995,7 @@ const styles = `
     padding:7px 11px;
     border-radius:999px;
     font-size:12px;
-    font-weight:800;
+    font-weight:900;
   }
 
   .oa-card__chip--cat{ background:#f8f4ff; color:#6b4fd8; }
@@ -895,7 +1014,7 @@ const styles = `
     padding:12px 13px;
     font-size:12px;
     line-height:1.5;
-    font-weight:700;
+    font-weight:800;
     margin-bottom:14px;
   }
 
@@ -917,7 +1036,7 @@ const styles = `
     border-radius:14px;
     padding:11px 14px;
     font-size:13px;
-    font-weight:800;
+    font-weight:900;
     display:inline-flex;
     align-items:center;
     justify-content:center;
@@ -926,9 +1045,9 @@ const styles = `
   }
 
   .oa-btn--primary{
-    background:#704fe6;
+    background:linear-gradient(135deg,#7c5cff 0%, #6d5dfd 100%);
     color:#fff;
-    box-shadow:0 8px 20px rgba(112,79,230,.22);
+    box-shadow:0 8px 18px rgba(109,93,253,.22);
   }
 
   .oa-btn--primary:hover{
@@ -953,11 +1072,10 @@ const styles = `
   }
 
   .oa-empty{
-    background:#fff;
-    border:1px solid #eceef5;
-    border-radius:24px;
-    box-shadow:0 10px 30px rgba(40,52,109,.05);
-    padding:48px 24px;
+    background:#ffffff;
+    border:1px dashed #d9e2ef;
+    border-radius:22px;
+    padding:54px 24px;
     text-align:center;
     color:#6f7894;
   }
@@ -965,7 +1083,7 @@ const styles = `
   .oa-empty p{
     margin:12px 0 0;
     font-size:15px;
-    font-weight:600;
+    font-weight:700;
   }
 
   .oa-modal-backdrop{
@@ -989,6 +1107,7 @@ const styles = `
     padding:22px;
     box-shadow:0 24px 64px rgba(15,23,42,.22);
     position:relative;
+    border:1px solid #e7edf5;
   }
 
   .oa-modal__close{
@@ -1022,11 +1141,11 @@ const styles = `
     display:flex;
     align-items:center;
     justify-content:center;
-    background:linear-gradient(180deg,#f2f4fb 0%, #e8ecfb 100%);
+    background:#eef2ff;
     color:#5a55d6;
-    font-weight:800;
+    font-weight:900;
     font-size:13px;
-    border:1px solid #e3e7f6;
+    border:1px solid #e1e7ff;
   }
 
   .oa-modal__header-text h2{
@@ -1034,7 +1153,7 @@ const styles = `
     color:#1a1f36;
     font-size:26px;
     line-height:1.2;
-    font-weight:800;
+    font-weight:900;
   }
 
   .oa-modal__header-meta{
@@ -1045,7 +1164,7 @@ const styles = `
     align-items:center;
     color:#68708b;
     font-size:13px;
-    font-weight:700;
+    font-weight:800;
   }
 
   .oa-modal__grid{
@@ -1074,7 +1193,7 @@ const styles = `
     margin:0 0 12px;
     color:#1a1f36;
     font-size:15px;
-    font-weight:800;
+    font-weight:900;
     display:flex;
     align-items:center;
   }
@@ -1084,6 +1203,7 @@ const styles = `
     color:#5f6781;
     font-size:14px;
     line-height:1.6;
+    font-weight:600;
   }
 
   .oa-modal__list{
@@ -1109,7 +1229,7 @@ const styles = `
   .oa-modal__list strong{
     color:#1a1f36;
     font-size:14px;
-    font-weight:700;
+    font-weight:800;
     line-height:1.4;
   }
 
@@ -1128,7 +1248,7 @@ const styles = `
     align-items:flex-start;
     color:#a16207;
     font-size:13px;
-    font-weight:700;
+    font-weight:800;
     line-height:1.5;
   }
 
@@ -1145,7 +1265,7 @@ const styles = `
     margin-bottom:8px;
     color:#6b7280;
     font-size:12px;
-    font-weight:800;
+    font-weight:900;
     text-transform:uppercase;
     letter-spacing:.04em;
   }
@@ -1163,7 +1283,7 @@ const styles = `
     padding:8px 10px;
     border-radius:999px;
     font-size:12px;
-    font-weight:800;
+    font-weight:900;
     border:1px solid transparent;
   }
 
@@ -1188,7 +1308,7 @@ const styles = `
   .oa-prereq-empty{
     color:#8a93ad;
     font-size:13px;
-    font-weight:600;
+    font-weight:700;
   }
 
   .oa-modal__footer{
@@ -1208,11 +1328,23 @@ const styles = `
 
   @media (max-width: 760px){
     .oa-root{
-      padding:18px 12px;
+      padding:12px;
     }
 
-    .oa-header__title{
-      font-size:28px;
+    .oa-headbar,
+    .oa-toolbar,
+    .oa-content{
+      padding-left:14px;
+      padding-right:14px;
+    }
+
+    .oa-filters{
+      padding-left:14px;
+      padding-right:14px;
+    }
+
+    .oa-headbar__title{
+      font-size:18px;
     }
 
     .oa-modal{

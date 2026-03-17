@@ -1,13 +1,29 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { estudiantesApi } from '../../../lib/api';
+
+const extractArray = (resp, ...keys) => {
+  if (Array.isArray(resp)) return resp;
+  const data = resp?.data ?? resp;
+  if (Array.isArray(data)) return data;
+
+  for (const key of keys) {
+    if (Array.isArray(data?.[key])) return data[key];
+  }
+
+  if (data && typeof data === 'object') {
+    for (const val of Object.values(data)) {
+      if (Array.isArray(val)) return val;
+    }
+  }
+
+  return [];
+};
+
 export const fetchEstudiantes = createAsyncThunk(
   'Estudiantes/fetchEstudiantes',
   async (filters = {}, { rejectWithValue }) => {
     try {
-      console.log('[EstudiantesThunk] Enviando filtros:', filters);
       const response = await estudiantesApi.fetchEstudiantes(filters);
-      console.log('[EstudiantesThunk] Respuesta del servidor:', response);
-      console.log('[EstudiantesThunk] Estudiantes obtenidas:', response.Estudiantes || response);
       return response;
     } catch (error) {
       return rejectWithValue(error);
@@ -20,10 +36,9 @@ export const fetchAllEstudiantes = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const resp = await estudiantesApi.fetchAllEstudiantes();
-      const data = resp?.data ?? resp;
-      return data?.Estudiantes || data?.items || data;
+      return extractArray(resp, 'Estudiantes', 'estudiantes', 'items');
     } catch (error) {
-      return rejectWithValue(error?.response?.data || error.message || error);
+      return rejectWithValue(error?.data || error?.message || error);
     }
   }
 );
@@ -33,9 +48,9 @@ export const fetchEstudianteById = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await estudiantesApi.fetchEstudianteById(id);
-      return response.Estudiante || response;
+      return response?.Estudiante || response?.estudiante || response;
     } catch (error) {
-      return rejectWithValue(error?.response?.data || error.message || error);
+      return rejectWithValue(error?.data || error?.message || error);
     }
   }
 );
@@ -44,13 +59,10 @@ export const createEstudiante = createAsyncThunk(
   'Estudiantes/createEstudiante',
   async (payload, { rejectWithValue }) => {
     try {
-      console.log('[EstudiantesThunk] Creando Estudiante:', payload)
-      const response = await estudiantesApi.createEstudiante(payload)
-      console.log('[EstudiantesThunk] Estudiante creada:', response)
-      return response?.Estudiante || response
+      const response = await estudiantesApi.createEstudiante(payload);
+      return response;
     } catch (error) {
-      console.error('[EstudiantesThunk] Error creando Estudiante:', error)
-      return rejectWithValue(error?.response?.data || error.message || error)
+      return rejectWithValue(error?.data || error?.message || error);
     }
   }
 );
@@ -59,13 +71,17 @@ export const updateEstudiante = createAsyncThunk(
   'Estudiantes/updateEstudiante',
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      console.log('[EstudiantesThunk] Actualizando Estudiante:', id, data);
       const response = await estudiantesApi.updateEstudiante(id, data);
-      console.log('[EstudiantesThunk] Estudiante actualizada:', response);
-      return { id, estudiante: response?.estudiante, usuario: response?.usuario, ...response };
+      const estudianteActualizado =
+        response?.Estudiante || response?.estudiante || response;
+
+      return {
+        id,
+        ...response,
+        estudiante: estudianteActualizado,
+      };
     } catch (error) {
-      console.error('[EstudiantesThunk] Error actualizando Estudiante:', error);
-      return rejectWithValue(error?.response?.data || error.message || error);
+      return rejectWithValue(error?.data || error?.message || error);
     }
   }
 );
@@ -74,14 +90,10 @@ export const deleteEstudiante = createAsyncThunk(
   'Estudiantes/deleteEstudiante',
   async (id, { rejectWithValue }) => {
     try {
-      console.log('[EstudiantesThunk] Eliminando Estudiante ID:', id)
-      const response = await estudiantesApi.deleteEstudiante(id)
-      console.log('[EstudiantesThunk] Estudiante eliminada:', response)
-      // Devolvemos el id para que el slice pueda filtrar la lista local
-      return { id, ...response }
+      const response = await estudiantesApi.deleteEstudiante(id);
+      return { id, ...response };
     } catch (error) {
-      console.error('[EstudiantesThunk] Error eliminando Estudiante:', error)
-      return rejectWithValue(error?.response?.data || error.message || error)
+      return rejectWithValue(error?.data || error?.message || error);
     }
   }
 );
@@ -90,13 +102,10 @@ export const buscarEstudiantes = createAsyncThunk(
   'Estudiantes/buscarEstudiantes',
   async (params = {}, { rejectWithValue }) => {
     try {
-      console.log('[EstudiantesThunk] Buscando estudiantes:', params);
       const response = await estudiantesApi.busquedaEstudiantes(params);
-      console.log('[EstudiantesThunk] Resultado búsqueda:', response);
       return response;
     } catch (error) {
-      console.error('[EstudiantesThunk] Error buscando estudiantes:', error);
-      return rejectWithValue(error?.response?.data || error.message || error);
+      return rejectWithValue(error?.data || error?.message || error);
     }
   }
 );

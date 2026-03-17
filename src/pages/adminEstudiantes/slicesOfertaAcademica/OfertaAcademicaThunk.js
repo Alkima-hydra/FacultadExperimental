@@ -1,6 +1,10 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ofertaAcademicaApi, carritoApi } from '../../../lib/api';
 
+const ESTADO_CURSO_ACTIVO = 'ACTIVO';
+const ESTADO_CURSO_FINALIZADO = 'FINALIZADO';
+const ESTADO_CURSO_CANCELADO = 'CANCELADO';
+
 const normalizarPrereq = (item) => ({
   id_materia_prereq: item?.id_materia_prereq ?? null,
   materia_id_materia: item?.materia_id_materia ?? null,
@@ -16,14 +20,22 @@ const normalizarPrereq = (item) => ({
     : null,
 });
 
+const normalizarEstadoCurso = (estado) => {
+  if (estado === ESTADO_CURSO_ACTIVO) return ESTADO_CURSO_ACTIVO;
+  if (estado === ESTADO_CURSO_FINALIZADO) return ESTADO_CURSO_FINALIZADO;
+  if (estado === ESTADO_CURSO_CANCELADO) return ESTADO_CURSO_CANCELADO;
+  return estado ?? ESTADO_CURSO_ACTIVO;
+};
+
 const normalizarCursoOferta = (curso) => ({
   id_curso: curso?.id_curso ?? null,
   periodo: curso?.periodo ?? '',
   cupos: Number(curso?.cupos ?? 0),
+  cupos_max: Number(curso?.cupos_max ?? 0),
   inscritos_actuales: Number(curso?.inscritos_actuales ?? 0),
   cupos_disponibles: Number(curso?.cupos_disponibles ?? 0),
   precio: Number(curso?.precio ?? 0),
-  estado: curso?.estado ?? false,
+  estado: normalizarEstadoCurso(curso?.estado),
   lecciones: Number(curso?.lecciones ?? 0),
   horas_academicas: Number(curso?.horas_academicas ?? 0),
   hora_inicio: curso?.hora_inicio ?? '',
@@ -134,7 +146,7 @@ export const addCursoOfertaToCarrito = createAsyncThunk(
       }
 
       return {
-        id_curso,
+        id_curso: Number(id_curso),
         message: res?.msg || 'Curso agregado al carrito correctamente.',
         carrito: res?.carrito || null,
       };

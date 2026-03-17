@@ -11,6 +11,7 @@ import {
   FiInfo,
   FiCalendar,
   FiUser,
+  FiRotateCcw,
 } from 'react-icons/fi';
 import Swal from 'sweetalert2';
 
@@ -18,12 +19,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchInscripcionesByEstudianteId,
   fetchInscritoByMatriculaId,
+  enviarCertificadoPorMatricula,
+  desinscribirseMismoDia,
 } from './slicesCursos/CursosThunk';
 
 import {
   selectInscritosFiltrados,
   selectIsLoadingInscritos,
   selectIsLoadingDetalle,
+  selectIsSendingCertificate,
+  selectIsUnenrolling,
   selectError,
   selectFiltroEstado,
   selectSearchTermCursos,
@@ -38,6 +43,7 @@ import {
   setFiltroEstado,
   setSearchTerm,
   clearError,
+  clearCertificateSuccess,
   closeDetalleModal,
 } from './slicesCursos/CursosSlice';
 
@@ -58,6 +64,10 @@ function fmtHour(h) {
   return String(h).slice(0, 5);
 }
 
+function fmtMoney(value) {
+  return `BOB ${Number(value || 0).toFixed(2)}`;
+}
+
 function getTeacherName(docente) {
   const u = docente?.usuario;
   if (!u) return 'Docente no asignado';
@@ -65,11 +75,19 @@ function getTeacherName(docente) {
 }
 
 function getEstadoCursoData(estado) {
-  if (estado === false) {
+  if (estado === 'FINALIZADO') {
     return {
       label: 'Concluido',
       bg: '#F3F4F6',
       color: '#374151',
+    };
+  }
+
+  if (estado === 'CANCELADO') {
+    return {
+      label: 'Cancelado',
+      bg: '#FEE2E2',
+      color: '#991B1B',
     };
   }
 
@@ -128,8 +146,38 @@ function getCourseImage(index) {
   return images[index % images.length];
 }
 
+function puedeDesinscribirse(inscrito) {
+  if (!inscrito?.id_matricula) return false;
+
+  const estado = inscrito?.estado_inscripcion || inscrito?.estado;
+  if (estado !== 'PAGADO') return false;
+
+  const fechaBase = inscrito?.fecha_inscripcion || inscrito?.creado_en;
+  if (!fechaBase) return false;
+
+  const fecha = new Date(fechaBase);
+  if (Number.isNaN(fecha.getTime())) return false;
+
+  const ahora = new Date();
+
+  return (
+    fecha.getFullYear() === ahora.getFullYear() &&
+    fecha.getMonth() === ahora.getMonth() &&
+    fecha.getDate() === ahora.getDate()
+  );
+}
+
 /* ─── Modal ─────────────────────────────────────────────── */
-const CourseDetailModal = ({ open, onClose, inscrito, isLoading }) => {
+const CourseDetailModal = ({
+  open,
+  onClose,
+  inscrito,
+  isLoading,
+  onCertificate,
+  onUnenroll,
+  isSendingCertificate,
+  isUnenrolling,
+}) => {
   if (!open) return null;
 
   const curso = inscrito?.curso || {};
@@ -139,6 +187,9 @@ const CourseDetailModal = ({ open, onClose, inscrito, isLoading }) => {
 
   const estadoNota = getEstadoNota(inscrito);
   const estadoCurso = getEstadoCursoData(curso?.estado);
+  const mostrarCertificado =
+    curso?.estado === 'FINALIZADO' && nota?.aprobado === true;
+  const mostrarDesinscripcion = puedeDesinscribirse(inscrito);
 
   return (
     <div className="scm-backdrop" onClick={onClose}>
@@ -190,7 +241,7 @@ const CourseDetailModal = ({ open, onClose, inscrito, isLoading }) => {
                 <div className="scm-list">
                   <div><span>Sigla</span><strong>{materia?.codigo || '—'}</strong></div>
                   <div><span>Periodo</span><strong>{curso?.periodo || '—'}</strong></div>
-                  <div><span>Inscrito</span><strong>{fmtDate(inscrito?.creado_en)}</strong></div>
+                  <div><span>Inscrito</span><strong>{fmtDate(inscrito?.fecha_inscripcion || inscrito?.creado_en)}</strong></div>
                   <div><span>Horario</span><strong>{fmtHour(curso?.hora_inicio)} - {fmtHour(curso?.hora_fin)}</strong></div>
                 </div>
               </div>
@@ -217,6 +268,34 @@ const CourseDetailModal = ({ open, onClose, inscrito, isLoading }) => {
                 </div>
               </div>
             </div>
+
+            {(mostrarCertificado || mostrarDesinscripcion) && (
+              <div className="scm-actions">
+                {mostrarDesinscripcion && (
+                  <button
+                    type="button"
+                    className="scm-action-btn scm-action-btn--danger"
+                    onClick={() => onUnenroll(inscrito)}
+                    disabled={isUnenrolling}
+                  >
+                    <FiRotateCcw size={15} />
+                    {isUnenrolling ? 'Procesando...' : 'Desinscribirse'}
+                  </button>
+                )}
+
+                {mostrarCertificado && (
+                  <button
+                    type="button"
+                    className="scm-action-btn scm-action-btn--primary"
+                    onClick={() => onCertificate(inscrito)}
+                    disabled={isSendingCertificate}
+                  >
+                    <FiAward size={15} />
+                    {isSendingCertificate ? 'Enviando...' : 'Enviar certificado'}
+                  </button>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -225,13 +304,27 @@ const CourseDetailModal = ({ open, onClose, inscrito, isLoading }) => {
 };
 
 /* ─── Card ─────────────────────────────────────────────── */
-const CourseCard = ({ inscrito, onView, onCertificate, index }) => {
+const CourseCard = ({
+  inscrito,
+  onView,
+  onCertificate,
+  onUnenroll,
+  index,
+  isSendingCertificate,
+  isUnenrolling,
+}) => {
   const curso = inscrito?.curso || {};
   const materia = curso?.materia || {};
   const docente = curso?.docente || {};
+  const nota = inscrito?.materia_notas || null;
+
   const estadoCurso = getEstadoCursoData(curso?.estado);
   const estadoNota = getEstadoNota(inscrito);
-  const showCertificate = curso?.estado === false;
+
+  const showCertificate =
+    curso?.estado === 'FINALIZADO' && nota?.aprobado === true;
+
+  const showUnenroll = puedeDesinscribirse(inscrito);
   const image = getCourseImage(index);
 
   return (
@@ -268,7 +361,7 @@ const CourseCard = ({ inscrito, onView, onCertificate, index }) => {
         <div className="scc-subinfo">
           <div><FiCalendar size={13} /> {curso?.dias_de_clases || 'Sin días'}</div>
           <div><FiClock size={13} /> {fmtHour(curso?.hora_inicio)} - {fmtHour(curso?.hora_fin)}</div>
-          <div><strong>Inscrito:</strong> {fmtDate(inscrito?.creado_en)}</div>
+          <div><strong>Inscrito:</strong> {fmtDate(inscrito?.fecha_inscripcion || inscrito?.creado_en)}</div>
         </div>
 
         <div className="scc-note-box">
@@ -287,14 +380,27 @@ const CourseCard = ({ inscrito, onView, onCertificate, index }) => {
             Ver info
           </button>
 
+          {showUnenroll && (
+            <button
+              className="scc-btn scc-btn--danger"
+              type="button"
+              onClick={() => onUnenroll(inscrito)}
+              disabled={isUnenrolling}
+            >
+              <FiRotateCcw size={14} />
+              {isUnenrolling ? 'Procesando...' : 'Desinscribirse'}
+            </button>
+          )}
+
           {showCertificate && (
             <button
               className="scc-btn scc-btn--cert"
               type="button"
               onClick={() => onCertificate(inscrito)}
+              disabled={isSendingCertificate}
             >
               <FiAward size={14} />
-              Certificado
+              {isSendingCertificate ? 'Enviando...' : 'Certificado'}
             </button>
           )}
         </div>
@@ -310,6 +416,8 @@ const StudentCourses = () => {
   const inscritos = useSelector(selectInscritosFiltrados);
   const isLoading = useSelector(selectIsLoadingInscritos);
   const isLoadingDetalle = useSelector(selectIsLoadingDetalle);
+  const isSendingCertificate = useSelector(selectIsSendingCertificate);
+  const isUnenrolling = useSelector(selectIsUnenrolling);
   const error = useSelector(selectError);
 
   const filtroEstado = useSelector(selectFiltroEstado);
@@ -324,8 +432,6 @@ const StudentCourses = () => {
   const totalAprobados = useSelector(selectCantidadAprobados);
   const totalReprobados = useSelector(selectCantidadReprobados);
   const totalPendientes = useSelector(selectCantidadPendientesNota);
-
-  const userId = useSelector((state) => state.login?.user?.id || null);
 
   const estudianteId = useSelector(
     (state) =>
@@ -370,23 +476,151 @@ const StudentCourses = () => {
   };
 
   const handleCertificate = async (inscrito) => {
-    const materia = inscrito?.curso?.materia?.nombre || 'este curso';
+    try {
+      const materia = inscrito?.curso?.materia?.nombre || 'este curso';
+      const idMatricula = inscrito?.id_matricula;
 
-    await Swal.fire({
-      title: 'Certificado',
-      html: `
-        <div style="margin-top:6px; color:#5A6676; font-size:14px; line-height:1.5">
-          El curso <strong style="color:#1A1F36">"${materia}"</strong> está concluido.<br/>
-          Aquí luego podremos generar o descargar el certificado.
-        </div>
-      `,
-      icon: 'success',
-      confirmButtonText: 'Entendido',
-      confirmButtonColor: '#6D5DFD',
-      didOpen: (popup) => {
-        popup.style.borderRadius = '16px';
-      },
-    });
+      if (!idMatricula) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'No se pudo enviar',
+          text: 'No se encontró la matrícula del curso.',
+          confirmButtonColor: '#6D5DFD',
+        });
+        return;
+      }
+
+      const confirm = await Swal.fire({
+        title: 'Enviar certificado',
+        html: `
+          <div style="margin-top:6px; color:#5A6676; font-size:14px; line-height:1.5">
+            Se enviará el certificado del curso
+            <strong style="color:#1A1F36">"${materia}"</strong>
+            a tu correo electrónico registrado.
+          </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, enviar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#6D5DFD',
+        cancelButtonColor: '#CBD5E1',
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      Swal.fire({
+        title: 'Enviando certificado...',
+        text: 'Espera un momento, estamos preparando tu PDF.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
+      await dispatch(enviarCertificadoPorMatricula(idMatricula)).unwrap();
+      dispatch(clearCertificateSuccess());
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Certificado enviado',
+        html: `
+          <div style="margin-top:6px; color:#5A6676; font-size:14px; line-height:1.5">
+            Tu certificado fue enviado correctamente a tu correo electrónico.
+          </div>
+        `,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#6D5DFD',
+      });
+    } catch (err) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error al enviar',
+        text: err || 'Ocurrió un problema al enviar el certificado.',
+        confirmButtonColor: '#6D5DFD',
+      });
+    }
+  };
+
+  const handleUnenroll = async (inscrito) => {
+    try {
+      const materia = inscrito?.curso?.materia?.nombre || 'este curso';
+      const idMatricula = inscrito?.id_matricula;
+      const precioCurso =
+        inscrito?.curso?.precio ||
+        inscrito?.pago?.monto ||
+        0;
+
+      if (!idMatricula) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'No se pudo desinscribir',
+          text: 'No se encontró la matrícula del curso.',
+          confirmButtonColor: '#6D5DFD',
+        });
+        return;
+      }
+
+      const confirm = await Swal.fire({
+        title: '¿Desinscribirte del curso?',
+        html: `
+          <div style="margin-top:6px; color:#5A6676; font-size:14px; line-height:1.6">
+            Vas a desinscribirte de
+            <strong style="color:#1A1F36">"${materia}"</strong>.<br/><br/>
+            El importe se acreditará como saldo a tu favor.
+            ${precioCurso ? `<br/><strong style="color:#166534">Saldo estimado: ${fmtMoney(precioCurso)}</strong>` : ''}
+          </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, desinscribirme',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#DC2626',
+        cancelButtonColor: '#CBD5E1',
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      Swal.fire({
+        title: 'Procesando desinscripción...',
+        text: 'Espera un momento.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
+      const response = await dispatch(desinscribirseMismoDia(idMatricula)).unwrap();
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Desinscripción realizada',
+        html: `
+          <div style="margin-top:6px; color:#5A6676; font-size:14px; line-height:1.6">
+            Te desinscribiste correctamente del curso
+            <strong style="color:#1A1F36">"${materia}"</strong>.<br/><br/>
+            <span style="display:inline-flex; align-items:center; gap:6px; color:#166534; font-weight:700;">
+              Saldo generado: ${fmtMoney(response?.saldo_generado || 0)}
+            </span>
+          </div>
+        `,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#6D5DFD',
+      });
+
+      if (modalOpen) {
+        dispatch(closeDetalleModal());
+      }
+    } catch (err) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'No se pudo desinscribir',
+        text: err || 'Ocurrió un problema al desinscribirte del curso.',
+        confirmButtonColor: '#6D5DFD',
+      });
+    }
   };
 
   return (
@@ -394,48 +628,76 @@ const StudentCourses = () => {
       <style>{`
         .sc-page {
           min-height: 100%;
-          padding: 28px 24px;
-          background: #edeef5;
+          padding: 16px 18px 22px;
+          background: transparent;
           box-sizing: border-box;
           font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
         }
 
-        .sc-header {
+        .sc-shell {
+          background: #ffffff;
+          border: 1px solid #e7edf5;
+          border-radius: 22px;
+          box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+          overflow: hidden;
+        }
+
+        .sc-headbar {
           display: flex;
           justify-content: space-between;
           align-items: center;
           gap: 14px;
+          padding: 18px 20px 14px;
+          border-bottom: 1px solid #eef2f7;
+          background: #ffffff;
           flex-wrap: wrap;
-          margin-bottom: 20px;
         }
 
-        .sc-header-left {
+        .sc-headbar-left {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
+          min-width: 0;
         }
 
-        .sc-header-pill {
+        .sc-headbar-accent {
           width: 8px;
-          height: 24px;
-          border-radius: 4px;
-          background: #6d5dfd;
+          height: 40px;
+          border-radius: 999px;
+          background: linear-gradient(180deg, #7c5cff 0%, #6d5dfd 100%);
+          flex-shrink: 0;
         }
 
-        .sc-title {
+        .sc-headbar-text {
+          min-width: 0;
+        }
+
+        .sc-headbar-title {
           margin: 0;
-          font-size: 24px;
+          font-size: 19px;
           font-weight: 900;
-          color: #1a1f36;
+          color: #101828;
+          line-height: 1.15;
+        }
+
+        .sc-headbar-sub {
+          margin: 4px 0 0;
+          font-size: 13px;
+          color: #667085;
+          font-weight: 700;
         }
 
         .sc-count {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           background: #eef2ff;
           color: #4338ca;
-          font-size: 12px;
-          font-weight: 800;
-          padding: 6px 10px;
+          font-size: 13px;
+          font-weight: 900;
+          padding: 10px 14px;
           border-radius: 999px;
+          white-space: nowrap;
         }
 
         .sc-toolbar {
@@ -444,21 +706,23 @@ const StudentCourses = () => {
           align-items: center;
           gap: 14px;
           flex-wrap: wrap;
-          margin-bottom: 22px;
+          padding: 16px 20px 18px;
+          background: #ffffff;
+          border-bottom: 1px solid #eef2f7;
         }
 
         .sc-filters {
           display: flex;
-          gap: 8px;
+          gap: 10px;
           flex-wrap: wrap;
         }
 
         .sc-filter {
-          border: 1px solid #e5e7eb;
-          background: #fff;
-          color: #374151;
+          border: 1px solid #dfe6f0;
+          background: #fbfcfe;
+          color: #344054;
           border-radius: 999px;
-          padding: 8px 12px;
+          padding: 11px 16px;
           font-size: 13px;
           font-weight: 800;
           cursor: pointer;
@@ -467,51 +731,59 @@ const StudentCourses = () => {
 
         .sc-filter:hover {
           transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(0,0,0,.05);
+          box-shadow: 0 8px 16px rgba(15,23,42,.06);
         }
 
         .sc-filter.active {
-          background: #6d5dfd;
-          border-color: #6d5dfd;
+          background: linear-gradient(135deg, #7c5cff 0%, #6d5dfd 100%);
+          border-color: #7c5cff;
           color: #fff;
+          box-shadow: 0 10px 18px rgba(109,93,253,.18);
         }
 
         .sc-search {
           position: relative;
-          width: 300px;
+          width: 390px;
           max-width: 100%;
         }
 
         .sc-search input {
           width: 100%;
           box-sizing: border-box;
-          border: 1.5px solid #dde0ef;
-          border-radius: 12px;
-          padding: 10px 12px 10px 38px;
+          border: 1px solid #dfe6f0;
+          border-radius: 15px;
+          padding: 13px 14px 13px 42px;
           font-size: 14px;
-          background: #fff;
+          font-weight: 600;
+          background: #fbfcfe;
           color: #1a1f36;
           outline: none;
         }
 
         .sc-search input:focus {
-          border-color: #6d5dfd;
-          box-shadow: 0 0 0 3px rgba(109, 93, 253, 0.12);
+          border-color: #8f7bff;
+          box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.10);
+          background: #fff;
         }
 
         .sc-search-icon {
           position: absolute;
-          left: 12px;
+          left: 14px;
           top: 50%;
           transform: translateY(-50%);
           color: #98a2b3;
+        }
+
+        .sc-content {
+          padding: 20px;
+          background: #ffffff;
         }
 
         .sc-error {
           background: #fef2f2;
           color: #991b1b;
           border: 1px solid #fecaca;
-          border-radius: 12px;
+          border-radius: 14px;
           padding: 12px 14px;
           margin-bottom: 18px;
           font-size: 14px;
@@ -519,50 +791,51 @@ const StudentCourses = () => {
         }
 
         .sc-empty {
-          background: #fff;
-          border-radius: 18px;
-          padding: 46px 24px;
+          background: #ffffff;
+          border-radius: 20px;
+          padding: 54px 24px;
           text-align: center;
           color: #6b7280;
-          border: 1px solid #e5e7eb;
+          border: 1px dashed #d9e2ef;
         }
 
         .sc-empty svg {
-          opacity: .55;
+          opacity: .45;
           margin-bottom: 12px;
         }
 
         .sc-empty p {
           margin: 0;
           font-size: 15px;
-          font-weight: 600;
+          font-weight: 700;
         }
 
         .sc-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
-          gap: 20px;
+          grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+          gap: 22px;
         }
 
         .scc-card {
           background: #fff;
-          border-radius: 18px;
+          border-radius: 20px;
           overflow: hidden;
-          border: 1px solid #e8eaf5;
-          box-shadow: 0 8px 24px rgba(16,24,40,.05);
+          border: 1px solid #e7edf5;
+          box-shadow: 0 12px 28px rgba(15,24,42,.05);
           transition: transform .18s ease, box-shadow .18s ease;
-          max-width: 360px;
+          max-width: 100%;
         }
 
         .scc-card:hover {
           transform: translateY(-4px);
-          box-shadow: 0 14px 34px rgba(16,24,40,.09);
+          box-shadow: 0 18px 36px rgba(15,24,42,.09);
         }
 
         .scc-image-wrap {
           position: relative;
-          height: 165px;
+          height: 185px;
           overflow: hidden;
+          background: #f4f6fb;
         }
 
         .scc-image {
@@ -579,30 +852,30 @@ const StudentCourses = () => {
 
         .scc-overlay-code {
           position: absolute;
-          left: 12px;
-          bottom: 12px;
+          left: 14px;
+          bottom: 14px;
           background: rgba(17, 24, 39, 0.78);
           color: #fff;
           font-size: 12px;
           font-weight: 800;
-          padding: 6px 10px;
+          padding: 7px 11px;
           border-radius: 999px;
           backdrop-filter: blur(6px);
         }
 
         .scc-overlay-state {
           position: absolute;
-          top: 12px;
-          right: 12px;
+          top: 14px;
+          right: 14px;
           font-size: 12px;
-          font-weight: 800;
-          padding: 6px 10px;
+          font-weight: 900;
+          padding: 7px 11px;
           border-radius: 999px;
           backdrop-filter: blur(4px);
         }
 
         .scc-body {
-          padding: 14px 16px 16px;
+          padding: 16px 16px 18px;
         }
 
         .scc-topline {
@@ -614,22 +887,25 @@ const StudentCourses = () => {
         }
 
         .scc-period {
-          color: #6b7280;
+          color: #667085;
           font-size: 12px;
-          font-weight: 700;
+          font-weight: 800;
+          background: #f2f4f7;
+          border-radius: 999px;
+          padding: 7px 11px;
         }
 
         .scc-title {
           margin: 0 0 10px;
-          font-size: 17px;
-          font-weight: 800;
-          color: #1a1f36;
+          font-size: 18px;
+          font-weight: 900;
+          color: #101828;
           line-height: 1.32;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
-          min-height: 44px;
+          min-height: 46px;
         }
 
         .scc-teacher {
@@ -638,16 +914,17 @@ const StudentCourses = () => {
           gap: 7px;
           color: #667085;
           font-size: 13px;
-          font-weight: 600;
-          margin-bottom: 12px;
+          font-weight: 700;
+          margin-bottom: 13px;
         }
 
         .scc-stats {
           display: flex;
           flex-wrap: wrap;
           gap: 8px;
-          background: #f7f8fc;
-          border-radius: 10px;
+          background: #f8fafc;
+          border: 1px solid #edf2f7;
+          border-radius: 12px;
           padding: 10px 12px;
           margin-bottom: 12px;
         }
@@ -658,31 +935,31 @@ const StudentCourses = () => {
           align-items: center;
           gap: 5px;
           font-size: 12px;
-          color: #4b5563;
-          font-weight: 600;
+          color: #475467;
+          font-weight: 700;
         }
 
         .scc-subinfo {
           display: flex;
           flex-direction: column;
-          gap: 7px;
+          gap: 8px;
           margin-bottom: 12px;
         }
 
         .scc-note-box {
           border: 1px solid #e5e7eb;
-          border-radius: 12px;
+          border-radius: 14px;
           padding: 12px;
           background: #fcfcfd;
-          margin-bottom: 12px;
+          margin-bottom: 14px;
         }
 
         .scc-note-badge {
           display: inline-flex;
-          padding: 5px 10px;
+          padding: 6px 10px;
           border-radius: 999px;
           font-size: 12px;
-          font-weight: 800;
+          font-weight: 900;
           margin-bottom: 8px;
         }
 
@@ -690,8 +967,8 @@ const StudentCourses = () => {
           margin: 0;
           font-size: 13px;
           color: #4b5563;
-          font-weight: 600;
-          line-height: 1.4;
+          font-weight: 700;
+          line-height: 1.45;
         }
 
         .scc-actions {
@@ -702,10 +979,10 @@ const StudentCourses = () => {
 
         .scc-btn {
           border: none;
-          border-radius: 10px;
-          padding: 9px 13px;
+          border-radius: 12px;
+          padding: 10px 14px;
           font-size: 13px;
-          font-weight: 800;
+          font-weight: 900;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
@@ -722,15 +999,28 @@ const StudentCourses = () => {
           background: #e0e7ff;
         }
 
+        .scc-btn--danger {
+          background: #fff1f2;
+          color: #be123c;
+        }
+
+        .scc-btn--danger:hover {
+          background: #ffe4e6;
+        }
+
         .scc-btn--cert {
-          background: #6d5dfd;
+          background: linear-gradient(135deg, #7c5cff 0%, #6d5dfd 100%);
           color: #fff;
-          box-shadow: 0 6px 16px rgba(109,93,253,.24);
+          box-shadow: 0 8px 18px rgba(109,93,253,.22);
         }
 
         .scc-btn--cert:hover {
-          background: #5a4ae8;
           transform: translateY(-1px);
+        }
+
+        .scc-btn:disabled {
+          opacity: .72;
+          cursor: not-allowed;
         }
 
         .scm-backdrop {
@@ -747,13 +1037,14 @@ const StudentCourses = () => {
 
         .scm-modal {
           width: min(100%, 620px);
-          max-height: 80vh;
+          max-height: 82vh;
           overflow-y: auto;
           background: #fff;
           border-radius: 22px;
           padding: 18px;
           box-shadow: 0 24px 64px rgba(15,23,42,.20);
           position: relative;
+          border: 1px solid #e7edf5;
         }
 
         .scm-close {
@@ -806,7 +1097,7 @@ const StudentCourses = () => {
           margin-top: 6px;
           color: #6b7280;
           font-size: 13px;
-          font-weight: 600;
+          font-weight: 700;
         }
 
         .scm-pill {
@@ -814,7 +1105,7 @@ const StudentCourses = () => {
           padding: 5px 10px;
           border-radius: 999px;
           font-size: 12px;
-          font-weight: 800;
+          font-weight: 900;
         }
 
         .scm-top-grid {
@@ -840,7 +1131,7 @@ const StudentCourses = () => {
         .scm-box h3 {
           margin: 0 0 10px;
           font-size: 15px;
-          font-weight: 800;
+          font-weight: 900;
           color: #1f2937;
         }
 
@@ -849,6 +1140,7 @@ const StudentCourses = () => {
           color: #4b5563;
           font-size: 14px;
           line-height: 1.5;
+          font-weight: 600;
         }
 
         .scm-list {
@@ -890,12 +1182,46 @@ const StudentCourses = () => {
           margin-top: 10px;
         }
 
+        .scm-actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-top: 14px;
+        }
+
+        .scm-action-btn {
+          border: none;
+          border-radius: 12px;
+          padding: 10px 14px;
+          font-size: 13px;
+          font-weight: 900;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+        }
+
+        .scm-action-btn--primary {
+          background: linear-gradient(135deg, #7c5cff 0%, #6d5dfd 100%);
+          color: #fff;
+        }
+
+        .scm-action-btn--danger {
+          background: #fff1f2;
+          color: #be123c;
+        }
+
+        .scm-action-btn:disabled {
+          opacity: .72;
+          cursor: not-allowed;
+        }
+
         .scm-loading {
           padding: 34px 12px;
           text-align: center;
           color: #6b7280;
           font-size: 15px;
-          font-weight: 600;
+          font-weight: 700;
         }
 
         @media (max-width: 900px) {
@@ -906,13 +1232,20 @@ const StudentCourses = () => {
           }
         }
 
-        @media (max-width: 700px) {
+        @media (max-width: 760px) {
           .sc-page {
-            padding: 18px 12px;
+            padding: 12px;
           }
 
-          .sc-header {
-            align-items: flex-start;
+          .sc-headbar,
+          .sc-toolbar,
+          .sc-content {
+            padding-left: 14px;
+            padding-right: 14px;
+          }
+
+          .sc-headbar {
+            align-items: stretch;
           }
 
           .sc-toolbar {
@@ -925,10 +1258,6 @@ const StudentCourses = () => {
 
           .sc-grid {
             grid-template-columns: 1fr;
-          }
-
-          .scc-card {
-            max-width: 100%;
           }
 
           .scm-modal {
@@ -945,76 +1274,97 @@ const StudentCourses = () => {
           .scm-title {
             font-size: 20px;
           }
+
+          .scm-actions {
+            flex-direction: column;
+          }
         }
       `}</style>
 
       <div className="sc-page">
-        {error ? <div className="sc-error">{error}</div> : null}
+        <div className="sc-shell">
+          <div className="sc-headbar">
+            <div className="sc-headbar-left">
+              <div className="sc-headbar-accent" />
+              <div className="sc-headbar-text">
+                <h2 className="sc-headbar-title">Cursos inscritos</h2>
+                <p className="sc-headbar-sub">
+                  Revisa tu avance, tus notas y la información de cada materia.
+                </p>
+              </div>
+            </div>
 
-        <div className="sc-header">
-          <div className="sc-header-left">
-            <div className="sc-header-pill" />
-            <h1 className="sc-title">Mis Cursos</h1>
             <span className="sc-count">
               {isLoading ? 'Cargando…' : `${total} inscritos`}
             </span>
           </div>
-        </div>
 
-        <div className="sc-toolbar">
-          <div className="sc-filters">
-            {resumenFiltros.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                className={`sc-filter ${filtroEstado === item.key ? 'active' : ''}`}
-                onClick={() => dispatch(setFiltroEstado(item.key))}
-              >
-                {item.label} ({item.count})
-              </button>
-            ))}
-          </div>
+          <div className="sc-toolbar">
+            <div className="sc-filters">
+              {resumenFiltros.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  className={`sc-filter ${filtroEstado === item.key ? 'active' : ''}`}
+                  onClick={() => dispatch(setFiltroEstado(item.key))}
+                >
+                  {item.label} ({item.count})
+                </button>
+              ))}
+            </div>
 
-          <div className="sc-search">
-            <FiSearch size={15} className="sc-search-icon" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre, sigla o docente..."
-              value={searchTerm}
-              onChange={(e) => dispatch(setSearchTerm(e.target.value))}
-            />
-          </div>
-        </div>
-
-        {isLoading ? (
-          <div className="sc-empty">
-            <FiBook size={46} />
-            <p>Cargando tus cursos...</p>
-          </div>
-        ) : inscritos.length === 0 ? (
-          <div className="sc-empty">
-            <FiInfo size={46} />
-            <p>No se encontraron cursos con los filtros actuales.</p>
-          </div>
-        ) : (
-          <div className="sc-grid">
-            {inscritos.map((inscrito, index) => (
-              <CourseCard
-                key={inscrito.id_matricula}
-                inscrito={inscrito}
-                onView={handleOpenDetail}
-                onCertificate={handleCertificate}
-                index={index}
+            <div className="sc-search">
+              <FiSearch size={15} className="sc-search-icon" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre, sigla o docente..."
+                value={searchTerm}
+                onChange={(e) => dispatch(setSearchTerm(e.target.value))}
               />
-            ))}
+            </div>
           </div>
-        )}
+
+          <div className="sc-content">
+            {error ? <div className="sc-error">{error}</div> : null}
+
+            {isLoading ? (
+              <div className="sc-empty">
+                <FiBook size={46} />
+                <p>Cargando tus cursos...</p>
+              </div>
+            ) : inscritos.length === 0 ? (
+              <div className="sc-empty">
+                <FiInfo size={46} />
+                <p>No se encontraron cursos con los filtros actuales.</p>
+              </div>
+            ) : (
+              <div className="sc-grid">
+                {inscritos.map((inscrito, index) => (
+                  <CourseCard
+                    key={inscrito.id_matricula}
+                    inscrito={inscrito}
+                    onView={handleOpenDetail}
+                    onCertificate={handleCertificate}
+                    onUnenroll={handleUnenroll}
+                    index={index}
+                    isSendingCertificate={isSendingCertificate}
+                    isUnenrolling={isUnenrolling}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         <CourseDetailModal
           open={modalOpen}
           onClose={handleCloseModal}
           inscrito={inscritoSeleccionado}
           isLoading={isLoadingDetalle}
+          onCertificate={handleCertificate}
+          onUnenroll={handleUnenroll}
+          isSendingCertificate={isSendingCertificate}
+          isUnenrolling={isUnenrolling}
         />
       </div>
     </>

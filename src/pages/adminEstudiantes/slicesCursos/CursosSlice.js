@@ -2,6 +2,8 @@ import { createSlice } from '@reduxjs/toolkit';
 import {
   fetchInscripcionesByEstudianteId,
   fetchInscritoByMatriculaId,
+  enviarCertificadoPorMatricula,
+  desinscribirseMismoDia,
 } from './CursosThunk';
 
 const initialState = {
@@ -12,11 +14,14 @@ const initialState = {
 
   isLoadingInscritos: false,
   isLoadingDetalle: false,
+  isSendingCertificate: false,
+  isUnenrolling: false,
+
   error: null,
+  certificateError: null,
+  certificateSuccess: null,
 
   filtroEstado: 'todos',
-  // todos | activos | concluidos | aprobados | reprobados | pendientes
-
   searchTerm: '',
 
   inscritoSeleccionado: null,
@@ -34,11 +39,15 @@ const aplicarFiltros = (state) => {
 
   switch (state.filtroEstado) {
     case 'activos':
-      lista = lista.filter((item) => item?.curso?.estado === true);
+      lista = lista.filter((item) => item?.curso?.estado === 'ACTIVO');
       break;
 
     case 'concluidos':
-      lista = lista.filter((item) => item?.curso?.estado === false);
+      lista = lista.filter(
+        (item) =>
+          item?.curso?.estado === 'FINALIZADO' ||
+          item?.curso?.estado === 'CANCELADO'
+      );
       break;
 
     case 'aprobados':
@@ -88,6 +97,14 @@ const cursosSlice = createSlice({
   reducers: {
     clearError: (state) => {
       state.error = null;
+    },
+
+    clearCertificateError: (state) => {
+      state.certificateError = null;
+    },
+
+    clearCertificateSuccess: (state) => {
+      state.certificateSuccess = null;
     },
 
     setFiltroEstado: (state, action) => {
@@ -154,12 +171,62 @@ const cursosSlice = createSlice({
       .addCase(fetchInscritoByMatriculaId.rejected, (state, action) => {
         state.isLoadingDetalle = false;
         state.error = action.payload || 'Error al cargar el detalle del curso';
+      })
+
+      .addCase(enviarCertificadoPorMatricula.pending, (state) => {
+        state.isSendingCertificate = true;
+        state.certificateError = null;
+        state.certificateSuccess = null;
+      })
+      .addCase(enviarCertificadoPorMatricula.fulfilled, (state, action) => {
+        state.isSendingCertificate = false;
+        state.certificateSuccess =
+          action.payload?.message || 'Certificado enviado correctamente';
+      })
+      .addCase(enviarCertificadoPorMatricula.rejected, (state, action) => {
+        state.isSendingCertificate = false;
+        state.certificateError =
+          action.payload || 'No se pudo enviar el certificado';
+      })
+
+      .addCase(desinscribirseMismoDia.pending, (state) => {
+        state.isUnenrolling = true;
+        state.error = null;
+      })
+      .addCase(desinscribirseMismoDia.fulfilled, (state, action) => {
+        state.isUnenrolling = false;
+
+        const idMatricula = Number(action.payload?.id_matricula);
+
+        state.inscritos = (state.inscritos || []).filter(
+          (item) => Number(item?.id_matricula) !== idMatricula
+        );
+
+        if (
+          state.inscritoSeleccionado &&
+          Number(state.inscritoSeleccionado?.id_matricula) === idMatricula
+        ) {
+          state.inscritoSeleccionado = null;
+          state.modalDetalleOpen = false;
+        }
+
+        state.certificateSuccess =
+          action.payload?.msg ||
+          'Te desinscribiste correctamente y se generó saldo a tu favor.';
+
+        aplicarFiltros(state);
+      })
+      .addCase(desinscribirseMismoDia.rejected, (state, action) => {
+        state.isUnenrolling = false;
+        state.error = action.payload || 'No se pudo realizar la desinscripción';
       });
   },
 });
 
 export const {
   clearError,
+  clearCertificateError,
+  clearCertificateSuccess,
   setFiltroEstado,
   setSearchTerm,
   clearSearchTerm,
@@ -169,7 +236,6 @@ export const {
   closeDetalleModal,
 } = cursosSlice.actions;
 
-// Selectors base
 export const selectEstudianteCursos = (state) =>
   state.cursosEstudiante?.estudiante || null;
 
@@ -188,35 +254,46 @@ export const selectIsLoadingInscritos = (state) =>
 export const selectIsLoadingDetalle = (state) =>
   state.cursosEstudiante?.isLoadingDetalle || false;
 
+export const selectIsSendingCertificate = (state) =>
+  state.cursosEstudiante?.isSendingCertificate || false;
+
+export const selectIsUnenrolling = (state) =>
+  state.cursosEstudiante?.isUnenrolling || false;
+
 export const selectError = (state) =>
   state.cursosEstudiante?.error || null;
 
-// Selectors de filtros
+export const selectCertificateError = (state) =>
+  state.cursosEstudiante?.certificateError || null;
+
+export const selectCertificateSuccess = (state) =>
+  state.cursosEstudiante?.certificateSuccess || null;
+
 export const selectFiltroEstado = (state) =>
   state.cursosEstudiante?.filtroEstado || 'todos';
 
 export const selectSearchTermCursos = (state) =>
   state.cursosEstudiante?.searchTerm || '';
 
-// Selectors de detalle / modal
 export const selectInscritoSeleccionado = (state) =>
   state.cursosEstudiante?.inscritoSeleccionado || null;
 
 export const selectModalDetalleOpen = (state) =>
   state.cursosEstudiante?.modalDetalleOpen || false;
 
-// Contadores útiles
 export const selectCantidadInscritos = (state) =>
   state.cursosEstudiante?.inscritos?.length || 0;
 
 export const selectCantidadActivos = (state) =>
   (state.cursosEstudiante?.inscritos || []).filter(
-    (item) => item?.curso?.estado === true
+    (item) => item?.curso?.estado === 'ACTIVO'
   ).length;
 
 export const selectCantidadConcluidos = (state) =>
   (state.cursosEstudiante?.inscritos || []).filter(
-    (item) => item?.curso?.estado === false
+    (item) =>
+      item?.curso?.estado === 'FINALIZADO' ||
+      item?.curso?.estado === 'CANCELADO'
   ).length;
 
 export const selectCantidadAprobados = (state) =>

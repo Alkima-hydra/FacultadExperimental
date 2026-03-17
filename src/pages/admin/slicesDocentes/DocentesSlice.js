@@ -28,6 +28,29 @@ const initialState = {
   error: null,
 };
 
+const actualizarDocenteEnColecciones = (state, docenteActualizado) => {
+  if (!docenteActualizado?.id_docente) return;
+
+  state.Docentes = (state.Docentes || []).map((d) =>
+    d.id_docente === docenteActualizado.id_docente
+      ? { ...d, ...docenteActualizado }
+      : d
+  );
+
+  state.allDocentes = (state.allDocentes || []).map((d) =>
+    d.id_docente === docenteActualizado.id_docente
+      ? { ...d, ...docenteActualizado }
+      : d
+  );
+
+  if (state.Docenteseleccionado?.id_docente === docenteActualizado.id_docente) {
+    state.Docenteseleccionado = {
+      ...state.Docenteseleccionado,
+      ...docenteActualizado,
+    };
+  }
+};
+
 const DocentesSlice = createSlice({
   name: 'Docentes',
   initialState,
@@ -47,39 +70,36 @@ const DocentesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // fetchDocentes
       .addCase(fetchDocentes.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
       .addCase(fetchDocentes.fulfilled, (state, action) => {
         state.isLoading = false;
-        const docentes = action.payload?.docentes ?? [];
-        state.Docentes    = docentes;
-        state.totalItems  = action.payload?.totalItems  ?? docentes.length;
-        state.totalPages  = action.payload?.totalPages  ?? 1;
+        const docentes = action.payload?.docentes ?? action.payload?.Docentes ?? [];
+        state.Docentes = docentes;
+        state.totalItems = action.payload?.totalItems ?? docentes.length;
+        state.totalPages = action.payload?.totalPages ?? 1;
         state.currentPage = action.payload?.currentPage ?? 1;
       })
       .addCase(fetchDocentes.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload?.message || 'Error al cargar Docentes';
+        state.error = action.payload?.message || 'Error al cargar docentes';
       })
 
-      // fetchAllDocentes
       .addCase(fetchAllDocentes.pending, (state) => {
         state.isLoadingAll = true;
         state.error = null;
       })
       .addCase(fetchAllDocentes.fulfilled, (state, action) => {
         state.isLoadingAll = false;
-        state.allDocentes = action.payload;
+        state.allDocentes = action.payload || [];
       })
       .addCase(fetchAllDocentes.rejected, (state, action) => {
         state.isLoadingAll = false;
-        state.error = action.payload?.message || 'Error al cargar todas los Docentes';
+        state.error = action.payload?.message || 'Error al cargar todos los docentes';
       })
 
-      // fetchDocenteById
       .addCase(fetchDocenteById.pending, (state) => {
         state.isLoadingById = true;
         state.error = null;
@@ -90,42 +110,52 @@ const DocentesSlice = createSlice({
       })
       .addCase(fetchDocenteById.rejected, (state, action) => {
         state.isLoadingById = false;
-        state.error = action.payload?.message || 'Error al cargar el Docente';
+        state.error = action.payload?.message || 'Error al cargar el docente';
       })
 
-      // createDocente
       .addCase(createDocente.pending, (state) => {
         state.isCreating = true;
         state.error = null;
       })
       .addCase(createDocente.fulfilled, (state, action) => {
         state.isCreating = false;
-        const nueva = action.payload;
-        if (Array.isArray(state.Docentes)) {
-          state.Docentes = [nueva, ...state.Docentes];
+
+        const nuevoDocente =
+          action.payload?.data?.docente ||
+          action.payload?.docente ||
+          action.payload?.Docente ||
+          null;
+
+        if (nuevoDocente?.id_docente) {
+          state.Docentes = [nuevoDocente, ...(state.Docentes || [])];
+          state.allDocentes = [nuevoDocente, ...(state.allDocentes || [])];
           state.totalItems = (state.totalItems || 0) + 1;
+          state.Docenteseleccionado = nuevoDocente;
         }
-        state.Docenteseleccionado = nueva;
       })
       .addCase(createDocente.rejected, (state, action) => {
         state.isCreating = false;
-        state.error = action.payload?.message || 'Error al crear Docente';
+        state.error = action.payload?.message || 'Error al crear docente';
       })
 
-      // updateDocente
       .addCase(updateDocente.pending, (state) => {
         state.isUpdating = true;
         state.error = null;
       })
       .addCase(updateDocente.fulfilled, (state, action) => {
         state.isUpdating = false;
+        const actualizado =
+          action.payload?.docente ||
+          action.payload?.Docente ||
+          action.payload;
+
+        actualizarDocenteEnColecciones(state, actualizado);
       })
       .addCase(updateDocente.rejected, (state, action) => {
         state.isUpdating = false;
-        state.error = action.payload?.message || 'Error al actualizar Docente';
+        state.error = action.payload?.message || 'Error al actualizar docente';
       })
 
-      // deleteDocente
       .addCase(deleteDocente.pending, (state) => {
         state.isDeleting = true;
         state.error = null;
@@ -133,36 +163,43 @@ const DocentesSlice = createSlice({
       .addCase(deleteDocente.fulfilled, (state, action) => {
         state.isDeleting = false;
         const deletedId = action.payload?.id;
+
         if (deletedId !== undefined) {
-          state.Docentes = state.Docentes.filter(p => p.id_docente !== deletedId);
+          state.Docentes = (state.Docentes || []).filter(
+            (d) => d.id_docente !== deletedId
+          );
+          state.allDocentes = (state.allDocentes || []).filter(
+            (d) => d.id_docente !== deletedId
+          );
         }
+
         if (state.Docenteseleccionado?.id_docente === deletedId) {
           state.Docenteseleccionado = null;
         }
+
         state.totalItems = Math.max(0, (state.totalItems || 1) - 1);
       })
       .addCase(deleteDocente.rejected, (state, action) => {
         state.isDeleting = false;
-        state.error = action.payload?.message || 'Error al eliminar Docente';
+        state.error = action.payload?.message || 'Error al eliminar docente';
       })
 
-      // buscarDocentes — misma estructura que fetchDocentes
       .addCase(buscarDocentes.pending, (state) => {
         state.isSearching = true;
         state.error = null;
       })
       .addCase(buscarDocentes.fulfilled, (state, action) => {
         state.isSearching = false;
-        const docentes = action.payload?.docentes ?? [];
-        state.Docentes    = docentes;
-        state.totalItems  = action.payload?.totalItems  ?? docentes.length;
-        state.totalPages  = action.payload?.totalPages  ?? 1;
+        const docentes = action.payload?.docentes ?? action.payload?.Docentes ?? [];
+        state.Docentes = docentes;
+        state.totalItems = action.payload?.totalItems ?? docentes.length;
+        state.totalPages = action.payload?.totalPages ?? 1;
         state.currentPage = action.payload?.currentPage ?? 1;
       })
       .addCase(buscarDocentes.rejected, (state, action) => {
         state.isSearching = false;
-        state.error = action.payload?.message || 'Error al buscar Docentes';
-      })
+        state.error = action.payload?.message || 'Error al buscar docentes';
+      });
   },
 });
 
@@ -178,8 +215,8 @@ export const selectDocentes = createSelector(
   (slice) => slice.Docentes ?? EMPTY_ARRAY
 );
 
-export const selectTotalItems  = (state) => state?.docentes?.totalItems  ?? 0;
-export const selectTotalPages  = (state) => state?.docentes?.totalPages  ?? 1;
+export const selectTotalItems = (state) => state?.docentes?.totalItems ?? 0;
+export const selectTotalPages = (state) => state?.docentes?.totalPages ?? 1;
 export const selectCurrentPage = (state) => state?.docentes?.currentPage ?? 1;
 
 export const selectAllDocentes = createSelector(
@@ -189,14 +226,14 @@ export const selectAllDocentes = createSelector(
 
 export const selectDocenteseleccionado = (state) => state?.docentes?.Docenteseleccionado ?? null;
 
-export const selectIsLoading     = (state) => Boolean(state?.docentes?.isLoading);
-export const selectIsLoadingAll  = (state) => Boolean(state?.docentes?.isLoadingAll);
+export const selectIsLoading = (state) => Boolean(state?.docentes?.isLoading);
+export const selectIsLoadingAll = (state) => Boolean(state?.docentes?.isLoadingAll);
 export const selectIsLoadingById = (state) => Boolean(state?.docentes?.isLoadingById);
-export const selectIsSearching   = (state) => Boolean(state?.docentes?.isSearching);
-export const selectError         = (state) => state?.docentes?.error ?? null;
-export const selectIsCreating    = (state) => Boolean(state?.docentes?.isCreating);
-export const selectIsUpdating    = (state) => Boolean(state?.docentes?.isUpdating);
-export const selectIsDeleting    = (state) => Boolean(state?.docentes?.isDeleting);
+export const selectIsSearching = (state) => Boolean(state?.docentes?.isSearching);
+export const selectError = (state) => state?.docentes?.error ?? null;
+export const selectIsCreating = (state) => Boolean(state?.docentes?.isCreating);
+export const selectIsUpdating = (state) => Boolean(state?.docentes?.isUpdating);
+export const selectIsDeleting = (state) => Boolean(state?.docentes?.isDeleting);
 
 export const DocentesReducer = DocentesSlice.reducer;
 export default DocentesSlice.reducer;
