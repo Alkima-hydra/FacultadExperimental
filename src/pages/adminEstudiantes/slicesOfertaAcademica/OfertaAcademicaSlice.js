@@ -4,6 +4,10 @@ import {
   addCursoOfertaToCarrito,
 } from './OfertaAcademicaThunk';
 
+const ESTADO_CURSO_ACTIVO = 'ACTIVO';
+const ESTADO_CURSO_FINALIZADO = 'FINALIZADO';
+const ESTADO_CURSO_CANCELADO = 'CANCELADO';
+
 const initialState = {
   estudiante: null,
   resumen: null,
@@ -38,6 +42,23 @@ const getDocenteNombre = (curso) => {
   return [u.nombres, u.apellido_paterno, u.apellido_materno].filter(Boolean).join(' ');
 };
 
+const recalcularResumen = (state) => {
+  const cursos = Array.isArray(state.cursos) ? state.cursos : [];
+
+  state.resumen = {
+    total_cursos_activos: cursos.length,
+    disponibles: cursos.filter((c) => c?.puede_inscribirse).length,
+    bloqueados: cursos.filter((c) => !c?.puede_inscribirse).length,
+    aprobadas_previamente: cursos.filter((c) => c?.ya_aprobada).length,
+    cursando_actualmente: cursos.filter((c) => c?.cursando_actualmente).length,
+    en_carrito_pendiente: cursos.filter((c) => c?.en_carrito_pendiente).length,
+    sin_cupos: cursos.filter((c) => c?.sin_cupos).length,
+    con_choque_horario: cursos.filter((c) => c?.choque_horario).length,
+    con_prerequisitos: cursos.filter((c) => c?.tiene_prerequisitos).length,
+    con_prerequisitos_pendientes: cursos.filter((c) => c?.tiene_prerequisitos_pendientes).length,
+  };
+};
+
 const aplicarFiltros = (state) => {
   let lista = Array.isArray(state.cursos) ? [...state.cursos] : [];
 
@@ -62,6 +83,15 @@ const aplicarFiltros = (state) => {
       break;
     case 'choque':
       lista = lista.filter((c) => c?.choque_horario);
+      break;
+    case 'activos':
+      lista = lista.filter((c) => c?.estado === ESTADO_CURSO_ACTIVO);
+      break;
+    case 'finalizados':
+      lista = lista.filter((c) => c?.estado === ESTADO_CURSO_FINALIZADO);
+      break;
+    case 'cancelados':
+      lista = lista.filter((c) => c?.estado === ESTADO_CURSO_CANCELADO);
       break;
     default:
       break;
@@ -112,6 +142,7 @@ const aplicarFiltros = (state) => {
       const codigoMateria = normalize(c?.materia?.codigo);
       const categoria = normalize(c?.materia?.categoria);
       const periodo = normalize(c?.periodo);
+      const estado = normalize(c?.estado);
       const docente = normalize(getDocenteNombre(c));
       const motivos = normalize((c?.motivos_bloqueo || []).join(' '));
       const prereqs = normalize(
@@ -125,6 +156,7 @@ const aplicarFiltros = (state) => {
         codigoMateria.includes(q) ||
         categoria.includes(q) ||
         periodo.includes(q) ||
+        estado.includes(q) ||
         docente.includes(q) ||
         motivos.includes(q) ||
         prereqs.includes(q)
@@ -133,6 +165,49 @@ const aplicarFiltros = (state) => {
   }
 
   state.cursosFiltrados = lista;
+};
+
+const marcarCursoEnCarrito = (state, idCurso) => {
+  const id = Number(idCurso);
+  const motivoCarrito = 'Esta materia ya está en tu carrito pendiente.';
+
+  state.cursos = (state.cursos || []).map((curso) => {
+    if (Number(curso?.id_curso) !== id) return curso;
+
+    const motivos = Array.isArray(curso?.motivos_bloqueo) ? [...curso.motivos_bloqueo] : [];
+    const motivosSinDuplicados = motivos.includes(motivoCarrito)
+      ? motivos
+      : [motivoCarrito, ...motivos];
+
+    return {
+      ...curso,
+      en_carrito_pendiente: true,
+      puede_inscribirse: false,
+      motivo_bloqueo: motivoCarrito,
+      motivos_bloqueo: motivosSinDuplicados,
+    };
+  });
+
+  if (state.cursoSeleccionado && Number(state.cursoSeleccionado?.id_curso) === id) {
+    const motivos = Array.isArray(state.cursoSeleccionado?.motivos_bloqueo)
+      ? [...state.cursoSeleccionado.motivos_bloqueo]
+      : [];
+
+    const motivosSinDuplicados = motivos.includes(motivoCarrito)
+      ? motivos
+      : [motivoCarrito, ...motivos];
+
+    state.cursoSeleccionado = {
+      ...state.cursoSeleccionado,
+      en_carrito_pendiente: true,
+      puede_inscribirse: false,
+      motivo_bloqueo: motivoCarrito,
+      motivos_bloqueo: motivosSinDuplicados,
+    };
+  }
+
+  recalcularResumen(state);
+  aplicarFiltros(state);
 };
 
 const OfertaAcademicaSlice = createSlice({
@@ -217,8 +292,8 @@ const OfertaAcademicaSlice = createSlice({
       .addCase(fetchOfertaAcademicaByUsuarioId.fulfilled, (state, action) => {
         state.isLoading = false;
         state.estudiante = action.payload?.estudiante || null;
-        state.resumen = action.payload?.resumen || null;
         state.cursos = action.payload?.cursos || [];
+        recalcularResumen(state);
         aplicarFiltros(state);
       })
       .addCase(fetchOfertaAcademicaByUsuarioId.rejected, (state, action) => {
@@ -235,6 +310,10 @@ const OfertaAcademicaSlice = createSlice({
         state.isAdding = false;
         state.successMessage =
           action.payload?.message || 'Curso agregado al carrito correctamente.';
+
+        if (action.payload?.id_curso) {
+          marcarCursoEnCarrito(state, action.payload.id_curso);
+        }
       })
       .addCase(addCursoOfertaToCarrito.rejected, (state, action) => {
         state.isAdding = false;

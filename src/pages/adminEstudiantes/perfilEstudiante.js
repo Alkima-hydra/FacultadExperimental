@@ -332,18 +332,6 @@ const StudentProfile = () => {
       <style>{styles}</style>
 
       <div className="it-sp-root">
-        <div className="it-sp-header">
-          <div className="it-sp-header__left">
-            <div className="it-sp-header__accent" />
-            <div>
-
-              <p className="it-sp-header__sub">
-                Revisa tu información personal. Solo puedes editar tu dirección y tu fecha de nacimiento.
-              </p>
-            </div>
-          </div>
-        </div>
-
         <div className="it-sp-layout">
           <aside className="it-sp-sidebar">
             <div className="it-sp-profile-card">
@@ -384,18 +372,56 @@ const StudentProfile = () => {
 
           <section className="it-sp-main">
             <div className="it-sp-content-card">
+              <div className="it-sp-top-note">
+                <div className="it-sp-top-note__dot" />
+                <p>
+                  Puedes revisar toda tu información personal aquí. Solo la dirección y la fecha de
+                  nacimiento pueden modificarse directamente desde este panel.
+                </p>
+              </div>
+
               <div className="it-sp-section">
                 <div className="it-sp-section__header">
                   <span className="it-sp-section__title">Información personal</span>
                 </div>
 
                 <div className="it-sp-fields-grid">
-                  <ReadOnlyField icon={FiUser} label="Nombres" value={data.nombres} onBlocked={handleBlockedField} />
-                  <ReadOnlyField icon={FiUser} label="Apellido paterno" value={data.apellido_paterno} onBlocked={handleBlockedField} />
-                  <ReadOnlyField icon={FiUser} label="Apellido materno" value={data.apellido_materno} onBlocked={handleBlockedField} />
-                  <ReadOnlyField icon={FiMail} label="Correo electrónico" value={data.mail} onBlocked={handleBlockedField} />
-                  <ReadOnlyField icon={FiHash} label="CI" value={data.ci} onBlocked={handleBlockedField} />
-                  <ReadOnlyField icon={FiUser} label="Género" value={data.genero} onBlocked={handleBlockedField} />
+                  <ReadOnlyField
+                    icon={FiUser}
+                    label="Nombres"
+                    value={data.nombres}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiUser}
+                    label="Apellido paterno"
+                    value={data.apellido_paterno}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiUser}
+                    label="Apellido materno"
+                    value={data.apellido_materno}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiMail}
+                    label="Correo electrónico"
+                    value={data.mail}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiHash}
+                    label="CI"
+                    value={data.ci}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiUser}
+                    label="Género"
+                    value={data.genero}
+                    onBlocked={handleBlockedField}
+                  />
                 </div>
               </div>
 
@@ -403,12 +429,22 @@ const StudentProfile = () => {
 
               <div className="it-sp-section">
                 <div className="it-sp-section__header">
-                  <span className="it-sp-section__title">Perfil de estudiante</span>
+                  <span className="it-sp-section__title">Perfil académico</span>
                 </div>
 
                 <div className="it-sp-fields-grid">
-                  <ReadOnlyField icon={FiBook} label="Carrera" value={data.carrera} onBlocked={handleBlockedField} />
-                  <ReadOnlyField icon={FiCalendar} label="Semestre de ingreso" value={data.semestre_ingreso} onBlocked={handleBlockedField} />
+                  <ReadOnlyField
+                    icon={FiBook}
+                    label="Carrera"
+                    value={data.carrera}
+                    onBlocked={handleBlockedField}
+                  />
+                  <ReadOnlyField
+                    icon={FiCalendar}
+                    label="Semestre de ingreso"
+                    value={data.semestre_ingreso}
+                    onBlocked={handleBlockedField}
+                  />
                   <ReadOnlyField
                     icon={FiShield}
                     label="Estado estudiante"
@@ -423,7 +459,7 @@ const StudentProfile = () => {
               <div className="it-sp-section">
                 <div className="it-sp-section__header it-sp-section__header--actions">
                   <div>
-                    <span className="it-sp-section__title">Datos que sí puedes editar</span>
+                    <span className="it-sp-section__title">Datos editables</span>
                   </div>
 
                   {!editingProfile ? (
@@ -481,7 +517,9 @@ const StudentProfile = () => {
                         type="date"
                         value={editForm.fecha_nacimiento}
                         onChange={(e) =>
-                          dispatch(setEditField({ name: 'fecha_nacimiento', value: e.target.value }))
+                          dispatch(
+                            setEditField({ name: 'fecha_nacimiento', value: e.target.value })
+                          )
                         }
                       />
                     </>
@@ -527,7 +565,9 @@ const StudentProfile = () => {
                     }}
                   >
                     <FiLock />
-                    <span>{passwordOpen ? 'Ocultar cambio de contraseña' : 'Cambiar contraseña'}</span>
+                    <span>
+                      {passwordOpen ? 'Ocultar cambio de contraseña' : 'Cambiar contraseña'}
+                    </span>
                     {passwordOpen ? <FiChevronUp /> : <FiChevronDown />}
                   </button>
                 </div>
@@ -620,7 +660,9 @@ const StudentProfile = () => {
                         disabled={isChangingPassword}
                       >
                         <FiSave />
-                        <span>{isChangingPassword ? 'Actualizando...' : 'Guardar contraseña'}</span>
+                        <span>
+                          {isChangingPassword ? 'Actualizando...' : 'Guardar contraseña'}
+                        </span>
                       </button>
                     </div>
 
@@ -641,57 +683,16 @@ const StudentProfile = () => {
 const styles = `
   .it-sp-root{
     min-height:100%;
-    padding:32px;
-    background:#f6f7fb;
+    padding:20px;
+    background:transparent;
     box-sizing:border-box;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   }
 
-  .it-sp-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap:20px;
-    margin-bottom:22px;
-    flex-wrap:wrap;
-  }
-
-  .it-sp-header__left{
-    display:flex;
-    align-items:flex-start;
-    gap:14px;
-  }
-
-  .it-sp-header__accent{
-    width:8px;
-    height:48px;
-    border-radius:8px;
-    background:linear-gradient(180deg,#704fe6 0%, #4b5fd6 100%);
-    flex-shrink:0;
-    margin-top:2px;
-  }
-
-  .it-sp-header__title{
-    margin:0;
-    font-size:32px;
-    line-height:1.08;
-    font-weight:500;
-    color:#1a1f36;
-    letter-spacing:-0.3px;
-  }
-
-  .it-sp-header__sub{
-    margin:8px 0 0;
-    color:#68708b;
-    font-size:14px;
-    line-height:1.6;
-    max-width:720px;
-  }
-
   .it-sp-layout{
     display:grid;
-    grid-template-columns:320px minmax(0, 1fr);
-    gap:24px;
+    grid-template-columns:300px minmax(0, 1fr);
+    gap:20px;
     align-items:start;
   }
 
@@ -702,14 +703,14 @@ const styles = `
 
   .it-sp-profile-card,
   .it-sp-content-card{
-    background:#fff;
-    border:1px solid #eceef5;
-    border-radius:24px;
-    box-shadow:0 10px 30px rgba(40,52,109,.05);
+    background:#ffffff;
+    border:1px solid #e7edf5;
+    border-radius:22px;
+    box-shadow:0 12px 32px rgba(15,23,42,0.05);
   }
 
   .it-sp-profile-card{
-    padding:24px 22px;
+    padding:24px 20px;
     position:sticky;
     top:20px;
   }
@@ -729,10 +730,10 @@ const styles = `
 
   .it-sp-profile-card__name{
     margin:0;
-    color:#1a1f36;
+    color:#111827;
     font-size:24px;
     line-height:1.2;
-    font-weight:700;
+    font-weight:800;
     letter-spacing:-0.2px;
     text-align:center;
   }
@@ -742,8 +743,8 @@ const styles = `
     align-items:center;
     justify-content:center;
     margin:12px auto 0;
-    background:#eef0fb;
-    color:#4b5fd6;
+    background:#eef2ff;
+    color:#4f46e5;
     font-size:11px;
     font-weight:800;
     padding:7px 12px;
@@ -764,9 +765,9 @@ const styles = `
     align-items:flex-start;
     padding:12px 13px;
     border-radius:14px;
-    background:#f8f9fd;
-    border:1px solid #edf0f7;
-    color:#6e7691;
+    background:#f8fafc;
+    border:1px solid #e9edf5;
+    color:#6b7280;
   }
 
   .it-sp-mini-info > div{
@@ -778,21 +779,49 @@ const styles = `
 
   .it-sp-mini-info span{
     font-size:11px;
-    font-weight:700;
+    font-weight:800;
     text-transform:uppercase;
-    letter-spacing:.5px;
-    color:#96a0be;
+    letter-spacing:.45px;
+    color:#98a2b3;
   }
 
   .it-sp-mini-info strong{
     font-size:13px;
     line-height:1.45;
-    color:#1f2640;
+    color:#1f2937;
     word-break:break-word;
   }
 
   .it-sp-content-card{
-    padding:26px 28px;
+    padding:24px 26px;
+  }
+
+  .it-sp-top-note{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:14px 16px;
+    margin-bottom:22px;
+    border-radius:16px;
+    background:#f8fafc;
+    border:1px solid #e9edf5;
+  }
+
+  .it-sp-top-note__dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#7c5cff;
+    margin-top:4px;
+    flex-shrink:0;
+  }
+
+  .it-sp-top-note p{
+    margin:0;
+    font-size:13px;
+    line-height:1.6;
+    color:#667085;
+    font-weight:600;
   }
 
   .it-sp-section{
@@ -815,22 +844,22 @@ const styles = `
 
   .it-sp-section__title{
     font-size:12px;
-    font-weight:800;
-    color:#95a0be;
-    letter-spacing:.8px;
+    font-weight:900;
+    color:#98a2b3;
+    letter-spacing:.08em;
     text-transform:uppercase;
   }
 
   .it-sp-fields-grid{
     display:grid;
     grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:18px 22px;
+    gap:18px 20px;
   }
 
   .it-sp-password-grid{
     display:grid;
     grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:18px 22px;
+    gap:18px 20px;
   }
 
   .it-sp-field{
@@ -846,10 +875,10 @@ const styles = `
     align-items:center;
     gap:6px;
     margin-bottom:7px;
-    color:#97a1be;
+    color:#98a2b3;
     font-size:11px;
-    font-weight:800;
-    letter-spacing:.5px;
+    font-weight:900;
+    letter-spacing:.05em;
     text-transform:uppercase;
     flex-wrap:wrap;
   }
@@ -876,36 +905,38 @@ const styles = `
   }
 
   .it-sp-field--readonly .it-sp-field__value{
-    padding:13px 14px;
-    background:#f4f5f9;
-    border:1px solid #e2e6ef;
-    border-radius:12px;
-    color:#5f667f;
+    padding:14px 15px;
+    background:#f8fafc;
+    border:1px solid #e6ebf3;
+    border-radius:14px;
+    color:#4b5563;
+    transition:all .16s ease;
   }
 
   .it-sp-field--readonly.is-muted .it-sp-field__value{
-    background:#eef1f6;
+    background:#f1f5f9;
   }
 
   .it-sp-field--readonly:hover .it-sp-field__value{
-    background:#ebeff6;
+    background:#f4f7fb;
+    border-color:#dde4ef;
   }
 
   .it-sp-field__value{
     margin:0;
     min-height:20px;
-    color:#1a1f36;
+    color:#111827;
     font-size:14px;
-    font-weight:600;
+    font-weight:700;
     line-height:1.5;
     word-break:break-word;
   }
 
   .it-sp-field__value--boxed{
-    padding:13px 14px;
-    border-radius:12px;
-    border:1px solid #dfe4f0;
-    background:#f8f9fd;
+    padding:14px 15px;
+    border-radius:14px;
+    border:1px solid #dfe6f0;
+    background:#f8fafc;
   }
 
   .it-sp-field__value--boxed.is-editable{
@@ -917,12 +948,12 @@ const styles = `
   .it-sp-field__input{
     width:100%;
     box-sizing:border-box;
-    border:1px solid #cfe4d7;
+    border:1px solid #dfe6f0;
     border-radius:14px;
-    background:#fbfffc;
-    color:#1a1f36;
+    background:#fbfcfe;
+    color:#111827;
     font-size:14px;
-    font-weight:500;
+    font-weight:600;
     padding:12px 14px;
     outline:none;
     transition:all .16s ease;
@@ -930,9 +961,9 @@ const styles = `
   }
 
   .it-sp-field__input:focus{
-    border-color:#704fe6;
+    border-color:#8f7bff;
     background:#fff;
-    box-shadow:0 0 0 4px rgba(112,79,230,.10);
+    box-shadow:0 0 0 4px rgba(124,92,255,.10);
   }
 
   .it-sp-field__input--date{
@@ -950,7 +981,7 @@ const styles = `
   .it-sp-divider{
     width:100%;
     height:1px;
-    background:#eef1f7;
+    background:#eef2f7;
     margin:22px 0;
   }
 
@@ -960,43 +991,42 @@ const styles = `
     gap:8px;
     border:none;
     cursor:pointer;
-    border-radius:12px;
+    border-radius:13px;
     padding:11px 18px;
     font-size:13px;
-    font-weight:700;
+    font-weight:800;
     transition:all .18s ease;
     min-height:44px;
   }
 
   .it-sp-btn--primary{
-    background:#704fe6;
+    background:linear-gradient(135deg,#7c5cff 0%, #6d5dfd 100%);
     color:#fff;
-    box-shadow:0 8px 20px rgba(112,79,230,.22);
+    box-shadow:0 10px 22px rgba(109,93,253,.20);
   }
 
   .it-sp-btn--primary:hover{
-    background:#6242da;
     transform:translateY(-1px);
   }
 
   .it-sp-btn--outline{
     background:#fff;
-    color:#4d5756;
-    border:1px solid #e4e7f1;
+    color:#475467;
+    border:1px solid #e4e7ec;
   }
 
   .it-sp-btn--outline:hover{
-    background:#f9faff;
+    background:#f9fafb;
   }
 
   .it-sp-btn--ghost{
     background:#fff;
-    color:#7d839d;
-    border:1px solid #e6e8f2;
+    color:#667085;
+    border:1px solid #e4e7ec;
   }
 
   .it-sp-btn--ghost:hover{
-    background:#f7f8fc;
+    background:#f9fafb;
   }
 
   .it-sp-btn:disabled{
@@ -1017,7 +1047,7 @@ const styles = `
     flex-direction:column;
     gap:16px;
     padding:18px;
-    border:1px solid #eceef5;
+    border:1px solid #e7edf5;
     border-radius:18px;
     background:#fcfcff;
   }
@@ -1025,15 +1055,15 @@ const styles = `
   .it-sp-password-rules{
     padding:14px 16px;
     border-radius:14px;
-    background:#f8f9fd;
-    border:1px solid #edf0f7;
+    background:#f8fafc;
+    border:1px solid #e9edf5;
   }
 
   .it-sp-password-rules p{
     margin:0 0 10px;
-    color:#4a536f;
+    color:#475467;
     font-size:13px;
-    font-weight:700;
+    font-weight:800;
   }
 
   .it-sp-checks-grid{
@@ -1046,20 +1076,20 @@ const styles = `
     display:flex;
     align-items:center;
     gap:8px;
-    color:#7b839c;
+    color:#667085;
     font-size:13px;
-    font-weight:600;
+    font-weight:700;
   }
 
   .it-sp-check-item.is-ok{
-    color:#25804a;
+    color:#15803d;
   }
 
   .it-sp-inline-error{
     margin:0;
-    color:#b63a3a;
+    color:#b42318;
     font-size:13px;
-    font-weight:700;
+    font-weight:800;
   }
 
   .it-sp-loading-wrap,
@@ -1074,11 +1104,11 @@ const styles = `
   .it-sp-feedback-card{
     width:min(460px, 100%);
     background:#fff;
-    border:1px solid #eceef5;
+    border:1px solid #e7edf5;
     border-radius:24px;
     padding:32px 26px;
     text-align:center;
-    box-shadow:0 10px 30px rgba(40,52,109,.05);
+    box-shadow:0 12px 32px rgba(15,23,42,.05);
   }
 
   .it-sp-feedback-card__icon{
@@ -1095,14 +1125,14 @@ const styles = `
 
   .it-sp-feedback-card h3{
     margin:0 0 8px;
-    color:#1a1f36;
+    color:#111827;
     font-size:20px;
-    font-weight:700;
+    font-weight:800;
   }
 
   .it-sp-feedback-card p{
     margin:0;
-    color:#6f7790;
+    color:#6b7280;
     font-size:14px;
     line-height:1.6;
   }
@@ -1119,8 +1149,8 @@ const styles = `
 
   .it-sp-loading-card p{
     margin:0;
-    color:#59627f;
-    font-weight:700;
+    color:#475467;
+    font-weight:800;
     font-size:15px;
   }
 
@@ -1140,11 +1170,7 @@ const styles = `
 
   @media (max-width: 760px){
     .it-sp-root{
-      padding:18px 12px;
-    }
-
-    .it-sp-header__title{
-      font-size:28px;
+      padding:14px 12px 18px;
     }
 
     .it-sp-content-card,
