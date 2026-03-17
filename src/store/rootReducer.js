@@ -15,7 +15,12 @@ import carritoReducer from '../pages/adminEstudiantes/slicesCarrito/CarritoSlice
 import ofertaAcademicaReducer from '../pages/adminEstudiantes/slicesOfertaAcademica/OfertaAcademicaSlice';
 import cursosEstudianteReducer from '../pages/adminEstudiantes/slicesCursos/CursosSlice';
 import checkoutReducer from '../pages/adminEstudiantes/slicesCheckout/CheckoutSlice';
+
+// admin docentes
 import perfilDocenteReducer from '../pages/adminDocentes/slicesPerfilDocente/PerfilDocenteSlice';
+import cursosDocenteReducer from '../pages/adminDocentes/slicesCursos/CursosSlices';
+import notasDocenteReducer from '../pages/adminDocentes/slicesNotas/NotasSlices';
+
 const loginPersistConfig = {
   key: 'login',
   storage,
@@ -36,7 +41,11 @@ export const rootReducer = combineReducers({
   ofertaAcademica: ofertaAcademicaReducer,
   cursosEstudiante: cursosEstudianteReducer,
   checkout: checkoutReducer,
+
+  // admin docentes
   perfilDocente: perfilDocenteReducer,
+  cursosDocente: cursosDocenteReducer,
+  notasDocente: notasDocenteReducer,
 });
 
 export default rootReducer;
