@@ -554,7 +554,6 @@ const pageBtn = (disabled, active) => ({
 const styles = {
   root: {
     padding: "28px 24px", background: "#F8FAFC", minHeight: "100vh",
-    fontFamily: "'Inter', -apple-system, sans-serif", position: "relative",
   },
   loaderOverlay: {
     position: "fixed", inset: 0, zIndex: 999,
